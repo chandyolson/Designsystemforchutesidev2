@@ -1,0 +1,17 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Map Open Sans class to Inter (legacy class compatibility) */
+[class*="font-['Open_Sans']"] {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Hide vertical scrollbars globally */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}

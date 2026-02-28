@@ -1,0 +1,280 @@
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { AnimalListCard } from "./animal-list-card";
+
+/* ── Filter Chip ───────────────────────────── */
+interface FilterChipProps {
+  label: string;
+  color: string;
+  bgColor: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function FilterChip({ label, color, bgColor, active, onClick }: FilterChipProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="shrink-0 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.96] font-['Inter']"
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        padding: "5px 14px",
+        color: active ? color : `${color}80`,
+        backgroundColor: active ? bgColor : `${bgColor}60`,
+        border: `1.5px solid ${active ? color + "30" : "transparent"}`,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ── Actions Dropdown ──────────────────────── */
+function ActionsDropdown() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const items = ["Import", "Export", "Filter/Sort", "Edit"];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.97] flex items-center justify-center"
+        style={{
+          width: 32,
+          height: 32,
+          backgroundColor: "white",
+          border: "1px solid rgba(14,38,70,0.12)",
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="3.5" r="1.3" fill="#0E2646" />
+          <circle cx="8" cy="8" r="1.3" fill="#0E2646" />
+          <circle cx="8" cy="12.5" r="1.3" fill="#0E2646" />
+        </svg>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-20 font-['Inter']"
+          style={{
+            minWidth: 170,
+            boxShadow: "0 8px 24px rgba(14,38,70,0.12)",
+          }}
+        >
+          {items.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
+              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Animal Data ───────────────────────────── */
+type FlagColor = "teal" | "gold" | "red";
+
+interface Animal {
+  tag: string;
+  flag?: FlagColor;
+  type: string;
+  values: string[];
+}
+
+const allAnimals: Animal[] = [
+  { tag: "4782", flag: "teal",  type: "COW",   values: ["2020", "1,247 lbs", "Normal"] },
+  { tag: "3091", flag: "gold",  type: "COW",   values: ["2021", "983 lbs", "Follow-up Thurs"] },
+  { tag: "5520", flag: "red",    type: "COW",   values: ["2019", "1,102 lbs", "Treatment administered"] },
+  { tag: "2218", flag: "teal",  type: "COW",   values: ["2018", "1,340 lbs", "Normal"] },
+  { tag: "6610", flag: "teal",  type: "COW",   values: ["2022", "1,095 lbs", "Gained well"] },
+  { tag: "7801", flag: "gold",  type: "COW",   values: ["2017", "1,410 lbs", "Watch BCS"] },
+  { tag: "1134", flag: "teal",  type: "HEIFER", values: ["2024", "687 lbs", "First calf"] },
+  { tag: "9027", flag: "teal",  type: "BULL",  values: ["2019", "2,180 lbs", "Breeding sound"] },
+  { tag: "4455", flag: "red",    type: "COW",   values: ["2020", "1,198 lbs", "Lame — right rear"] },
+  { tag: "3320", flag: "teal",  type: "STEER", values: ["2023", "845 lbs", "On feed"] },
+  { tag: "8812", flag: "teal",  type: "COW",   values: ["2021", "1,156 lbs", "Normal"] },
+  { tag: "5501", flag: "gold",  type: "COW",   values: ["2020", "1,078 lbs", "Thin — supplement"] },
+  { tag: "7744", flag: "teal",  type: "HEIFER", values: ["2024", "712 lbs", "Growing well"] },
+  { tag: "2290", flag: "teal",  type: "COW",   values: ["2019", "1,290 lbs", "Normal"] },
+];
+
+/* ── Screen Component ──────────────────────── */
+interface AnimalsScreenProps {
+  onSelectAnimal?: (tag: string) => void;
+}
+
+export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
+  const navigate = useNavigate();
+  const [statusFilter, setStatusFilter] = useState(true);
+  const [typeFilter, setTypeFilter] = useState(true);
+  const [search, setSearch] = useState("");
+
+  /* Very simple filtering logic for demo */
+  const filtered = allAnimals.filter((a) => {
+    if (typeFilter && a.type !== "COW") return false;
+    if (statusFilter && (a.flag === "red")) return false; // "Active" hides critical
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      const matchTag = a.tag.toLowerCase().includes(q);
+      const matchType = a.type.toLowerCase().includes(q);
+      const matchValues = a.values.some((v) => v.toLowerCase().includes(q));
+      if (!matchTag && !matchType && !matchValues) return false;
+    }
+    return true;
+  });
+
+  const clearFilters = () => {
+    setStatusFilter(false);
+    setTypeFilter(false);
+  };
+
+  const anyFilterActive = statusFilter || typeFilter;
+
+  return (
+    <div className="space-y-4">
+      {/* ── Search Bar ── */}
+      <div
+        className="flex items-center gap-2.5 rounded-xl font-['Inter']"
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px solid rgba(14,38,70,0.10)",
+          padding: "0 14px",
+          height: 42,
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+          <circle cx="7" cy="7" r="4.5" stroke="#0E2646" strokeWidth="1.5" opacity={0.25} />
+          <line x1="10.5" y1="10.5" x2="13.5" y2="13.5" stroke="#0E2646" strokeWidth="1.5" strokeLinecap="round" opacity={0.25} />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by tag, type, or memo…"
+          className="flex-1 bg-transparent outline-none font-['Inter'] placeholder:text-[#1A1A1A]/25"
+          style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="shrink-0 cursor-pointer flex items-center justify-center rounded-full"
+            style={{ width: 18, height: 18, backgroundColor: "rgba(14,38,70,0.08)" }}
+          >
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <path d="M1.5 1.5L6.5 6.5M6.5 1.5L1.5 6.5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" opacity={0.35} />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* ── Filter Chips ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <FilterChip
+          label="Status: Active"
+          color="#27AE60"
+          bgColor="#27AE6018"
+          active={statusFilter}
+          onClick={() => setStatusFilter((v) => !v)}
+        />
+        <FilterChip
+          label="Type: Cow"
+          color="#2D7DD2"
+          bgColor="#2D7DD218"
+          active={typeFilter}
+          onClick={() => setTypeFilter((v) => !v)}
+        />
+        {anyFilterActive && (
+          <FilterChip
+            label="Clear"
+            color="#6B6B6B"
+            bgColor="#6B6B6B12"
+            active={false}
+            onClick={clearFilters}
+          />
+        )}
+      </div>
+
+      {/* ── Result count + Toolbar Row ── */}
+      <div className="flex items-center justify-between">
+        <p
+          className="text-[#1A1A1A]/30 font-['Inter']"
+          style={{ fontSize: 11, fontWeight: 600 }}
+        >
+          {filtered.length} animals
+        </p>
+        <div className="flex items-center gap-2.5">
+          {/* Yellow (+) button */}
+          <button
+            type="button"
+            onClick={() => navigate("/animals/new")}
+            className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
+            style={{
+              width: 32,
+              height: 32,
+              fontSize: 20,
+              fontWeight: 400,
+              lineHeight: 1,
+              color: "#1A1A1A",
+              backgroundColor: "#F3D12A",
+              boxShadow: "0 2px 8px rgba(243,209,42,0.30)",
+            }}
+          >
+            +
+          </button>
+
+          <ActionsDropdown />
+        </div>
+      </div>
+
+      {/* ── Animal Card List ── */}
+      <div className="space-y-2.5">
+        {filtered.map((a) => (
+          <div
+            key={a.tag}
+            onClick={() => navigate(`/animals/${a.tag.replace("#", "")}`)}
+            className="cursor-pointer active:scale-[0.99] transition-transform duration-100"
+          >
+            <AnimalListCard
+              tag={a.tag}
+              flag={a.flag}
+              typePill={a.type}
+              values={a.values}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* ── Load more hint ── */}
+      <div className="text-center py-3">
+        <span
+          className="text-[#55BAAA] font-['Inter'] cursor-pointer"
+          style={{ fontSize: 13, fontWeight: 600 }}
+        >
+          Load More
+        </span>
+      </div>
+    </div>
+  );
+}
