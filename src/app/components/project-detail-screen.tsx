@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
 import { FormFieldRow, FormSelectRow } from "./form-field-row";
 import { CollapsibleSection } from "./collapsible-section";
 import { PillButton } from "./pill-button";
 import { FlagIcon } from "./flag-icon";
+import { FloatingMicButton } from "./floating-mic-button";
+import { CowHistoryPanel, mockAnimals, alreadyProcessedTags } from "./cow-history-panel";
+import { useToast } from "./toast-context";
 
 /* ── Mock worked animals ── */
 const workedAnimals = [
@@ -23,23 +26,114 @@ const projectProducts = [
   { name: "GnRH (Cystorelin)", dosage: "2 mL", route: "IM", inventory: "25 mL" },
 ];
 
+/* ── Processing type for this project (mock: Pregnancy Check) ── */
+const PROJECT_PROCESSING_TYPE = "Pregnancy Check";
+
+/* ── Quick notes options ── */
+const quickNoteOptions = ["Normal", "Free Martin", "Twin", "Cull - no milk", "White face", "Follow-up"];
+
 export function ProjectDetailScreen() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { id } = useParams();
   const [activeTab, setActiveTab] = useState<"input" | "animals" | "stats" | "details">("input");
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
-  const [inputFields, setInputFields] = useState({
-    tag: "",
-    weight: "",
-    notes: "",
-    data1: "",
-    data2: "",
-  });
+  /* ── Input tab state ── */
+  const [tag, setTag] = useState("4782");
+  const [weight, setWeight] = useState("1,247");
+  const [quickNotes, setQuickNotes] = useState("");
+  const [dnaSample, setDnaSample] = useState("");
+  const [memo, setMemo] = useState("");
 
-  const updateInput = (key: keyof typeof inputFields) => (val: string) =>
-    setInputFields((prev) => ({ ...prev, [key]: val }));
+  /* ── Pregnancy Check conditional fields (default view) ── */
+  const [pregStage, setPregStage] = useState("Bred");
+  const [daysGest, setDaysGest] = useState("142");
+  const [calfSex, setCalfSex] = useState("Bull");
+
+  /* ── Breeding conditional fields ── */
+  const [sireBull, setSireBull] = useState("");
+  const [breedingDate, setBreedingDate] = useState("");
+  const [breedingMethod, setBreedingMethod] = useState("");
+
+  /* ── Cull / Sale conditional fields ── */
+  const [cullReason, setCullReason] = useState("");
+  const [disposition, setDisposition] = useState("");
+  const [saleWeight, setSaleWeight] = useState("");
+
+  /* ── BSE conditional fields ── */
+  const [bseResult, setBseResult] = useState("");
+  const [scrotalCirc, setScrotalCirc] = useState("");
+  const [motility, setMotility] = useState("");
+  const [morphology, setMorphology] = useState("");
+
+  /* ── Generic conditional fields ── */
+  const [data1, setData1] = useState("");
+  const [data2, setData2] = useState("");
+
+  /* ── Derive matched animal ── */
+  const trimmedTag = tag.trim();
+  const matchedAnimal = trimmedTag ? mockAnimals[trimmedTag] ?? null : null;
+  const isDuplicate = trimmedTag ? alreadyProcessedTags.includes(trimmedTag) : false;
+
+  /* Focus tag input on mount and tab switch */
+  useEffect(() => {
+    if (activeTab === "input") {
+      // Don't auto-focus on initial load with pre-filled data
+    }
+  }, [activeTab]);
+
+  /* ── Clear form ── */
+  const clearForm = () => {
+    setTag("");
+    setWeight("");
+    setQuickNotes("");
+    setDnaSample("");
+    setMemo("");
+    setPregStage("");
+    setDaysGest("");
+    setCalfSex("");
+    setSireBull("");
+    setBreedingDate("");
+    setBreedingMethod("");
+    setCullReason("");
+    setDisposition("");
+    setSaleWeight("");
+    setBseResult("");
+    setScrotalCirc("");
+    setMotility("");
+    setMorphology("");
+    setData1("");
+    setData2("");
+    setTimeout(() => tagInputRef.current?.focus(), 50);
+  };
+
+  /* ── Save & Next ── */
+  const handleSaveNext = () => {
+    if (!trimmedTag) return;
+    try { navigator.vibrate?.(50); } catch {}
+    showToast("success", `${trimmedTag} saved`);
+    clearForm();
+  };
+
+  /* ── Save & Done ── */
+  const handleSaveDone = () => {
+    if (trimmedTag) {
+      showToast("success", `${trimmedTag} saved`);
+    }
+    navigate("/cow-work");
+  };
 
   const tabs = ["input", "animals", "stats", "details"] as const;
   const tabLabels = { input: "Input", animals: "Animals", stats: "Stats", details: "Details" };
+
+  /* ── BSE result color helper ── */
+  const bseColor = (val: string) => {
+    if (val === "Pass") return "#55BAAA";
+    if (val === "Fail") return "#E74C3C";
+    if (val === "Defer") return "#F3D12A";
+    return undefined;
+  };
 
   return (
     <div className="space-y-0">
@@ -62,7 +156,7 @@ export function ProjectDetailScreen() {
         </p>
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => navigate(`/cow-work/${id || "spring-preg"}/close-out`)}
           className="mt-4 w-full rounded-xl py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.98]"
           style={{
             fontSize: 13,
@@ -106,39 +200,154 @@ export function ProjectDetailScreen() {
 
       {/* ══ TAB CONTENT ══ */}
       <div className="py-5">
+        {/* ──────────────────────────────────────
+            INPUT TAB — Full chuteside entry
+           ────────────────────────────────────── */}
         {activeTab === "input" && (
-          <div className="space-y-5">
-            {/* Tag scan field — prominent */}
+          <div className="space-y-4">
+            {/* ── ANIMAL LOOKUP ── */}
             <div className="space-y-2.5">
+              {/* Tag / EID scan field */}
               <div className="flex items-center gap-3">
                 <label
                   className="shrink-0 text-[#1A1A1A] font-['Inter']"
                   style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "46px" }}
                 >
-                  Tag Scan
+                  Tag / EID
                 </label>
                 <input
+                  ref={tagInputRef}
                   type="text"
-                  value={inputFields.tag}
-                  onChange={(e) => updateInput("tag")(e.target.value)}
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
                   placeholder="Scan or enter tag…"
                   className="flex-1 min-w-0 h-[46px] px-3 rounded-lg bg-white border-2 border-[#F3D12A] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
                   style={{ fontSize: 16, fontWeight: 600 }}
                 />
               </div>
-              <FormFieldRow label="Weight" value={inputFields.weight} onChange={updateInput("weight")} placeholder="lbs" type="number" />
-              <FormFieldRow label="Data 1" value={inputFields.data1} onChange={updateInput("data1")} placeholder="Work-type specific" />
-              <FormFieldRow label="Data 2" value={inputFields.data2} onChange={updateInput("data2")} placeholder="Work-type specific" />
-              <FormFieldRow label="Notes" value={inputFields.notes} onChange={updateInput("notes")} placeholder="Quick note…" />
+
+              {/* ── Match status ── */}
+              {trimmedTag && !isDuplicate && matchedAnimal && (
+                <div
+                  className="rounded-full font-['Inter'] inline-flex items-center"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#55BAAA",
+                    backgroundColor: "rgba(85,186,170,0.08)",
+                    border: "1.5px solid rgba(85,186,170,0.25)",
+                    padding: "5px 14px",
+                  }}
+                >
+                  ✓ {matchedAnimal.tag} — {matchedAnimal.tagColor} — {matchedAnimal.type} — {matchedAnimal.yearBorn}
+                </div>
+              )}
+
+              {trimmedTag && isDuplicate && (
+                <div>
+                  <div
+                    className="rounded-lg font-['Inter'] w-full"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#8B7A00",
+                      backgroundColor: "rgba(243,209,42,0.1)",
+                      border: "1px solid rgba(243,209,42,0.4)",
+                      padding: "8px 12px",
+                    }}
+                  >
+                    ⚠ This animal already has a record in this project
+                  </div>
+                  <button
+                    type="button"
+                    className="cursor-pointer font-['Inter'] mt-1.5"
+                    style={{ fontSize: 12, fontWeight: 600, color: "#55BAAA", background: "none", border: "none", padding: 0 }}
+                  >
+                    View existing record →
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <PillButton variant="outline" size="md" style={{ flex: 1 }}>Skip</PillButton>
-              <PillButton size="md" style={{ flex: 1 }}>Save &amp; Next</PillButton>
+            {/* ── COW HISTORY PANEL ── */}
+            {matchedAnimal && !isDuplicate && (
+              <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
+            )}
+
+            {/* ── COMMON FIELDS ── */}
+            <div className="space-y-2.5">
+              <FormFieldRow
+                label="Weight"
+                type="number"
+                value={weight}
+                onChange={setWeight}
+                placeholder="lbs"
+              />
+              <FormSelectRow
+                label="Quick Notes"
+                value={quickNotes}
+                onChange={setQuickNotes}
+                placeholder="Select…"
+                options={quickNoteOptions}
+              />
+              <FormFieldRow
+                label="DNA / Sample"
+                value={dnaSample}
+                onChange={setDnaSample}
+                placeholder="Sample ID"
+              />
+              {/* Memo textarea */}
+              <div className="flex items-start gap-3">
+                <label
+                  className="shrink-0 text-[#1A1A1A] font-['Inter']"
+                  style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+                >
+                  Memo
+                </label>
+                <div className="flex-1 min-w-0">
+                  <textarea
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    placeholder="Notes…"
+                    rows={2}
+                    className="w-full px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 resize-none"
+                    style={{ fontSize: 16, fontWeight: 400, minHeight: 64 }}
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* ── CONDITIONAL FIELDS ── */}
+            {renderConditionalFields()}
+
+            {/* ── ACTION BUTTONS ── */}
+            <div className="space-y-3 pt-2">
+              <div className="flex gap-3">
+                <PillButton variant="outline" size="md" onClick={clearForm} style={{ flex: 1 }}>
+                  Skip
+                </PillButton>
+                <PillButton size="md" onClick={handleSaveNext} style={{ flex: 1 }}>
+                  Save & Next
+                </PillButton>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveDone}
+                className="w-full cursor-pointer font-['Inter'] text-center"
+                style={{ fontSize: 13, fontWeight: 600, color: "#55BAAA", background: "none", border: "none", padding: "4px 0" }}
+              >
+                Save & Done →
+              </button>
+            </div>
+
+            {/* ── FLOATING MIC ── */}
+            <FloatingMicButton state="idle" />
           </div>
         )}
 
+        {/* ──────────────────────────────────────
+            ANIMALS TAB
+           ────────────────────────────────────── */}
         {activeTab === "animals" && (
           <div className="space-y-2.5">
             {workedAnimals.map((a) => (
@@ -162,9 +371,11 @@ export function ProjectDetailScreen() {
           </div>
         )}
 
+        {/* ──────────────────────────────────────
+            STATS TAB
+           ────────────────────────────────────── */}
         {activeTab === "stats" && (
           <div className="space-y-4">
-            {/* Quick stats grid */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Total Worked", value: "5" },
@@ -185,9 +396,11 @@ export function ProjectDetailScreen() {
           </div>
         )}
 
+        {/* ──────────────────────────────────────
+            DETAILS TAB
+           ────────────────────────────────────── */}
         {activeTab === "details" && (
           <div className="space-y-5">
-            {/* ── Project Info ── */}
             <div className="space-y-2.5">
               <FormFieldRow label="Project" value="Spring Preg Check" placeholder="" />
               <FormFieldRow label="Work Type" value="PREG" placeholder="" />
@@ -199,7 +412,6 @@ export function ProjectDetailScreen() {
               <FormFieldRow label="Head Count" value="45" placeholder="" />
             </div>
 
-            {/* ── Products ── */}
             <CollapsibleSection title={`Products (${projectProducts.length})`} defaultOpen>
               <div className="space-y-2 pt-1">
                 {projectProducts.map((p) => (
@@ -249,7 +461,7 @@ export function ProjectDetailScreen() {
               <PillButton variant="outline" size="md" onClick={() => navigate("/cow-work")} style={{ flex: 1 }}>
                 Back to List
               </PillButton>
-              <PillButton size="md" style={{ flex: 1 }}>
+              <PillButton size="md" onClick={() => navigate(`/cow-work/${id || "spring-preg"}/close-out`)} style={{ flex: 1 }}>
                 Complete Project
               </PillButton>
             </div>
@@ -258,4 +470,197 @@ export function ProjectDetailScreen() {
       </div>
     </div>
   );
+
+  /* ═══════════════════════════════════════════════
+     CONDITIONAL FIELDS RENDERER
+     ═══════════════════════════════════════════════ */
+  function renderConditionalFields() {
+    const type = PROJECT_PROCESSING_TYPE;
+
+    /* Section header */
+    const SectionHeader = ({ label }: { label: string }) => (
+      <div className="pt-1">
+        <div className="border-t border-[#D4D4D0]/40 pt-3 mb-2">
+          <p
+            className="font-['Inter'] uppercase"
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "rgba(26,26,26,0.35)",
+            }}
+          >
+            {label}
+          </p>
+        </div>
+      </div>
+    );
+
+    if (type === "Pregnancy Check") {
+      return (
+        <>
+          <SectionHeader label="Pregnancy Check" />
+          <div className="space-y-2.5">
+            <FormSelectRow
+              label="Preg Stage"
+              value={pregStage}
+              onChange={setPregStage}
+              placeholder="Select…"
+              options={["Open", "AI", "Bred", "Late", "Short", "Medium", "Long"]}
+              required
+            />
+            <FormFieldRow
+              label="Days Gest"
+              type="number"
+              value={daysGest}
+              onChange={setDaysGest}
+              placeholder="days"
+            />
+            <FormSelectRow
+              label="Calf Sex"
+              value={calfSex}
+              onChange={setCalfSex}
+              placeholder="Select…"
+              options={["Bull", "Heifer", "Twin - BB", "Twin - HH", "Twin - BH", "Unknown"]}
+            />
+          </div>
+        </>
+      );
+    }
+
+    if (type === "Breeding / Bull Turnout") {
+      return (
+        <>
+          <SectionHeader label="Breeding / Bull Turnout" />
+          <div className="space-y-2.5">
+            <FormFieldRow
+              label="Sire / Bull"
+              value={sireBull}
+              onChange={setSireBull}
+              placeholder="Bull tag or name"
+            />
+            <FormFieldRow
+              label="Breeding Date"
+              type="date"
+              value={breedingDate}
+              onChange={setBreedingDate}
+              placeholder=""
+            />
+            <FormSelectRow
+              label="Method"
+              value={breedingMethod}
+              onChange={setBreedingMethod}
+              placeholder="Select…"
+              options={["Natural", "AI", "ET"]}
+            />
+          </div>
+        </>
+      );
+    }
+
+    if (type === "Cull / Sale") {
+      return (
+        <>
+          <SectionHeader label="Cull / Sale" />
+          <div className="space-y-2.5">
+            <FormFieldRow
+              label="Cull Reason"
+              value={cullReason}
+              onChange={setCullReason}
+              placeholder="e.g. Open, Lame, Age"
+            />
+            <FormSelectRow
+              label="Disposition"
+              value={disposition}
+              onChange={setDisposition}
+              placeholder="Select…"
+              options={["Sold", "Kept", "Dead", "Shipped"]}
+            />
+            <FormFieldRow
+              label="Sale Weight"
+              type="number"
+              value={saleWeight}
+              onChange={setSaleWeight}
+              placeholder="lbs"
+            />
+          </div>
+        </>
+      );
+    }
+
+    if (type === "Bull Testing (BSE)") {
+      return (
+        <>
+          <SectionHeader label="Bull Testing (BSE)" />
+          <div className="space-y-2.5">
+            <div className="flex items-start gap-3">
+              <label
+                className="shrink-0 text-[#1A1A1A] font-['Inter']"
+                style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+              >
+                BSE Result<span style={{ fontSize: 14, fontWeight: 600, color: "#E74C3C", marginLeft: 2 }}>*</span>
+              </label>
+              <div className="flex-1 min-w-0">
+                <div className="relative">
+                  <select
+                    value={bseResult}
+                    onChange={(e) => setBseResult(e.target.value)}
+                    className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] font-['Inter'] outline-none transition-all appearance-none cursor-pointer focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25"
+                    style={{
+                      fontSize: 16,
+                      fontWeight: bseResult ? 700 : 400,
+                      color: bseResult ? (bseColor(bseResult) || "#1A1A1A") : "rgba(26,26,26,0.30)",
+                    }}
+                  >
+                    <option value="" disabled>Select…</option>
+                    {["Pass", "Fail", "Defer"].map((opt) => (
+                      <option key={opt} value={opt} style={{ color: "#1A1A1A" }}>{opt}</option>
+                    ))}
+                  </select>
+                  <svg
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+                    width="12" height="12" viewBox="0 0 12 12" fill="none"
+                  >
+                    <path d="M3 4.5L6 7.5L9 4.5" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <FormFieldRow
+              label="Scrotal Circ"
+              type="number"
+              value={scrotalCirc}
+              onChange={setScrotalCirc}
+              placeholder="cm"
+            />
+            <FormFieldRow
+              label="Motility %"
+              type="number"
+              value={motility}
+              onChange={setMotility}
+              placeholder="%"
+            />
+            <FormFieldRow
+              label="Morphology %"
+              type="number"
+              value={morphology}
+              onChange={setMorphology}
+              placeholder="%"
+            />
+          </div>
+        </>
+      );
+    }
+
+    /* Default: Movement / Brucellosis / Processing / Working / Other */
+    return (
+      <>
+        <SectionHeader label={type} />
+        <div className="space-y-2.5">
+          <FormFieldRow label="Data 1" value={data1} onChange={setData1} placeholder="Custom field" />
+          <FormFieldRow label="Data 2" value={data2} onChange={setData2} placeholder="Custom field" />
+        </div>
+      </>
+    );
+  }
 }

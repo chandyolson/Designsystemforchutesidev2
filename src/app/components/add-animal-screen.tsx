@@ -3,19 +3,34 @@ import { useNavigate } from "react-router";
 import { FormFieldRow, FormSelectRow } from "./form-field-row";
 import { CollapsibleSection } from "./collapsible-section";
 import { PillButton } from "./pill-button";
+import { useToast } from "./toast-context";
+import { DuplicateAnimalWarning } from "./duplicate-animal-warning";
+import type { DuplicateAnimal } from "./duplicate-animal-warning";
+
+/* ── Mock existing herd for duplicate detection ── */
+const existingAnimals: DuplicateAnimal[] = [
+  { tag: "5520", tagColor: "Yellow", sex: "Cow", yearBorn: "2021", status: "Active", flag: "teal" },
+  { tag: "3309", tagColor: "Pink", sex: "Cow", yearBorn: "2020", status: "Active", flag: "teal" },
+  { tag: "8841", tagColor: "Green", sex: "Bull", yearBorn: "2025", status: "Active", flag: null },
+];
 
 export function AddAnimalScreen() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  /* Pre-fill with "5520" and show dialog for demo */
+  const [duplicateMatch, setDuplicateMatch] = useState<DuplicateAnimal | null>(
+    existingAnimals.find((a) => a.tag === "5520") ?? null
+  );
   const [fields, setFields] = useState({
-    tag: "",
-    tagColor: "",
+    tag: "5520",
+    tagColor: "Yellow",
     eid: "",
     eid2: "",
     otherId: "",
     lifetimeId: "",
-    sex: "",
-    animalType: "",
-    yearBorn: "",
+    sex: "Cow",
+    animalType: "Cow",
+    yearBorn: "2021",
     status: "Active",
     sire: "",
     dam: "",
@@ -26,6 +41,27 @@ export function AddAnimalScreen() {
 
   const update = (key: keyof typeof fields) => (val: string) =>
     setFields((prev) => ({ ...prev, [key]: val }));
+
+  /* ── Duplicate check on save ── */
+  const handleSave = () => {
+    const tag = fields.tag.trim();
+    if (!tag) {
+      showToast("error", "Tag number is required");
+      return;
+    }
+    const match = existingAnimals.find((a) => a.tag === tag);
+    if (match) {
+      setDuplicateMatch(match);
+      return;
+    }
+    confirmSave();
+  };
+
+  const confirmSave = () => {
+    setDuplicateMatch(null);
+    showToast("success", `Animal ${fields.tag} added successfully`);
+    navigate("/animals");
+  };
 
   return (
     <div className="space-y-5">
@@ -77,10 +113,23 @@ export function AddAnimalScreen() {
         <PillButton variant="outline" size="md" onClick={() => navigate(-1)} style={{ flex: 1 }}>
           Cancel
         </PillButton>
-        <PillButton size="md" onClick={() => navigate("/animals")} style={{ flex: 1 }}>
+        <PillButton size="md" onClick={handleSave} style={{ flex: 1 }}>
           Save Animal
         </PillButton>
       </div>
+
+      {/* ── Duplicate Warning Dialog ── */}
+      {duplicateMatch && (
+        <DuplicateAnimalWarning
+          animal={duplicateMatch}
+          onViewExisting={() => {
+            setDuplicateMatch(null);
+            navigate(`/animals/${duplicateMatch.tag}`);
+          }}
+          onAddAnyway={confirmSave}
+          onCancel={() => setDuplicateMatch(null)}
+        />
+      )}
     </div>
   );
 }

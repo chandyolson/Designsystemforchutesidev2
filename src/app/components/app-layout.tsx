@@ -61,6 +61,18 @@ function getHeaderConfig(pathname: string): HeaderConfig {
     return { title: "Calving Record", subtitle: `Calf ${tag}`, showBack: true };
   }
   if (pathname === "/cow-work") return { title: "Cow Work", subtitle: "5 Active Projects" };
+  if (pathname === "/cow-work/new") return { title: "New Project", subtitle: "Create a new work project", showBack: true };
+  if (pathname === "/cow-work/templates") return { title: "Work Templates", subtitle: "Saved project configurations", showBack: true };
+  if (pathname === "/cow-work/templates/new") return { title: "New Template", subtitle: "Configure project defaults", showBack: true };
+  if (pathname.match(/^\/cow-work\/templates\/[^/]+$/) && pathname !== "/cow-work/templates/new") {
+    return { title: "Edit Template", subtitle: "Configure project defaults", showBack: true };
+  }
+  if (pathname.match(/^\/cow-work\/[^/]+\/close-out$/)) {
+    return { title: "Close Out Project", subtitle: "Spring Preg Check", showBack: true };
+  }
+  if (pathname.match(/^\/cow-work\/[^/]+\/report$/)) {
+    return { title: "Project Report", subtitle: "Spring Preg Check · Completed", showBack: true };
+  }
   if (pathname.match(/^\/cow-work\/[^/]+\/animal\/[^/]+$/)) {
     const animalId = pathname.split("/").pop();
     return { title: "Animal Record", subtitle: `Tag ${animalId} · Project Work`, showBack: true };

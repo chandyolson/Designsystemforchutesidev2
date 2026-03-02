@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { AnimalListCard } from "./animal-list-card";
-import { SelectModeToggle } from "./select-mode-toggle";
 import { SelectableCardWrapper } from "./selectable-card-wrapper";
 import { SelectAllBar } from "./select-all-bar";
 import { BulkActionBar } from "./bulk-action-bar";
@@ -39,7 +38,13 @@ function FilterChip({ label, color, bgColor, active, onClick }: FilterChipProps)
 }
 
 /* ── Actions Dropdown ──────────────────────── */
-function ActionsDropdown() {
+function ActionsDropdown({
+  selectMode,
+  onToggleSelect,
+}: {
+  selectMode: boolean;
+  onToggleSelect: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -78,10 +83,33 @@ function ActionsDropdown() {
         <div
           className="absolute right-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-20 font-['Inter']"
           style={{
-            minWidth: 170,
+            minWidth: 185,
             boxShadow: "0 8px 24px rgba(14,38,70,0.12)",
           }}
         >
+          {/* Select Mode toggle item */}
+          <button
+            type="button"
+            onClick={() => { onToggleSelect(); setOpen(false); }}
+            className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
+            style={{ fontSize: 13, fontWeight: selectMode ? 700 : 500, color: selectMode ? "#55BAAA" : "#1A1A1A" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+              {selectMode ? (
+                <>
+                  <rect x="1.5" y="1.5" width="11" height="11" rx="2.5" fill="#55BAAA" />
+                  <path d="M4.5 7L6.25 8.75L9.5 5.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </>
+              ) : (
+                <rect x="1.75" y="1.75" width="10.5" height="10.5" rx="2.25" stroke="#0E2646" strokeOpacity="0.35" strokeWidth="1.5" />
+              )}
+            </svg>
+            {selectMode ? "Exit Select Mode" : "Select Mode"}
+          </button>
+
+          <div className="mx-3 my-1 border-t border-[#D4D4D0]/40" />
+
+          {/* Standard actions */}
           {items.map((item) => (
             <button
               key={item}
@@ -260,7 +288,6 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
           {filtered.length} animals
         </p>
         <div className="flex items-center gap-2.5">
-          <SelectModeToggle active={selectMode} onToggle={toggleSelectMode} />
           {/* Yellow (+) button */}
           <button
             type="button"
@@ -280,7 +307,10 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
             +
           </button>
 
-          <ActionsDropdown />
+          <ActionsDropdown
+            selectMode={selectMode}
+            onToggleSelect={toggleSelectMode}
+          />
         </div>
       </div>
 

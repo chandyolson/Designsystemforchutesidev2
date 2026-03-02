@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
-import { SelectModeToggle } from "./select-mode-toggle";
 import { SelectableCardWrapper } from "./selectable-card-wrapper";
 import { SelectAllBar } from "./select-all-bar";
 import { BulkActionBar } from "./bulk-action-bar";
@@ -9,7 +8,13 @@ import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
 
 /* ── Actions Dropdown ── */
-function ActionsDropdown() {
+function ActionsDropdown({
+  selectMode,
+  onToggleSelect,
+}: {
+  selectMode: boolean;
+  onToggleSelect: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -20,8 +25,6 @@ function ActionsDropdown() {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
-
-  const items = ["Export Projects", "Archive Completed", "Print Summary"];
 
   return (
     <div ref={ref} className="relative">
@@ -45,9 +48,32 @@ function ActionsDropdown() {
       {open && (
         <div
           className="absolute right-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-20 font-['Inter']"
-          style={{ minWidth: 170, boxShadow: "0 8px 24px rgba(14,38,70,0.12)" }}
+          style={{ minWidth: 185, boxShadow: "0 8px 24px rgba(14,38,70,0.12)" }}
         >
-          {items.map((item) => (
+          {/* Select Mode toggle item */}
+          <button
+            type="button"
+            onClick={() => { onToggleSelect(); setOpen(false); }}
+            className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
+            style={{ fontSize: 13, fontWeight: selectMode ? 700 : 500, color: selectMode ? "#55BAAA" : "#1A1A1A" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+              {selectMode ? (
+                <>
+                  <rect x="1.5" y="1.5" width="11" height="11" rx="2.5" fill="#55BAAA" />
+                  <path d="M4.5 7L6.25 8.75L9.5 5.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </>
+              ) : (
+                <rect x="1.75" y="1.75" width="10.5" height="10.5" rx="2.25" stroke="#0E2646" strokeOpacity="0.35" strokeWidth="1.5" />
+              )}
+            </svg>
+            {selectMode ? "Exit Select Mode" : "Select Mode"}
+          </button>
+
+          <div className="mx-3 my-1 border-t border-[#D4D4D0]/40" />
+
+          {/* Standard actions */}
+          {["Export Projects", "Archive Completed", "Print Summary"].map((item) => (
             <button
               key={item}
               type="button"
@@ -101,19 +127,34 @@ function FilterSortDropdown({
         style={{
           width: 32,
           height: 32,
-          backgroundColor: "white",
-          border: "1px solid rgba(14,38,70,0.12)",
+          backgroundColor: hasActiveFilter ? "rgba(85,186,170,0.08)" : "white",
+          border: hasActiveFilter ? "1px solid rgba(85,186,170,0.3)" : "1px solid rgba(14,38,70,0.12)",
         }}
       >
+        {/* Filter funnel + sort lines icon */}
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="3.5" r="1.3" fill="#0E2646" />
-          <circle cx="8" cy="8" r="1.3" fill="#0E2646" />
-          <circle cx="8" cy="12.5" r="1.3" fill="#0E2646" />
+          <path
+            d="M2 3.5h12M4 6.5h8M6 9.5h4M7 12.5h2"
+            stroke={hasActiveFilter ? "#55BAAA" : "#0E2646"}
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
         </svg>
+        {hasActiveFilter && (
+          <span
+            className="absolute -top-0.5 -right-0.5 rounded-full"
+            style={{
+              width: 7,
+              height: 7,
+              backgroundColor: "#55BAAA",
+              border: "1.5px solid #F5F5F0",
+            }}
+          />
+        )}
       </button>
       {open && (
         <div
-          className="absolute right-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-30 font-['Inter']"
+          className="absolute left-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-30 font-['Inter']"
           style={{ minWidth: 210, boxShadow: "0 8px 24px rgba(14,38,70,0.12)" }}
         >
           {/* Filter section */}
@@ -364,27 +405,51 @@ export function CowWorkScreen() {
   return (
     <div className="space-y-4">
       {/* ── Toolbar Row ── */}
-      <div className="flex items-center justify-end gap-2.5">
-        <SelectModeToggle active={selectMode} onToggle={toggleSelectMode} />
-        <button
-          type="button"
-          onClick={() => navigate("/cow-work/new")}
-          className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
-          style={{
-            width: 38, height: 38, fontSize: 22, fontWeight: 400, lineHeight: 1,
-            color: "#1A1A1A", backgroundColor: "#F3D12A",
-            boxShadow: "0 2px 8px rgba(243,209,42,0.30)",
-          }}
-        >
-          +
-        </button>
+      <div className="flex items-center justify-between gap-2.5">
+        {/* Left: Filter/Sort */}
         <FilterSortDropdown
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
           sortBy={sortBy}
           setSortBy={setSortBy}
         />
-        <ActionsDropdown />
+
+        {/* Right: Templates, + FAB, Actions (with Select inside) */}
+        <div className="flex items-center gap-2.5">
+          {/* Templates button */}
+          <button
+            type="button"
+            onClick={() => navigate("/cow-work/templates")}
+            className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.97] flex items-center justify-center"
+            style={{
+              width: 32,
+              height: 32,
+              backgroundColor: "white",
+              border: "1px solid rgba(14,38,70,0.12)",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2.5" y="2" width="11" height="12" rx="1.5" stroke="#0E2646" strokeWidth="1.3" />
+              <path d="M5 5.5h6M5 8h6M5 10.5h4" stroke="#0E2646" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/cow-work/new")}
+            className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
+            style={{
+              width: 38, height: 38, fontSize: 22, fontWeight: 400, lineHeight: 1,
+              color: "#1A1A1A", backgroundColor: "#F3D12A",
+              boxShadow: "0 2px 8px rgba(243,209,42,0.30)",
+            }}
+          >
+            +
+          </button>
+          <ActionsDropdown
+            selectMode={selectMode}
+            onToggleSelect={toggleSelectMode}
+          />
+        </div>
       </div>
 
       {/* ── Search Bar ── */}
