@@ -1,0 +1,17 @@
+Create a Diseases reference screen. This is a read-only global list of cattle diseases. Users can star diseases to mark them as common for their operation — starred diseases appear first in dropdowns and search results throughout the app. Each disease row is tappable into a Disease Detail screen.Use the standard app header: back arrow, title "Diseases", subtitle "Reference - Global List".Content area (20px padding, #F5F5F0 background):SEARCH BAR: magnifying glass, placeholder "Search diseases...", clear X.FILTER CHIPS: horizontal row. "All" (selected, background #0E2646, color white), "Common" (unselected: background white, border 1px #D4D4D0), "Respiratory", "Reproductive", "Digestive", "Other". Horizontal scroll if needed.RESULT COUNT: "24 diseases - 6 common" Inter 11px font-weight 600 color #1A1A1A at 30%.Starred diseases appear at top in their own section:SECTION 1 — "COMMON FOR YOUR OPERATION" label Inter 11px font-weight 700 letter-spacing 0.1em color #0E2646 at 35%, count "6" on right.White card, rounded-xl, border 1px #D4D4D0, divide-y #D4D4D0 at 40%. Each row: padding 12px 16px, flex row between, tappable (cursor-pointer, active:bg-[#F5F5F0]).Row contents — Left side: Disease name Inter 14px font-weight 600 color #1A1A1A. Below: category pill + brief descriptor in Inter 12px color #1A1A1A at 35%.Category pills: rounded-full, padding 1px 8px, Inter 10px font-weight 700. Respiratory (background #E3F2FD, color #1565C0), Reproductive (background #F3E5F5, color #6A1B9A), Digestive (background #FFF3E0, color #E65100), Infectious (background #FFEBEE, color #C62828), Metabolic (background #E8F5E9, color #2E7D32), Parasitic (background #FFF8E1, color #B8860B), Other (background #F5F5F0, color #1A1A1A at 50%).Right side: tappable star icon (22px, filled star #F3D12A for starred, outline #D4D4D0 for unstarred) + chevron (12px, #1A1A1A at 20%).Show 6 starred diseases:
+
+"BRD (Bovine Respiratory Disease)" / Respiratory - "Pneumonia complex, most common feedlot illness" / starred
+"Scours" / Digestive - "Calf diarrhea, multiple causes" / starred
+"Pinkeye" / Infectious - "Infectious bovine keratoconjunctivitis" / starred
+"Foot Rot" / Infectious - "Interdigital necrobacillosis" / starred
+"BVD (Bovine Viral Diarrhea)" / Reproductive - "Persistent infection, reproductive loss" / starred
+"Anaplasmosis" / Parasitic - "Tick-borne blood parasite" / starred
+Thin 12px gap, then:SECTION 2 — "ALL DISEASES" label with count "18".Show 8 more unstarred diseases:
+7. "Blackleg" / Infectious - "Clostridial myositis"
+8. "Hardware Disease" / Digestive - "Traumatic reticulopericarditis"
+9. "Lump Jaw" / Infectious - "Actinomycosis"
+10. "Mastitis" / Reproductive - "Udder infection"
+11. "Pneumonia" / Respiratory - "Bacterial or viral lung infection"
+12. "Trichomoniasis" / Reproductive - "Venereal disease in bulls"
+13. "White Muscle Disease" / Metabolic - "Selenium/Vitamin E deficiency"
+14. "Wooden Tongue" / Infectious - "Actinobacillosis""Load More" link at bottom, Inter 13px font-weight 600 color #55BAAA.Info card at bottom: rounded-lg, background #E3F2FD, padding 12px 16px. Info icon (16px, #2196F3) + "This is a global disease list. Tap the star to mark diseases common to your operation. Tap any disease for details and treatment info." Inter 12px color #0D47A1.Screen size: 375px wide.

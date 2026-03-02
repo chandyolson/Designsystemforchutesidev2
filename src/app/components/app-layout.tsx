@@ -72,6 +72,9 @@ function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname.match(/^\/cow-work\/[^/]+\/close-out$/)) {
     return { title: "Close Out Project", subtitle: "Spring Preg Check", showBack: true };
   }
+  if (pathname.match(/^\/cow-work\/[^/]+\/inventory-close-out$/)) {
+    return { title: "Inventory Close-Out", subtitle: "2026 Spring Calving · Feb 28, 2026", showBack: true };
+  }
   if (pathname.match(/^\/cow-work\/[^/]+\/report$/)) {
     return { title: "Project Report", subtitle: "Spring Preg Check · Completed", showBack: true };
   }
@@ -85,12 +88,48 @@ function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname.startsWith("/red-book/")) return { title: "Entry", subtitle: "Red Book", showBack: true, showSave: true };
   if (pathname === "/reference") return { title: "Reference", subtitle: "Settings & Lookups" };
   if (pathname === "/reference/groups") return { title: "Groups", subtitle: "Reference · 6 Groups", showBack: true };
+  if (pathname.startsWith("/reference/groups/")) return { title: "2026 Spring Calving", subtitle: "Season Group · 87 Head", showBack: true };
   if (pathname === "/reference/locations") return { title: "Locations", subtitle: "Reference · 8 Locations", showBack: true };
   if (pathname === "/reference/quick-notes") return { title: "Quick Notes", subtitle: "Reference · 3 Categories", showBack: true };
   if (pathname === "/reference/diseases") return { title: "Diseases", subtitle: "Reference · Global List", showBack: true };
+  if (pathname.startsWith("/reference/diseases/")) {
+    const DISEASE_NAMES: Record<string, string> = {
+      d1: "Bovine Respiratory Disease", d2: "Scours", d3: "Pinkeye",
+      d4: "Foot Rot", d5: "BVD", d6: "Anaplasmosis",
+      d7: "Blackleg", d8: "Hardware Disease", d9: "Lump Jaw",
+      d10: "Mastitis", d11: "Pneumonia", d12: "Trichomoniasis",
+      d13: "White Muscle Disease", d14: "Wooden Tongue",
+      d15: "Johne's Disease", d16: "Leptospirosis",
+      d17: "IBR", d18: "Coccidiosis", d19: "Tetanus",
+      d20: "Bloat", d21: "Grass Tetany", d22: "Milk Fever",
+      d23: "Ketosis", d24: "Ringworm",
+    };
+    const dId = pathname.split("/").pop() || "";
+    const dName = DISEASE_NAMES[dId] || "Disease Detail";
+    return { title: dName, subtitle: "Disease Reference", showBack: true };
+  }
   if (pathname === "/reference/preferences") return { title: "Preferences", subtitle: "Reference · Saddle Butte Ranch", showBack: true };
   if (pathname === "/reference/team") return { title: "Team", subtitle: "Reference · 5 Members", showBack: true };
   if (pathname === "/reference/operation") return { title: "Operation Profile", subtitle: "Reference", showBack: true };
+  if (pathname === "/reference/products") return { title: "Products", subtitle: "Reference · 14 Products", showBack: true };
+  if (pathname.startsWith("/reference/products/")) {
+    const PRODUCT_NAMES: Record<string, { name: string; sub: string }> = {
+      p1: { name: "Multimin 90", sub: "Supplement - Trace Minerals" },
+      p2: { name: "Bovi-Shield Gold 5", sub: "Vaccine - Respiratory" },
+      p3: { name: "Ivermectin", sub: "Parasiticide - Injectable" },
+      p4: { name: "Draxxin", sub: "Antibiotic - Tulathromycin" },
+      p5: { name: "Vista Once SQ", sub: "Vaccine - Respiratory" },
+      p6: { name: "Excede", sub: "Antibiotic - Ceftiofur" },
+      p7: { name: "Lutalyse", sub: "Supplement - Prostaglandin" },
+      p8: { name: "Safeguard", sub: "Parasiticide - Fenbendazole" },
+    };
+    const pId = pathname.split("/").pop() || "";
+    const info = PRODUCT_NAMES[pId] || { name: "Product", sub: "Product Reference" };
+    return { title: info.name, subtitle: info.sub, showBack: true };
+  }
+  if (pathname === "/reference/vet-practices") return { title: "Vet Practices", subtitle: "Reference · 2 Linked", showBack: true };
+  if (pathname === "/reference/breeds") return { title: "Breeds", subtitle: "Reference · Global List", showBack: true };
+  if (pathname === "/user-profile") return { title: "User Profile", subtitle: "Account", showBack: true };
   if (pathname === "/treatment/new") return { title: "Record Treatment", subtitle: "Tag 3309 · Pink Cow", showBack: true };
   if (pathname === "/treatments") return { title: "Treatments", subtitle: "All Records", showBack: true };
   if (pathname === "/bse/new") return { title: "BSE Exam", subtitle: "Tag 901 · Black Bull", showBack: true };

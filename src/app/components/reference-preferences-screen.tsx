@@ -39,6 +39,7 @@ const ALL_SEGMENTS: Segment[] = [
   { id: "eid4", label: "EID Last 4" },
   { id: "seq", label: "Sequence #" },
   { id: "breed", label: "Breed Code" },
+  { id: "tagcolor", label: "Tag Color" },
 ];
 
 const PREVIEW_MAP: Record<string, string> = {
@@ -51,6 +52,7 @@ const PREVIEW_MAP: Record<string, string> = {
   eid4: "8821",
   seq: "001",
   breed: "AN",
+  tagcolor: "RED",
 };
 
 function LifetimeIdSection({
@@ -432,7 +434,7 @@ function TagColorGrid({
 
 /* ══════════════════════════════════════════
    SCREEN
-   ══════════════════════════════════════════ */
+   ��═════════════════════════════════════════ */
 export function ReferencePreferencesScreen() {
   const { showToast } = useToast();
 

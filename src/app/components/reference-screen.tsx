@@ -110,7 +110,7 @@ export function ReferenceScreen() {
         items={[
           { name: "Operation Profile", description: "Name, address, contact info", onClick: () => navigate("/reference/operation") },
           { name: "Team Members", description: "Manage users, roles, and invitations", onClick: () => navigate("/reference/team") },
-          { name: "Vet Practices", description: "Linked veterinary practices" },
+          { name: "Vet Practices", description: "Linked veterinary practices", onClick: () => navigate("/reference/vet-practices") },
           { name: "Preferences", description: "Tag system, breeds, preg stages", onClick: () => navigate("/reference/preferences") },
         ]}
       />
@@ -118,10 +118,10 @@ export function ReferenceScreen() {
       <SettingsGroup
         title="Lists & Lookups"
         items={[
-          { name: "Breeds", description: "Breed codes and full names" },
+          { name: "Breeds", description: "Breed codes and full names", onClick: () => navigate("/reference/breeds") },
           { name: "Locations", description: "Pastures, pens, facilities", onClick: () => navigate("/reference/locations") },
           { name: "Groups", description: "Calving seasons, management groups", onClick: () => navigate("/reference/groups") },
-          { name: "Products", description: "Vaccines, antibiotics, supplements" },
+          { name: "Products", description: "Vaccines, antibiotics, supplements", onClick: () => navigate("/reference/products") },
           { name: "Diseases", description: "Disease lookup table", onClick: () => navigate("/reference/diseases") },
           { name: "Quick Notes", description: "Calving, cow, and project notes", onClick: () => navigate("/reference/quick-notes") },
           { name: "Project Templates", description: "Default work session configurations" },
@@ -131,7 +131,7 @@ export function ReferenceScreen() {
       <SettingsGroup
         title="Account"
         items={[
-          { name: "User Profile", description: "Display name, phone, avatar" },
+          { name: "User Profile", description: "Display name, phone, avatar", onClick: () => navigate("/user-profile") },
           { name: "Switch Operation", description: "Change active operation" },
           { name: "Sign Out", description: "Log out of ChuteSide" },
         ]}

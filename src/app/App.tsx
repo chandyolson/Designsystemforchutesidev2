@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router";
+import { GroupsScreen } from "./components/groups-screen";
+import { ReferenceGroupsScreen } from "./components/reference-groups-screen";
+import { GroupDetailScreen } from "./components/group-detail-screen";
 import { AppLayout } from "./components/app-layout";
 import { DashboardScreen } from "./components/dashboard-screen";
 import { AnimalsScreen } from "./components/animals-screen";
@@ -33,17 +36,22 @@ import { SignUpScreen } from "./components/sign-up-screen";
 import { ForgotPasswordScreen } from "./components/forgot-password-screen";
 import { ResetPasswordScreen } from "./components/reset-password-screen";
 import { OnboardingScreen } from "./components/onboarding-screen";
-import { GroupsScreen } from "./components/groups-screen";
-import { ReferenceGroupsScreen } from "./components/reference-groups-screen";
 import { ReferenceLocationsScreen } from "./components/reference-locations-screen";
 import { ReferenceQuickNotesScreen } from "./components/reference-quick-notes-screen";
 import { ReferenceDiseasesScreen } from "./components/reference-diseases-screen";
 import { ReferencePreferencesScreen } from "./components/reference-preferences-screen";
 import { ReferenceTeamScreen } from "./components/reference-team-screen";
 import { ReferenceOperationScreen } from "./components/reference-operation-screen";
+import { ReferenceProductsScreen } from "./components/reference-products-screen";
+import { ReferenceVetPracticesScreen } from "./components/reference-vet-practices-screen";
+import { ReferenceBreedsScreen } from "./components/reference-breeds-screen";
+import { UserProfileScreen } from "./components/user-profile-screen";
 import { TreatmentEntryScreen } from "./components/treatment-entry-screen";
 import { TreatmentHistoryScreen } from "./components/treatment-history-screen";
 import { BseExamScreen } from "./components/bse-exam-screen";
+import { InventoryCloseOutScreen } from "./components/inventory-close-out-screen";
+import { DiseaseDetailScreen } from "./components/disease-detail-screen";
+import { ProductDetailScreen } from "./components/product-detail-screen";
 import { GradientProvider } from "./components/gradient-context";
 import { ToastProvider } from "./components/toast-context";
 import { DeleteConfirmProvider } from "./components/delete-confirmation";
@@ -87,6 +95,7 @@ export default function App() {
                     <Route path="cow-work/templates/:id" element={<WorkTemplateEditScreen />} />
                     <Route path="cow-work/:id" element={<ProjectDetailScreen />} />
                     <Route path="cow-work/:id/close-out" element={<ProjectCloseOutScreen />} />
+                    <Route path="cow-work/:id/inventory-close-out" element={<InventoryCloseOutScreen />} />
                     <Route path="cow-work/:id/report" element={<ProjectReportScreen />} />
                     <Route path="cow-work/:id/animal/:animalId" element={<ProjectAnimalDetailScreen />} />
                     <Route path="red-book" element={<RedBookScreen />} />
@@ -94,12 +103,19 @@ export default function App() {
                     <Route path="red-book/:id" element={<RedBookEntryScreen />} />
                     <Route path="reference" element={<ReferenceScreen />} />
                     <Route path="reference/groups" element={<ReferenceGroupsScreen />} />
+                    <Route path="reference/groups/:id" element={<GroupDetailScreen />} />
                     <Route path="reference/locations" element={<ReferenceLocationsScreen />} />
                     <Route path="reference/quick-notes" element={<ReferenceQuickNotesScreen />} />
                     <Route path="reference/diseases" element={<ReferenceDiseasesScreen />} />
+                    <Route path="reference/diseases/:diseaseId" element={<DiseaseDetailScreen />} />
                     <Route path="reference/preferences" element={<ReferencePreferencesScreen />} />
                     <Route path="reference/team" element={<ReferenceTeamScreen />} />
                     <Route path="reference/operation" element={<ReferenceOperationScreen />} />
+                    <Route path="reference/products" element={<ReferenceProductsScreen />} />
+                    <Route path="reference/products/:productId" element={<ProductDetailScreen />} />
+                    <Route path="reference/vet-practices" element={<ReferenceVetPracticesScreen />} />
+                    <Route path="reference/breeds" element={<ReferenceBreedsScreen />} />
+                    <Route path="user-profile" element={<UserProfileScreen />} />
                     <Route path="treatment/new" element={<TreatmentEntryScreen />} />
                     <Route path="treatments" element={<TreatmentHistoryScreen />} />
                     <Route path="bse/new" element={<BseExamScreen />} />
