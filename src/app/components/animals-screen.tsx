@@ -7,6 +7,7 @@ import { BulkActionBar } from "./bulk-action-bar";
 import { useSelectMode } from "./hooks/use-select-mode";
 import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
+import { ExportFormatPicker } from "./export-format-picker";
 
 /* ── Filter Chip ───────────────────────────── */
 interface FilterChipProps {
@@ -41,9 +42,11 @@ function FilterChip({ label, color, bgColor, active, onClick }: FilterChipProps)
 function ActionsDropdown({
   selectMode,
   onToggleSelect,
+  onExport,
 }: {
   selectMode: boolean;
   onToggleSelect: () => void;
+  onExport?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -114,7 +117,12 @@ function ActionsDropdown({
             <button
               key={item}
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                if (item === "Export" && onExport) {
+                  onExport();
+                }
+                setOpen(false);
+              }}
               className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
               style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
             >
@@ -164,6 +172,7 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
   const [statusFilter, setStatusFilter] = useState(true);
   const [typeFilter, setTypeFilter] = useState(true);
   const [search, setSearch] = useState("");
+  const [exportPickerOpen, setExportPickerOpen] = useState(false);
   const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
@@ -310,6 +319,7 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
           <ActionsDropdown
             selectMode={selectMode}
             onToggleSelect={toggleSelectMode}
+            onExport={() => setExportPickerOpen(true)}
           />
         </div>
       </div>
@@ -385,6 +395,19 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
           </div>
         </div>
       )}
+
+      {/* ── Export Format Picker ── */}
+      <ExportFormatPicker
+        open={exportPickerOpen}
+        onClose={() => setExportPickerOpen(false)}
+        subtitle={selectMode && selectedIds.size > 0
+          ? `${selectedIds.size} animal${selectedIds.size > 1 ? "s" : ""} selected`
+          : `${filtered.length} animals`
+        }
+        onExport={(format, columns) => {
+          showToast("success", `Exported ${format.toUpperCase()} with ${columns.length} columns`);
+        }}
+      />
     </div>
   );
 }

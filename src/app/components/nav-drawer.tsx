@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useGradient } from "./gradient-context";
+import { useAuth } from "./auth-context";
 
 const menuItems = [
   "Operation Dashboard",
@@ -15,6 +16,8 @@ interface NavDrawerProps {
   onClose: () => void;
   activeItem?: string;
   onItemSelect?: (item: string) => void;
+  onSignOut?: () => void;
+  onSwitchOperation?: () => void;
 }
 
 export function NavDrawer({
@@ -22,6 +25,8 @@ export function NavDrawer({
   onClose,
   activeItem = "Operation Dashboard",
   onItemSelect,
+  onSignOut,
+  onSwitchOperation,
 }: NavDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const { drawerGradient } = useGradient();
@@ -144,6 +149,7 @@ export function NavDrawer({
 
           <button
             type="button"
+            onClick={onSwitchOperation}
             className="w-full text-left cursor-pointer transition-colors duration-150"
             style={{
               padding: "16px 24px",
@@ -153,6 +159,21 @@ export function NavDrawer({
             }}
           >
             Switch Operation
+          </button>
+
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="w-full text-left cursor-pointer transition-colors duration-150"
+            style={{
+              padding: "4px 24px 16px 24px",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#E74C3C",
+              opacity: 0.6,
+            }}
+          >
+            Sign Out
           </button>
 
           {/* Safe area padding */}

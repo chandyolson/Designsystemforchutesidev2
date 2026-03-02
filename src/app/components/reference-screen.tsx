@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 /* ── Chevron SVG ── */
 function Chevron({ rotated }: { rotated?: boolean }) {
@@ -17,10 +18,11 @@ function Chevron({ rotated }: { rotated?: boolean }) {
 }
 
 /* ── Settings Item ── */
-function SettingsItem({ name, description }: { name: string; description: string }) {
+function SettingsItem({ name, description, onClick }: { name: string; description: string; onClick?: () => void }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="w-full flex items-center justify-between gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-[#F5F5F0] active:bg-[#F5F5F0] font-['Inter']"
     >
       <div className="min-w-0 flex-1 text-left">
@@ -43,7 +45,7 @@ function SettingsGroup({
   defaultOpen = false,
 }: {
   title: string;
-  items: { name: string; description: string }[];
+  items: { name: string; description: string; onClick?: () => void }[];
   defaultOpen?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -89,7 +91,7 @@ function SettingsGroup({
       >
         <div className="rounded-xl bg-white border border-[#D4D4D0]/60 overflow-hidden divide-y divide-[#D4D4D0]/40">
           {items.map((item) => (
-            <SettingsItem key={item.name} name={item.name} description={item.description} />
+            <SettingsItem key={item.name} name={item.name} description={item.description} onClick={item.onClick} />
           ))}
         </div>
       </div>
@@ -99,15 +101,17 @@ function SettingsGroup({
 
 /* ── Screen ── */
 export function ReferenceScreen() {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       <SettingsGroup
         title="Operation"
         items={[
-          { name: "Operation Profile", description: "Name, address, contact info" },
-          { name: "Team Members", description: "Manage users, roles, and invitations" },
+          { name: "Operation Profile", description: "Name, address, contact info", onClick: () => navigate("/reference/operation") },
+          { name: "Team Members", description: "Manage users, roles, and invitations", onClick: () => navigate("/reference/team") },
           { name: "Vet Practices", description: "Linked veterinary practices" },
-          { name: "Preferences", description: "Tag system, breeds, preg stages" },
+          { name: "Preferences", description: "Tag system, breeds, preg stages", onClick: () => navigate("/reference/preferences") },
         ]}
       />
 
@@ -115,13 +119,12 @@ export function ReferenceScreen() {
         title="Lists & Lookups"
         items={[
           { name: "Breeds", description: "Breed codes and full names" },
-          { name: "Locations", description: "Pastures, pens, facilities" },
-          { name: "Groups", description: "Calving seasons, management groups" },
+          { name: "Locations", description: "Pastures, pens, facilities", onClick: () => navigate("/reference/locations") },
+          { name: "Groups", description: "Calving seasons, management groups", onClick: () => navigate("/reference/groups") },
           { name: "Products", description: "Vaccines, antibiotics, supplements" },
-          { name: "Diseases", description: "Disease lookup table" },
-          { name: "Quick Notes", description: "Calving, cow, and project notes" },
+          { name: "Diseases", description: "Disease lookup table", onClick: () => navigate("/reference/diseases") },
+          { name: "Quick Notes", description: "Calving, cow, and project notes", onClick: () => navigate("/reference/quick-notes") },
           { name: "Project Templates", description: "Default work session configurations" },
-          { name: "BCS Scoring Guide", description: "Body condition score reference" },
         ]}
       />
 

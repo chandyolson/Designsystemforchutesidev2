@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { NavDrawer } from "./nav-drawer";
+import { OperationPicker } from "./operation-picker";
 import { ToastContainer } from "./toast-notification";
+import { useAuth } from "./auth-context";
 
 /* ── Hamburger Button ── */
 function HamburgerButton({ onClick }: { onClick: () => void }) {
@@ -82,12 +84,22 @@ function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname === "/red-book/new") return { title: "New Entry", subtitle: "Red Book", showBack: true, showSave: true };
   if (pathname.startsWith("/red-book/")) return { title: "Entry", subtitle: "Red Book", showBack: true, showSave: true };
   if (pathname === "/reference") return { title: "Reference", subtitle: "Settings & Lookups" };
-  if (pathname === "/dashboard-explore") return { title: "Dashboard", subtitle: "Design Exploration" };
-  if (pathname === "/flag-explore") return { title: "Flag Colors", subtitle: "Design Exploration", showBack: true };
-  if (pathname === "/gradient-explore") return { title: "Gradients", subtitle: "Design Exploration", showBack: true };
-  if (pathname === "/color-explore") return { title: "Colors", subtitle: "Font & Pill Accents", showBack: true };
-  if (pathname === "/font-explore") return { title: "Fonts", subtitle: "Sans-Serif Options", showBack: true };
-  if (pathname === "/skeletons") return { title: "Skeletons", subtitle: "Loading Placeholders", showBack: true };
+  if (pathname === "/reference/groups") return { title: "Groups", subtitle: "Reference · 6 Groups", showBack: true };
+  if (pathname === "/reference/locations") return { title: "Locations", subtitle: "Reference · 8 Locations", showBack: true };
+  if (pathname === "/reference/quick-notes") return { title: "Quick Notes", subtitle: "Reference · 3 Categories", showBack: true };
+  if (pathname === "/reference/diseases") return { title: "Diseases", subtitle: "Reference · Global List", showBack: true };
+  if (pathname === "/reference/preferences") return { title: "Preferences", subtitle: "Reference · Saddle Butte Ranch", showBack: true };
+  if (pathname === "/reference/team") return { title: "Team", subtitle: "Reference · 5 Members", showBack: true };
+  if (pathname === "/reference/operation") return { title: "Operation Profile", subtitle: "Reference", showBack: true };
+  if (pathname === "/treatment/new") return { title: "Record Treatment", subtitle: "Tag 3309 · Pink Cow", showBack: true };
+  if (pathname === "/treatments") return { title: "Treatments", subtitle: "All Records", showBack: true };
+  if (pathname === "/bse/new") return { title: "BSE Exam", subtitle: "Tag 901 · Black Bull", showBack: true };
+  if (pathname === "/dev/dashboard-explore") return { title: "Dashboard", subtitle: "Design Exploration" };
+  if (pathname === "/dev/flag-explore") return { title: "Flag Colors", subtitle: "Design Exploration", showBack: true };
+  if (pathname === "/dev/gradient-explore") return { title: "Gradients", subtitle: "Design Exploration", showBack: true };
+  if (pathname === "/dev/color-explore") return { title: "Colors", subtitle: "Font & Pill Accents", showBack: true };
+  if (pathname === "/dev/font-explore") return { title: "Fonts", subtitle: "Sans-Serif Options", showBack: true };
+  if (pathname === "/dev/skeletons") return { title: "Skeletons", subtitle: "Loading Placeholders", showBack: true };
   return { title: "ChuteSide", subtitle: "", compact: true };
 }
 
@@ -111,8 +123,10 @@ const menuItemToRoute: Record<string, string> = {
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const config = getHeaderConfig(location.pathname);
 
@@ -132,6 +146,21 @@ export function AppLayout() {
           navigate(menuItemToRoute[item] ?? "/");
           setDrawerOpen(false);
         }}
+        onSignOut={() => {
+          logout();
+          setDrawerOpen(false);
+          navigate("/sign-in");
+        }}
+        onSwitchOperation={() => {
+          setDrawerOpen(false);
+          setTimeout(() => setOperationPickerOpen(true), 200);
+        }}
+      />
+
+      {/* ── Operation Picker Overlay ── */}
+      <OperationPicker
+        open={operationPickerOpen}
+        onClose={() => setOperationPickerOpen(false)}
       />
 
       {/* ── Mobile Frame ── */}

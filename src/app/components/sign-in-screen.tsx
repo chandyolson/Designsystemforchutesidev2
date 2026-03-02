@@ -10,12 +10,14 @@ import {
   GoogleSSOButton,
   AuthFooterLink,
 } from "./auth-shared";
+import { useAuth } from "./auth-context";
 
 /* ═══════════════════════════════════════════════
    SIGN IN SCREEN
    ═══════════════════════════════════════════════ */
 export function SignInScreen() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,12 +31,12 @@ export function SignInScreen() {
     if (!password.trim()) { setError("Please enter your password."); return; }
 
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate("/"); }, 1200);
+    setTimeout(() => { setLoading(false); login(); navigate("/"); }, 1200);
   };
 
   const handleGoogleSSO = () => {
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate("/"); }, 1200);
+    setTimeout(() => { setLoading(false); login(); navigate("/"); }, 1200);
   };
 
   return (

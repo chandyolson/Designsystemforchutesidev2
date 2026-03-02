@@ -12,12 +12,14 @@ import {
   PasswordStrengthBar,
   usePasswordStrength,
 } from "./auth-shared";
+import { useAuth } from "./auth-context";
 
 /* ═══════════════════════════════════════════════
    SIGN UP SCREEN
    ═══════════════════════════════════════════════ */
 export function SignUpScreen() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,12 +44,12 @@ export function SignUpScreen() {
     if (password !== confirmPassword) { setError("Passwords do not match."); return; }
 
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate("/onboarding"); }, 1400);
+    setTimeout(() => { setLoading(false); login(); navigate("/onboarding"); }, 1400);
   };
 
   const handleGoogleSSO = () => {
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate("/onboarding"); }, 1200);
+    setTimeout(() => { setLoading(false); login(); navigate("/onboarding"); }, 1200);
   };
 
   return (

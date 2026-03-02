@@ -4,6 +4,7 @@ import { FlagIcon } from "./flag-icon";
 import { PillButton } from "./pill-button";
 import { FormFieldRow } from "./form-field-row";
 import { useToast } from "./toast-context";
+import { EmailReportDialog } from "./email-report-dialog";
 
 /* ── Toggle Switch ── */
 function ToggleSwitch({
@@ -122,7 +123,6 @@ export function ProjectReportScreen() {
 
   /* ── Email dialog ── */
   const [emailOpen, setEmailOpen] = useState(false);
-  const [emailAddr, setEmailAddr] = useState("");
 
   /* Close export dropdown on outside click */
   useEffect(() => {
@@ -604,49 +604,13 @@ export function ProjectReportScreen() {
       </div>
 
       {/* ══ EMAIL DIALOG OVERLAY ══ */}
-      {emailOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setEmailOpen(false);
-          }}
-        >
-          <div className="absolute inset-0 bg-black/30" />
-          <div
-            className="relative w-full max-w-[375px] rounded-t-2xl bg-[#F5F5F0] px-5 py-5 space-y-4 z-10"
-            style={{ boxShadow: "0 -4px 30px rgba(0,0,0,0.12)" }}
-          >
-            <p style={{ fontSize: 16, fontWeight: 700, color: "#0E2646" }}>
-              Email Report
-            </p>
-            <FormFieldRow
-              label="To"
-              value={emailAddr}
-              onChange={setEmailAddr}
-              placeholder="email@example.com"
-            />
-            <p style={{ fontSize: 11, fontWeight: 400, color: "rgba(26,26,26,0.35)" }}>
-              Separate multiple addresses with commas
-            </p>
-            <div className="flex gap-3 pt-1">
-              <PillButton variant="outline" size="md" onClick={() => setEmailOpen(false)} style={{ flex: 1 }}>
-                Cancel
-              </PillButton>
-              <PillButton
-                size="md"
-                onClick={() => {
-                  setEmailOpen(false);
-                  setEmailAddr("");
-                  showToast("success", "Report sent");
-                }}
-                style={{ flex: 1 }}
-              >
-                Send
-              </PillButton>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmailReportDialog
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        onSend={() => {
+          showToast("success", "Report sent");
+        }}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { CollapsibleSection } from "./collapsible-section";
 import { FlagIcon } from "./flag-icon";
 import type { FlagColor } from "./flag-icon";
 import { PillButton } from "./pill-button";
+import { AnimalPickerRow } from "./animal-picker-row";
 
 /* ── Mock animal record data ── */
 const animalRecord = {
@@ -114,6 +115,7 @@ const flagLabels: Record<FlagColor, string> = {
 export function AnimalDetailScreen() {
   const [activeTab, setActiveTab] = useState<"details" | "history">("details");
   const navigate = useNavigate();
+  const { tag } = useParams<{ tag: string }>();
 
   /* Form state with pre-filled values */
   const [fields, setFields] = useState({
@@ -130,6 +132,10 @@ export function AnimalDetailScreen() {
   });
 
   const [selectedQuickNotes, setSelectedQuickNotes] = useState<string[]>([]);
+
+  /* Pedigree state */
+  const [sire, setSire] = useState("");
+  const [dam, setDam] = useState("");
 
   const quickNoteOptions = [
     "Docile", "Aggressive", "Flighty", "Hard keeper", "Easy keeper",
@@ -259,15 +265,29 @@ export function AnimalDetailScreen() {
           <div className="space-y-5">
             {/* ── Form Fields ── */}
             <div className="space-y-2.5">
-              <FormFieldRow label="Tag" value={fields.tag} onChange={update("tag")} placeholder="Tag number" />
-              <FormSelectRow label="Tag Color" value={fields.tagColor} onChange={update("tagColor")} placeholder="Select color" options={["Pink", "Yellow", "Orange", "Green", "Blue", "White", "Red", "Purple", "No Tag"]} />
-              <FormFieldRow label="EID" value={fields.eid} onChange={update("eid")} placeholder="Electronic ID" />
-              <FormSelectRow label="Sex" value={fields.sex} onChange={update("sex")} placeholder="Select sex" options={["Bull", "Cow", "Steer", "Spayed Heifer", "Heifer"]} />
-              <FormSelectRow label="Animal Type" value={fields.animalType} onChange={update("animalType")} placeholder="Select type" options={["Calf", "Yearling", "Feeder", "Cow", "Bull", "Replacement Heifer"]} />
-              <FormSelectRow label="Year Born" value={fields.yearBorn} onChange={update("yearBorn")} placeholder="Select year" options={["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"]} />
               <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Sold", "Dead", "Culled", "Missing"]} />
               <FormFieldRow label="Flag" value={fields.flag} onChange={update("flag")} placeholder="Management / Monitor / Critical" />
               <FormFieldRow label="Flag Reason" value={fields.flagReason} onChange={update("flagReason")} placeholder="Reason for flag" />
+              <CollapsibleSection
+                title="Details"
+                collapsedContent={
+                  <p
+                    className="font-['Inter'] mt-1.5 truncate"
+                    style={{ fontSize: 12, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}
+                  >
+                    {fields.tag} · {fields.tagColor} · {fields.eid} · {fields.sex} · {fields.animalType} · {fields.yearBorn}
+                  </p>
+                }
+              >
+                <div className="space-y-2.5 pt-2">
+                  <FormFieldRow label="Tag" value={fields.tag} onChange={update("tag")} placeholder="Tag number" />
+                  <FormSelectRow label="Tag Color" value={fields.tagColor} onChange={update("tagColor")} placeholder="Select color" options={["Pink", "Yellow", "Orange", "Green", "Blue", "White", "Red", "Purple", "No Tag"]} />
+                  <FormFieldRow label="EID" value={fields.eid} onChange={update("eid")} placeholder="Electronic ID" />
+                  <FormSelectRow label="Sex" value={fields.sex} onChange={update("sex")} placeholder="Select sex" options={["Bull", "Cow", "Steer", "Spayed Heifer", "Heifer"]} />
+                  <FormSelectRow label="Animal Type" value={fields.animalType} onChange={update("animalType")} placeholder="Select type" options={["Calf", "Yearling", "Feeder", "Cow", "Bull", "Replacement Heifer"]} />
+                  <FormSelectRow label="Year Born" value={fields.yearBorn} onChange={update("yearBorn")} placeholder="Select year" options={["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"]} />
+                </div>
+              </CollapsibleSection>
               <CollapsibleSection
                 title="Quick Notes"
                 collapsedContent={
@@ -317,10 +337,10 @@ export function AnimalDetailScreen() {
             </div>
 
             {/* ── Pedigree (collapsed) ── */}
-            <CollapsibleSection title="PEDIGREE">
+            <CollapsibleSection title="Pedigree">
               <div className="space-y-2.5 pt-2">
-                <FormFieldRow label="Sire" placeholder="Sire tag or name" />
-                <FormFieldRow label="Dam" placeholder="Dam tag or name" />
+                <AnimalPickerRow label="Sire" value={sire} onChange={setSire} placeholder="Search sire by tag…" filterSex={["Bull"]} />
+                <AnimalPickerRow label="Dam" value={dam} onChange={setDam} placeholder="Search dam by tag…" filterSex={["Cow", "Heifer"]} />
                 <FormFieldRow label="Reg. Name" placeholder="Registration name" />
                 <FormFieldRow label="Reg. No." placeholder="Registration number" />
               </div>

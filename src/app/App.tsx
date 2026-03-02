@@ -33,57 +33,86 @@ import { SignUpScreen } from "./components/sign-up-screen";
 import { ForgotPasswordScreen } from "./components/forgot-password-screen";
 import { ResetPasswordScreen } from "./components/reset-password-screen";
 import { OnboardingScreen } from "./components/onboarding-screen";
+import { GroupsScreen } from "./components/groups-screen";
+import { ReferenceGroupsScreen } from "./components/reference-groups-screen";
+import { ReferenceLocationsScreen } from "./components/reference-locations-screen";
+import { ReferenceQuickNotesScreen } from "./components/reference-quick-notes-screen";
+import { ReferenceDiseasesScreen } from "./components/reference-diseases-screen";
+import { ReferencePreferencesScreen } from "./components/reference-preferences-screen";
+import { ReferenceTeamScreen } from "./components/reference-team-screen";
+import { ReferenceOperationScreen } from "./components/reference-operation-screen";
+import { TreatmentEntryScreen } from "./components/treatment-entry-screen";
+import { TreatmentHistoryScreen } from "./components/treatment-history-screen";
+import { BseExamScreen } from "./components/bse-exam-screen";
 import { GradientProvider } from "./components/gradient-context";
 import { ToastProvider } from "./components/toast-context";
 import { DeleteConfirmProvider } from "./components/delete-confirmation";
 import { CalvingDataProvider } from "./components/calving-data-context";
+import { AuthProvider } from "./components/auth-context";
+import { ProtectedRoute } from "./components/protected-route";
 
 export default function App() {
   return (
+    <AuthProvider>
     <ToastProvider>
       <DeleteConfirmProvider>
         <CalvingDataProvider>
           <GradientProvider>
             <BrowserRouter>
               <Routes>
-                {/* Standalone auth screen — no AppLayout header */}
+                {/* Standalone auth screens — no AppLayout, no auth gate */}
                 <Route path="sign-in" element={<SignInScreen />} />
                 <Route path="sign-up" element={<SignUpScreen />} />
                 <Route path="forgot-password" element={<ForgotPasswordScreen />} />
                 <Route path="reset-password" element={<ResetPasswordScreen />} />
                 <Route path="onboarding" element={<OnboardingScreen />} />
 
-                <Route element={<AppLayout />}>
-                  <Route index element={<DashboardScreen />} />
-                  <Route path="animals" element={<AnimalsScreen />} />
-                  <Route path="animals/new" element={<AddAnimalScreen />} />
-                  <Route path="animals/:id" element={<AnimalDetailScreen />} />
-                  <Route path="animals/:id/edit" element={<AnimalEditScreen />} />
-                  <Route path="calving" element={<CalvingScreen />} />
-                  <Route path="calving/new" element={<AddCalfScreen />} />
-                  <Route path="calving/:calfTag" element={<CalvingDetailScreen />} />
-                  <Route path="cow-work" element={<CowWorkScreen />} />
-                  <Route path="cow-work/new" element={<NewProjectScreen />} />
-                  <Route path="cow-work/templates" element={<WorkTemplateListScreen />} />
-                  <Route path="cow-work/templates/new" element={<WorkTemplateEditScreen />} />
-                  <Route path="cow-work/templates/:id" element={<WorkTemplateEditScreen />} />
-                  <Route path="cow-work/:id" element={<ProjectDetailScreen />} />
-                  <Route path="cow-work/:id/close-out" element={<ProjectCloseOutScreen />} />
-                  <Route path="cow-work/:id/report" element={<ProjectReportScreen />} />
-                  <Route path="cow-work/:id/animal/:animalId" element={<ProjectAnimalDetailScreen />} />
-                  <Route path="red-book" element={<RedBookScreen />} />
-                  <Route path="red-book/new" element={<RedBookEntryScreen />} />
-                  <Route path="red-book/:id" element={<RedBookEntryScreen />} />
-                  <Route path="reference" element={<ReferenceScreen />} />
-                  <Route path="dashboard-explore" element={<DashboardExploreScreen />} />
-                  <Route path="flag-explore" element={<FlagColorExplorer />} />
-                  <Route path="gradient-explore" element={<GradientExplorer />} />
-                  <Route path="color-explore" element={<ColorExplorer />} />
-                  <Route path="font-explore" element={<FontExplorer />} />
-                  <Route path="empty-states" element={<EmptyStateExplorer />} />
-                  <Route path="voice-input" element={<VoiceInputExplorer />} />
-                  <Route path="mass-select" element={<MassSelectExplorer />} />
-                  <Route path="skeletons" element={<SkeletonExplorer />} />
+                {/* Auth-gated routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="groups" element={<GroupsScreen />} />
+
+                  <Route element={<AppLayout />}>
+                    <Route index element={<DashboardScreen />} />
+                    <Route path="animals" element={<AnimalsScreen />} />
+                    <Route path="animals/new" element={<AddAnimalScreen />} />
+                    <Route path="animals/:id" element={<AnimalDetailScreen />} />
+                    <Route path="animals/:id/edit" element={<AnimalEditScreen />} />
+                    <Route path="calving" element={<CalvingScreen />} />
+                    <Route path="calving/new" element={<AddCalfScreen />} />
+                    <Route path="calving/:calfTag" element={<CalvingDetailScreen />} />
+                    <Route path="cow-work" element={<CowWorkScreen />} />
+                    <Route path="cow-work/new" element={<NewProjectScreen />} />
+                    <Route path="cow-work/templates" element={<WorkTemplateListScreen />} />
+                    <Route path="cow-work/templates/new" element={<WorkTemplateEditScreen />} />
+                    <Route path="cow-work/templates/:id" element={<WorkTemplateEditScreen />} />
+                    <Route path="cow-work/:id" element={<ProjectDetailScreen />} />
+                    <Route path="cow-work/:id/close-out" element={<ProjectCloseOutScreen />} />
+                    <Route path="cow-work/:id/report" element={<ProjectReportScreen />} />
+                    <Route path="cow-work/:id/animal/:animalId" element={<ProjectAnimalDetailScreen />} />
+                    <Route path="red-book" element={<RedBookScreen />} />
+                    <Route path="red-book/new" element={<RedBookEntryScreen />} />
+                    <Route path="red-book/:id" element={<RedBookEntryScreen />} />
+                    <Route path="reference" element={<ReferenceScreen />} />
+                    <Route path="reference/groups" element={<ReferenceGroupsScreen />} />
+                    <Route path="reference/locations" element={<ReferenceLocationsScreen />} />
+                    <Route path="reference/quick-notes" element={<ReferenceQuickNotesScreen />} />
+                    <Route path="reference/diseases" element={<ReferenceDiseasesScreen />} />
+                    <Route path="reference/preferences" element={<ReferencePreferencesScreen />} />
+                    <Route path="reference/team" element={<ReferenceTeamScreen />} />
+                    <Route path="reference/operation" element={<ReferenceOperationScreen />} />
+                    <Route path="treatment/new" element={<TreatmentEntryScreen />} />
+                    <Route path="treatments" element={<TreatmentHistoryScreen />} />
+                    <Route path="bse/new" element={<BseExamScreen />} />
+                    <Route path="dev/dashboard-explore" element={<DashboardExploreScreen />} />
+                    <Route path="dev/flag-explore" element={<FlagColorExplorer />} />
+                    <Route path="dev/gradient-explore" element={<GradientExplorer />} />
+                    <Route path="dev/color-explore" element={<ColorExplorer />} />
+                    <Route path="dev/font-explore" element={<FontExplorer />} />
+                    <Route path="dev/empty-states" element={<EmptyStateExplorer />} />
+                    <Route path="dev/voice-input" element={<VoiceInputExplorer />} />
+                    <Route path="dev/mass-select" element={<MassSelectExplorer />} />
+                    <Route path="dev/skeletons" element={<SkeletonExplorer />} />
+                  </Route>
                 </Route>
               </Routes>
             </BrowserRouter>
@@ -91,5 +120,6 @@ export default function App() {
         </CalvingDataProvider>
       </DeleteConfirmProvider>
     </ToastProvider>
+    </AuthProvider>
   );
 }
