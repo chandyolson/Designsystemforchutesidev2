@@ -38,7 +38,7 @@ export function RedBookEntryScreen() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Entry title…"
           className="flex-1 min-w-0 h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-          style={{ fontSize: 14, fontWeight: 400 }}
+          style={{ fontSize: 16, fontWeight: 400 }}
         />
       </div>
 
@@ -55,7 +55,7 @@ export function RedBookEntryScreen() {
             type="button"
             onClick={() => setCatOpen((v) => !v)}
             className="w-full h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-left font-['Inter'] flex items-center justify-between cursor-pointer"
-            style={{ fontSize: 14, fontWeight: 400, color: category ? "#1A1A1A" : "rgba(26,26,26,0.3)" }}
+            style={{ fontSize: 16, fontWeight: 400, color: category ? "#1A1A1A" : "rgba(26,26,26,0.3)" }}
           >
             <span className="truncate">{category || "Select category…"}</span>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 transition-transform duration-200" style={{ transform: catOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
@@ -73,7 +73,7 @@ export function RedBookEntryScreen() {
                   type="button"
                   onClick={() => { setCategory(cat); setCatOpen(false); }}
                   className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-                  style={{ fontSize: 13, fontWeight: cat === category ? 700 : 500, color: cat === category ? "#0E2646" : "#1A1A1A" }}
+                  style={{ fontSize: 16, fontWeight: cat === category ? 700 : 500, color: cat === category ? "#0E2646" : "#1A1A1A" }}
                 >
                   {cat}
                 </button>
@@ -108,7 +108,7 @@ export function RedBookEntryScreen() {
           onChange={(e) => setBody(e.target.value)}
           placeholder="Write your entry…"
           className="w-full h-[180px] px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all resize-none"
-          style={{ fontSize: 14, fontWeight: 400, lineHeight: 1.6 }}
+          style={{ fontSize: 16, fontWeight: 400, lineHeight: 1.6 }}
         />
       </div>
 

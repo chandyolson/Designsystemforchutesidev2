@@ -15,3 +15,57 @@
 *::-webkit-scrollbar {
   display: none;
 }
+
+/* Toast slide-in animation */
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dialog animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Voice mic pulse ring */
+@keyframes micPulse {
+  0% { transform: translate(-50%, -50%) scale(0.92); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.08); opacity: 0.15; }
+  100% { transform: translate(-50%, -50%) scale(0.92); opacity: 0.5; }
+}
+
+/* Spinner rotation */
+@keyframes spinnerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Inline mic thin pulse */
+@keyframes inlineMicPulse {
+  0% { transform: scale(0.92); opacity: 0.4; }
+  50% { transform: scale(1.06); opacity: 0.15; }
+  100% { transform: scale(0.92); opacity: 0.4; }
+}
+
+/* Skeleton shimmer sweep */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

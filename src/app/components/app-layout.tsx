@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { NavDrawer } from "./nav-drawer";
+import { ToastContainer } from "./toast-notification";
 
 /* ── Hamburger Button ── */
 function HamburgerButton({ onClick }: { onClick: () => void }) {
@@ -74,6 +75,7 @@ function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname === "/gradient-explore") return { title: "Gradients", subtitle: "Design Exploration", showBack: true };
   if (pathname === "/color-explore") return { title: "Colors", subtitle: "Font & Pill Accents", showBack: true };
   if (pathname === "/font-explore") return { title: "Fonts", subtitle: "Sans-Serif Options", showBack: true };
+  if (pathname === "/skeletons") return { title: "Skeletons", subtitle: "Loading Placeholders", showBack: true };
   return { title: "ChuteSide", subtitle: "", compact: true };
 }
 
@@ -175,6 +177,9 @@ export function AppLayout() {
               </p>
             )}
           </div>
+
+          {/* ── Toast overlay anchored below header ── */}
+          <ToastContainer />
         </div>
 
         {/* ══ PAGE CONTENT ══ */}

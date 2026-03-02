@@ -136,7 +136,7 @@ export function AddCalfScreen() {
                       value={fields.size}
                       onChange={(e) => update("size")(e.target.value)}
                       className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all appearance-none cursor-pointer"
-                      style={{ fontSize: 14, fontWeight: 400, color: fields.size ? "#1A1A1A" : "rgba(26,26,26,0.30)" }}
+                      style={{ fontSize: 16, fontWeight: 400, color: fields.size ? "#1A1A1A" : "rgba(26,26,26,0.30)" }}
                     >
                       <option value="" disabled>Size</option>
                       {["Small", "Average", "Large"].map((opt) => (
@@ -156,7 +156,7 @@ export function AddCalfScreen() {
                     value={fields.birthWeight}
                     onChange={(e) => update("birthWeight")(e.target.value)}
                     className="w-[80px] h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-                    style={{ fontSize: 14, fontWeight: 400 }}
+                    style={{ fontSize: 16, fontWeight: 400 }}
                   />
                 </div>
               </div>
@@ -220,7 +220,7 @@ export function AddCalfScreen() {
                 onChange={(e) => update("notes")(e.target.value)}
                 placeholder="Calving notes…"
                 className="w-full h-[100px] px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all resize-none"
-                style={{ fontSize: 14, fontWeight: 400 }}
+                style={{ fontSize: 16, fontWeight: 400 }}
               />
             </div>
 

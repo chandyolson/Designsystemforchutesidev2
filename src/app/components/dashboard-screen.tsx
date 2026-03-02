@@ -5,6 +5,9 @@ import { DataCard } from "./data-card";
 import { FlagIcon } from "./flag-icon";
 import { PillButton } from "./pill-button";
 import { CollapsibleSection } from "./collapsible-section";
+import { useToast } from "./toast-context";
+import { useDeleteConfirm } from "./delete-confirmation";
+import { FormFieldRow, FormSelectRow } from "./form-field-row";
 
 /* ── Data ──────────────────────────────────── */
 const stats = [
@@ -144,6 +147,8 @@ export function DashboardScreen() {
   const [search, setSearch] = useState("");
   const [herdExpanded, setHerdExpanded] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { showDeleteConfirm } = useDeleteConfirm();
 
   return (
     <div className="space-y-6">
@@ -155,7 +160,7 @@ export function DashboardScreen() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tags, animals, pens…"
           className="w-full h-[46px] pl-4 pr-4 rounded-xl bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/20 transition-all"
-          style={{ fontSize: 14, fontWeight: 400 }}
+          style={{ fontSize: 16, fontWeight: 400 }}
         />
       </div>
 
@@ -431,6 +436,119 @@ export function DashboardScreen() {
           Start Session
         </PillButton>
       </div>
+
+      {/* ── Toast Demo ── */}
+      <section className="space-y-3">
+        <SectionHeading text="Toast Demo" />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => showToast("success", "Record saved successfully")}
+            className="flex-1 rounded-lg py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+            style={{ fontSize: 12, fontWeight: 600, backgroundColor: "#E8F5E9", color: "#1B5E20", border: "1px solid #27AE60" }}
+          >
+            Success
+          </button>
+          <button
+            type="button"
+            onClick={() => showToast("error", "Failed to save — check your connection")}
+            className="flex-1 rounded-lg py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+            style={{ fontSize: 12, fontWeight: 600, backgroundColor: "#FFEBEE", color: "#B71C1C", border: "1px solid #E74C3C" }}
+          >
+            Error
+          </button>
+          <button
+            type="button"
+            onClick={() => showToast("info", "3 animals updated")}
+            className="flex-1 rounded-lg py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+            style={{ fontSize: 12, fontWeight: 600, backgroundColor: "#E3F2FD", color: "#0D47A1", border: "1px solid #2196F3" }}
+          >
+            Info
+          </button>
+        </div>
+      </section>
+
+      {/* ── Delete Confirmation Demo ── */}
+      <section className="space-y-3">
+        <SectionHeading text="Delete Dialog Demo" />
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              showDeleteConfirm({
+                title: "Delete Animal?",
+                message: "Tag 5520 will be permanently removed. This cannot be undone.",
+                onConfirm: () => showToast("success", "Animal deleted"),
+              })
+            }
+            className="w-full rounded-lg py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+            style={{ fontSize: 12, fontWeight: 600, backgroundColor: "#FFEBEE", color: "#B71C1C", border: "1px solid #E74C3C" }}
+          >
+            Single Delete
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              showDeleteConfirm({
+                title: "Delete Calving Record?",
+                message: "This will also delete the calf record for Tag 8841. This cannot be undone.",
+                onConfirm: () => showToast("success", "Calving record deleted"),
+              })
+            }
+            className="w-full rounded-lg py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+            style={{ fontSize: 12, fontWeight: 600, backgroundColor: "#FFEBEE", color: "#B71C1C", border: "1px solid #E74C3C" }}
+          >
+            Cascade Delete
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              showDeleteConfirm({
+                title: "Delete 5 Animals?",
+                message: "All selected animals will be permanently removed. This cannot be undone.",
+                onConfirm: () => showToast("success", "5 animals deleted"),
+              })
+            }
+            className="w-full rounded-lg py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+            style={{ fontSize: 12, fontWeight: 600, backgroundColor: "#FFEBEE", color: "#B71C1C", border: "1px solid #E74C3C" }}
+          >
+            Mass Delete
+          </button>
+        </div>
+      </section>
+
+      {/* ── Form Error States Demo ── */}
+      <section className="space-y-3">
+        <SectionHeading text="Form Error States" />
+        <div className="bg-white rounded-xl border border-[#D4D4D0]/60 p-4 space-y-4">
+          <FormFieldRow
+            label="Dam Tag"
+            placeholder="Enter dam tag"
+            value=""
+            required
+            error="Dam tag is required"
+          />
+          <FormFieldRow
+            label="Calf Tag"
+            placeholder="Enter calf tag"
+            value="8851"
+            required
+          />
+          <FormSelectRow
+            label="Sex"
+            placeholder="Select…"
+            value=""
+            options={["Bull", "Heifer", "Steer"]}
+            required
+            error="Please select a sex"
+          />
+          <FormFieldRow
+            label="Notes"
+            placeholder="Optional notes"
+            value=""
+          />
+        </div>
+      </section>
 
       {/* ── Design Exploration Link ── */}
       <button

@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { CalvingRecordCard } from "./calving-record-card";
+import { useCalvingData } from "./calving-data-context";
+import { SelectModeToggle } from "./select-mode-toggle";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { SelectAllBar } from "./select-all-bar";
+import { BulkActionBar } from "./bulk-action-bar";
+import { useSelectMode } from "./hooks/use-select-mode";
+import { useToast } from "./toast-context";
+import { useDeleteConfirm } from "./delete-confirmation";
 
 /* ── Group Dropdown ────────────────────────── */
 const groups = ["2026 Season", "2025 Season", "2024 Season", "Fall 2025 Embryo"];
@@ -153,7 +161,6 @@ function ActionsDropdown() {
           border: "1px solid rgba(14,38,70,0.12)",
         }}
       >
-        {/* 3-dot vertical menu icon */}
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="3.5" r="1.3" fill="#0E2646" />
           <circle cx="8" cy="8" r="1.3" fill="#0E2646" />
@@ -183,47 +190,53 @@ function ActionsDropdown() {
   );
 }
 
-/* ── Calving Data ──────────────────────────── */
-interface CalvingRecord {
-  damTag: string;
-  calfTag: string;
-  date: string;
-  sex: string;
-  sire: string;
-  assistance: string;
-}
-
-const calvingRecords: CalvingRecord[] = [
-  { damTag: "7801", calfTag: "8841", date: "Feb 26", sex: "Heifer", sire: "Basin Payweight", assistance: "1 — No Assistance" },
-  { damTag: "3091", calfTag: "8842", date: "Feb 25", sex: "Bull", sire: "Connealy Consensus", assistance: "1 — No Assistance" },
-  { damTag: "4782", calfTag: "8843", date: "Feb 24", sex: "Heifer", sire: "SAV Resource", assistance: "2 — Easy Pull" },
-  { damTag: "5501", calfTag: "8844", date: "Feb 23", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance" },
-  { damTag: "2290", calfTag: "8845", date: "Feb 22", sex: "Heifer", sire: "Vermilion Dateline", assistance: "1 — No Assistance" },
-  { damTag: "8812", calfTag: "8846", date: "Feb 21", sex: "Bull", sire: "Connealy Consensus", assistance: "3 — Hard Pull" },
-  { damTag: "2218", calfTag: "8847", date: "Feb 20", sex: "Heifer", sire: "SAV Resource", assistance: "1 — No Assistance" },
-  { damTag: "6610", calfTag: "8848", date: "Feb 19", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance" },
-  { damTag: "4455", calfTag: "8849", date: "Feb 18", sex: "Heifer", sire: "Vermilion Dateline", assistance: "2 — Easy Pull" },
-  { damTag: "3320", calfTag: "8850", date: "Feb 17", sex: "Bull", sire: "Connealy Consensus", assistance: "1 — No Assistance" },
-  { damTag: "5520", calfTag: "8851", date: "Feb 16", sex: "Heifer", sire: "SAV Resource", assistance: "4 — Surgical" },
-  { damTag: "7744", calfTag: "8852", date: "Feb 15", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance" },
-];
-
 /* ── Screen Component ──────────────────────── */
 export function CalvingScreen() {
   const [group, setGroup] = useState("2026 Season");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const { records } = useCalvingData();
+  const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
+  const { showToast } = useToast();
+  const { showDeleteConfirm } = useDeleteConfirm();
 
-  const filteredRecords = calvingRecords.filter((r) => {
+  const filteredRecords = records.filter((r) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
       r.damTag.toLowerCase().includes(q) ||
       r.calfTag.toLowerCase().includes(q) ||
       r.sire.toLowerCase().includes(q) ||
-      r.sex.toLowerCase().includes(q)
+      r.sex.toLowerCase().includes(q) ||
+      r.notes.toLowerCase().includes(q) ||
+      r.memo.toLowerCase().includes(q)
     );
   });
+
+  const allFilteredIds = filteredRecords.map((r) => r.calfTag);
+
+  const handleBulkFlag = () => {
+    showToast("success", `Flagged ${selectedIds.size} records`);
+    clearSelection();
+    toggleSelectMode();
+  };
+
+  const handleBulkEdit = () => {
+    showToast("info", `Editing ${selectedIds.size} records`);
+  };
+
+  const handleBulkDelete = () => {
+    showDeleteConfirm({
+      title: "Delete Records",
+      message: `Are you sure you want to delete ${selectedIds.size} calving record${selectedIds.size > 1 ? "s" : ""}? This cannot be undone.`,
+      confirmLabel: `Delete ${selectedIds.size}`,
+      onConfirm: () => {
+        showToast("success", `Deleted ${selectedIds.size} records`);
+        clearSelection();
+        toggleSelectMode();
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -243,9 +256,9 @@ export function CalvingScreen() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by tag, sire, or sex…"
+          placeholder="Search by tag, sire, notes…"
           className="w-full h-[40px] pl-9 pr-3 rounded-xl bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-          style={{ fontSize: 14, fontWeight: 400 }}
+          style={{ fontSize: 16, fontWeight: 400 }}
         />
         {search && (
           <button
@@ -260,7 +273,7 @@ export function CalvingScreen() {
         )}
       </div>
 
-      {/* ── Toolbar: record count + add/actions ── */}
+      {/* ── Toolbar: record count + select toggle + add/actions ── */}
       <div className="flex items-center justify-between">
         <p
           className="text-[#1A1A1A]/30 font-['Inter']"
@@ -269,6 +282,7 @@ export function CalvingScreen() {
           {filteredRecords.length} records
         </p>
         <div className="flex items-center gap-2">
+          <SelectModeToggle active={selectMode} onToggle={toggleSelectMode} />
           {/* Yellow (+) button */}
           <button
             type="button"
@@ -292,18 +306,51 @@ export function CalvingScreen() {
         </div>
       </div>
 
+      {/* ── Select All Bar (visible in select mode) ── */}
+      {selectMode && (
+        <SelectAllBar
+          selectedCount={selectedIds.size}
+          totalCount={filteredRecords.length}
+          onToggleAll={() => toggleAll(allFilteredIds)}
+        />
+      )}
+
       {/* ── Calving Record Card List ── */}
-      <div className="space-y-2.5">
-        {filteredRecords.map((r) => (
-          <CalvingRecordCard
-            key={`${r.damTag}-${r.calfTag}`}
-            damTag={r.damTag}
-            calfTag={r.calfTag}
-            date={r.date}
-            values={[r.sex, r.sire, r.assistance]}
-            onClick={() => navigate(`/calving/${r.calfTag}`)}
-          />
-        ))}
+      <div className={`space-y-2.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+        {filteredRecords.map((r) =>
+          selectMode ? (
+            <div
+              key={`${r.damTag}-${r.calfTag}`}
+              onClick={() => toggleItem(r.calfTag)}
+              className="cursor-pointer"
+            >
+              <SelectableCardWrapper
+                selected={selectedIds.has(r.calfTag)}
+                onToggle={() => toggleItem(r.calfTag)}
+              >
+                <CalvingRecordCard
+                  damTag={r.damTag}
+                  calfTag={r.calfTag}
+                  date={r.date}
+                  sex={r.sex}
+                  notes={r.notes}
+                  memo={r.memo}
+                />
+              </SelectableCardWrapper>
+            </div>
+          ) : (
+            <CalvingRecordCard
+              key={`${r.damTag}-${r.calfTag}`}
+              damTag={r.damTag}
+              calfTag={r.calfTag}
+              date={r.date}
+              sex={r.sex}
+              notes={r.notes}
+              memo={r.memo}
+              onClick={() => navigate(`/calving/${r.calfTag}`)}
+            />
+          )
+        )}
       </div>
 
       {/* ── Load more ── */}
@@ -315,6 +362,21 @@ export function CalvingScreen() {
           Load More
         </span>
       </div>
+
+      {/* ── Bulk Action Bar ── */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+          <div className="max-w-[420px] mx-auto">
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              itemLabel={selectedIds.size === 1 ? "record" : "records"}
+              onFlag={handleBulkFlag}
+              onEdit={handleBulkEdit}
+              onDelete={handleBulkDelete}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

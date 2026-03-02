@@ -144,7 +144,8 @@ export function ProjectDetailScreen() {
             {workedAnimals.map((a) => (
               <div
                 key={a.tag}
-                className="rounded-xl px-4 py-3 font-['Inter'] flex items-center justify-between"
+                onClick={() => navigate(`/cow-work/spring-preg/animal/${a.tag}`)}
+                className="rounded-xl px-4 py-3 font-['Inter'] flex items-center justify-between cursor-pointer transition-all active:scale-[0.98]"
                 style={{ backgroundColor: "#0E2646" }}
               >
                 <div className="min-w-0 flex-1">
@@ -156,24 +157,6 @@ export function ProjectDetailScreen() {
                     {a.weight} lbs · {a.notes}
                   </p>
                 </div>
-                {/* Edit icon */}
-                <button
-                  type="button"
-                  onClick={() => navigate(`/cow-work/spring-preg/animal/${a.tag}`)}
-                  className="shrink-0 flex items-center justify-center cursor-pointer transition-all active:scale-90 rounded-lg"
-                  style={{ width: 32, height: 32, backgroundColor: "rgba(240,240,240,0.08)" }}
-                  aria-label={`Edit animal ${a.tag}`}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M9.5 3.5L12.5 6.5M2 14L2.5 11.5L11 3C11.5523 2.44772 12.4477 2.44772 13 3C13.5523 3.55228 13.5523 4.44772 13 5L4.5 13.5L2 14Z"
-                      stroke="rgba(240,240,240,0.5)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
               </div>
             ))}
           </div>

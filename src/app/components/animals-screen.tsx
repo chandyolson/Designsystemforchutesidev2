@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { AnimalListCard } from "./animal-list-card";
+import { SelectModeToggle } from "./select-mode-toggle";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { SelectAllBar } from "./select-all-bar";
+import { BulkActionBar } from "./bulk-action-bar";
+import { useSelectMode } from "./hooks/use-select-mode";
+import { useToast } from "./toast-context";
+import { useDeleteConfirm } from "./delete-confirmation";
 
 /* ── Filter Chip ───────────────────────────── */
 interface FilterChipProps {
@@ -129,6 +136,9 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
   const [statusFilter, setStatusFilter] = useState(true);
   const [typeFilter, setTypeFilter] = useState(true);
   const [search, setSearch] = useState("");
+  const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
+  const { showToast } = useToast();
+  const { showDeleteConfirm } = useDeleteConfirm();
 
   /* Very simple filtering logic for demo */
   const filtered = allAnimals.filter((a) => {
@@ -150,6 +160,31 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
   };
 
   const anyFilterActive = statusFilter || typeFilter;
+
+  const allFilteredIds = filtered.map((a) => a.tag);
+
+  const handleBulkFlag = () => {
+    showToast("success", `Flagged ${selectedIds.size} animals`);
+    clearSelection();
+    toggleSelectMode();
+  };
+
+  const handleBulkEdit = () => {
+    showToast("info", `Editing ${selectedIds.size} animals`);
+  };
+
+  const handleBulkDelete = () => {
+    showDeleteConfirm({
+      title: "Delete Animals",
+      message: `Are you sure you want to delete ${selectedIds.size} animal${selectedIds.size > 1 ? "s" : ""}? This cannot be undone.`,
+      confirmLabel: `Delete ${selectedIds.size}`,
+      onConfirm: () => {
+        showToast("success", `Deleted ${selectedIds.size} animals`);
+        clearSelection();
+        toggleSelectMode();
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -173,7 +208,7 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by tag, type, or memo…"
           className="flex-1 bg-transparent outline-none font-['Inter'] placeholder:text-[#1A1A1A]/25"
-          style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+          style={{ fontSize: 16, fontWeight: 500, color: "#1A1A1A" }}
         />
         {search && (
           <button
@@ -225,6 +260,7 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
           {filtered.length} animals
         </p>
         <div className="flex items-center gap-2.5">
+          <SelectModeToggle active={selectMode} onToggle={toggleSelectMode} />
           {/* Yellow (+) button */}
           <button
             type="button"
@@ -248,22 +284,51 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
         </div>
       </div>
 
+      {/* ── Select All Bar (visible in select mode) ── */}
+      {selectMode && (
+        <SelectAllBar
+          selectedCount={selectedIds.size}
+          totalCount={filtered.length}
+          onToggleAll={() => toggleAll(allFilteredIds)}
+        />
+      )}
+
       {/* ── Animal Card List ── */}
-      <div className="space-y-2.5">
-        {filtered.map((a) => (
-          <div
-            key={a.tag}
-            onClick={() => navigate(`/animals/${a.tag.replace("#", "")}`)}
-            className="cursor-pointer active:scale-[0.99] transition-transform duration-100"
-          >
-            <AnimalListCard
-              tag={a.tag}
-              flag={a.flag}
-              typePill={a.type}
-              values={a.values}
-            />
-          </div>
-        ))}
+      <div className={`space-y-2.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+        {filtered.map((a) =>
+          selectMode ? (
+            <div
+              key={a.tag}
+              onClick={() => toggleItem(a.tag)}
+              className="cursor-pointer"
+            >
+              <SelectableCardWrapper
+                selected={selectedIds.has(a.tag)}
+                onToggle={() => toggleItem(a.tag)}
+              >
+                <AnimalListCard
+                  tag={a.tag}
+                  flag={a.flag}
+                  typePill={a.type}
+                  values={a.values}
+                />
+              </SelectableCardWrapper>
+            </div>
+          ) : (
+            <div
+              key={a.tag}
+              onClick={() => navigate(`/animals/${a.tag.replace("#", "")}`)}
+              className="cursor-pointer active:scale-[0.99] transition-transform duration-100"
+            >
+              <AnimalListCard
+                tag={a.tag}
+                flag={a.flag}
+                typePill={a.type}
+                values={a.values}
+              />
+            </div>
+          )
+        )}
       </div>
 
       {/* ── Load more hint ── */}
@@ -275,6 +340,21 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
           Load More
         </span>
       </div>
+
+      {/* ── Bulk Action Bar ── */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+          <div className="max-w-[420px] mx-auto">
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              itemLabel={selectedIds.size === 1 ? "animal" : "animals"}
+              onFlag={handleBulkFlag}
+              onEdit={handleBulkEdit}
+              onDelete={handleBulkDelete}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

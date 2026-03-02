@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
+import { SelectModeToggle } from "./select-mode-toggle";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { SelectAllBar } from "./select-all-bar";
+import { BulkActionBar } from "./bulk-action-bar";
+import { useSelectMode } from "./hooks/use-select-mode";
+import { useToast } from "./toast-context";
+import { useDeleteConfirm } from "./delete-confirmation";
 
 /* ── Actions Dropdown ── */
 function ActionsDropdown() {
@@ -223,26 +230,63 @@ const projects: Project[] = [
   { id: "p7", name: "Treatment — Pen 1C", status: "In Progress", workType: "TX", date: "Feb 26, 2026", headCount: 3 },
 ];
 
-/* Status pill colors: In Progress = berry, Pending = seafoam, Completed = maize muted */
+/* Status pill colors */
 const statusPillStyles: Record<string, { color: string; bg: string }> = {
   "In Progress": { color: "#FFFFFF", bg: "#9B2335" },
   "Pending":     { color: "#FFFFFF", bg: "#4DC9B0" },
   "Completed":   { color: "rgba(240,240,240,0.5)", bg: "rgba(240,240,240,0.08)" },
 };
 
-/* Work type dot color */
 const workTypeColors: Record<string, string> = {
   "In Progress": "#9B2335",
   "Pending":     "#4DC9B0",
   "Completed":   "rgba(240,240,240,0.35)",
 };
 
-/* Sort order for status-based sorting: In Progress first, then Pending, then Completed */
 const statusOrder: Record<string, number> = {
   "In Progress": 0,
   "Pending": 1,
   "Completed": 2,
 };
+
+/* ── Project Card (extracted for reuse) ── */
+function ProjectCard({ p }: { p: Project }) {
+  const pill = statusPillStyles[p.status];
+  const dotColor = workTypeColors[p.status];
+  return (
+    <div className="rounded-xl px-4 py-3.5 font-['Inter']" style={{ backgroundColor: "#0E2646" }}>
+      {/* Row 1 — Name + Status pill */}
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className="truncate"
+          style={{ fontSize: 16, fontWeight: 600, color: "#F0F0F0", lineHeight: 1.3 }}
+        >
+          {p.name}
+        </span>
+        <span
+          className="shrink-0 rounded-full"
+          style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+            padding: "3px 10px", lineHeight: 1.3,
+            color: pill.color,
+            backgroundColor: pill.bg,
+          }}
+        >
+          {p.status.toUpperCase()}
+        </span>
+      </div>
+
+      {/* Row 2 — Dot-separated values */}
+      <p className="mt-1.5 truncate" style={{ fontSize: 13, fontWeight: 400, color: "rgba(240,240,240,0.45)", lineHeight: 1.4 }}>
+        <span style={{ color: dotColor }}>{p.workType}</span>
+        {"  ·  "}
+        {p.date}
+        {"  ·  "}
+        {p.headCount} head
+      </p>
+    </div>
+  );
+}
 
 /* ── Screen ── */
 export function CowWorkScreen() {
@@ -250,6 +294,9 @@ export function CowWorkScreen() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<SortOption>("status");
   const [search, setSearch] = useState("");
+  const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
+  const { showToast } = useToast();
+  const { showDeleteConfirm } = useDeleteConfirm();
 
   const filteredSorted = useMemo(() => {
     let list = [...projects];
@@ -289,10 +336,36 @@ export function CowWorkScreen() {
     return list;
   }, [statusFilter, sortBy, search]);
 
+  const allFilteredIds = filteredSorted.map((p) => p.id);
+
+  const handleBulkFlag = () => {
+    showToast("success", `Flagged ${selectedIds.size} projects`);
+    clearSelection();
+    toggleSelectMode();
+  };
+
+  const handleBulkEdit = () => {
+    showToast("info", `Editing ${selectedIds.size} projects`);
+  };
+
+  const handleBulkDelete = () => {
+    showDeleteConfirm({
+      title: "Delete Projects",
+      message: `Are you sure you want to delete ${selectedIds.size} project${selectedIds.size > 1 ? "s" : ""}? This cannot be undone.`,
+      confirmLabel: `Delete ${selectedIds.size}`,
+      onConfirm: () => {
+        showToast("success", `Deleted ${selectedIds.size} projects`);
+        clearSelection();
+        toggleSelectMode();
+      },
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* ── Toolbar Row ── */}
       <div className="flex items-center justify-end gap-2.5">
+        <SelectModeToggle active={selectMode} onToggle={toggleSelectMode} />
         <button
           type="button"
           onClick={() => navigate("/cow-work/new")}
@@ -329,7 +402,7 @@ export function CowWorkScreen() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, type, or status…"
           className="w-full h-[40px] pl-9 pr-3 rounded-xl bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-          style={{ fontSize: 14, fontWeight: 400 }}
+          style={{ fontSize: 16, fontWeight: 400 }}
         />
         {search && (
           <button
@@ -371,51 +444,41 @@ export function CowWorkScreen() {
         {filteredSorted.length} project{filteredSorted.length !== 1 ? "s" : ""}
       </p>
 
+      {/* ── Select All Bar ── */}
+      {selectMode && (
+        <SelectAllBar
+          selectedCount={selectedIds.size}
+          totalCount={filteredSorted.length}
+          onToggleAll={() => toggleAll(allFilteredIds)}
+        />
+      )}
+
       {/* ── Project Cards ── */}
-      <div className="space-y-3.5">
-        {filteredSorted.map((p) => {
-          const pill = statusPillStyles[p.status];
-          const dotColor = workTypeColors[p.status];
-          return (
+      <div className={`space-y-3.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+        {filteredSorted.map((p) =>
+          selectMode ? (
+            <div
+              key={p.id}
+              onClick={() => toggleItem(p.id)}
+              className="cursor-pointer"
+            >
+              <SelectableCardWrapper
+                selected={selectedIds.has(p.id)}
+                onToggle={() => toggleItem(p.id)}
+              >
+                <ProjectCard p={p} />
+              </SelectableCardWrapper>
+            </div>
+          ) : (
             <div
               key={p.id}
               onClick={() => navigate(`/cow-work/${p.id}`)}
               className="cursor-pointer active:scale-[0.99] transition-transform duration-100"
             >
-              <div className="rounded-xl px-4 py-3.5 font-['Inter']" style={{ backgroundColor: "#0E2646" }}>
-                {/* Row 1 — Name + Status pill */}
-                <div className="flex items-center justify-between gap-3">
-                  <span
-                    className="truncate"
-                    style={{ fontSize: 16, fontWeight: 600, color: "#F0F0F0", lineHeight: 1.3 }}
-                  >
-                    {p.name}
-                  </span>
-                  <span
-                    className="shrink-0 rounded-full"
-                    style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
-                      padding: "3px 10px", lineHeight: 1.3,
-                      color: pill.color,
-                      backgroundColor: pill.bg,
-                    }}
-                  >
-                    {p.status.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Row 2 — Dot-separated values */}
-                <p className="mt-1.5 truncate" style={{ fontSize: 13, fontWeight: 400, color: "rgba(240,240,240,0.45)", lineHeight: 1.4 }}>
-                  <span style={{ color: dotColor }}>{p.workType}</span>
-                  {"  ·  "}
-                  {p.date}
-                  {"  ·  "}
-                  {p.headCount} head
-                </p>
-              </div>
+              <ProjectCard p={p} />
             </div>
-          );
-        })}
+          )
+        )}
       </div>
 
       {/* ── Empty state ── */}
@@ -441,6 +504,21 @@ export function CowWorkScreen() {
           <span className="text-[#55BAAA] font-['Inter'] cursor-pointer" style={{ fontSize: 13, fontWeight: 600 }}>
             Load More
           </span>
+        </div>
+      )}
+
+      {/* ── Bulk Action Bar ── */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+          <div className="max-w-[420px] mx-auto">
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              itemLabel={selectedIds.size === 1 ? "project" : "projects"}
+              onFlag={handleBulkFlag}
+              onEdit={handleBulkEdit}
+              onDelete={handleBulkDelete}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -37,7 +37,20 @@ export function AddAnimalScreen() {
         <FormSelectRow label="Sex" value={fields.sex} onChange={update("sex")} placeholder="Select sex" options={["Bull", "Cow", "Steer", "Spayed Heifer", "Heifer"]} />
         <FormSelectRow label="Animal Type" value={fields.animalType} onChange={update("animalType")} placeholder="Select type" options={["Calf", "Yearling", "Feeder", "Cow", "Bull", "Replacement Heifer"]} />
         <FormSelectRow label="Year Born" value={fields.yearBorn} onChange={update("yearBorn")} placeholder="Select year" options={["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"]} />
-        <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Sold", "Dead", "Culled", "Missing"]} />
+        <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Dead", "Sold"]} />
+        {/* ── Notes ── */}
+        <div className="space-y-2 pt-1">
+          <p className="text-[#1A1A1A] font-['Inter']" style={{ fontSize: 14, fontWeight: 600 }}>
+            Notes
+          </p>
+          <textarea
+            value={fields.notes}
+            onChange={(e) => update("notes")(e.target.value)}
+            placeholder="Additional notes about this animal…"
+            className="w-full h-[100px] px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all resize-none"
+            style={{ fontSize: 16, fontWeight: 400 }}
+          />
+        </div>
       </div>
 
       {/* ── ID Details (collapsed) ── */}
@@ -58,20 +71,6 @@ export function AddAnimalScreen() {
           <FormFieldRow label="Reg. No." value={fields.regNo} onChange={update("regNo")} placeholder="Registration number" />
         </div>
       </CollapsibleSection>
-
-      {/* ── Notes ── */}
-      <div className="space-y-2">
-        <p className="text-[#1A1A1A] font-['Inter']" style={{ fontSize: 14, fontWeight: 600 }}>
-          Notes
-        </p>
-        <textarea
-          value={fields.notes}
-          onChange={(e) => update("notes")(e.target.value)}
-          placeholder="Additional notes about this animal…"
-          className="w-full h-[100px] px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all resize-none"
-          style={{ fontSize: 14, fontWeight: 400 }}
-        />
-      </div>
 
       {/* ── Actions ── */}
       <div className="flex gap-3 pt-2">

@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { SelectModeToggle } from "./select-mode-toggle";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { SelectAllBar } from "./select-all-bar";
+import { BulkActionBar } from "./bulk-action-bar";
+import { useSelectMode } from "./hooks/use-select-mode";
+import { useToast } from "./toast-context";
+import { useDeleteConfirm } from "./delete-confirmation";
 
 /* ── Filter Chip ── */
 function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -93,17 +100,100 @@ const entries: RedBookEntry[] = [
 
 const categories = ["All", "Invoice/Receipt", "Cattle Note", "Computer Document", "Repairs"];
 
+/* ── Entry Card (extracted for reuse) ── */
+function EntryCard({ entry }: { entry: RedBookEntry }) {
+  return (
+    <div
+      className="rounded-xl px-4 py-4 font-['Inter'] relative"
+      style={{
+        background: "linear-gradient(155deg, #0E2646 0%, #163A5E 60%, #55BAAA 100%)",
+      }}
+    >
+      {/* Pinned indicator */}
+      {entry.pinned && (
+        <span
+          className="absolute top-3 right-3 rounded-full"
+          style={{ width: 8, height: 8, backgroundColor: "#F3D12A" }}
+        />
+      )}
+
+      {/* Title */}
+      <p className="text-white truncate pr-4" style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
+        {entry.title}
+      </p>
+
+      {/* Category pill */}
+      <span
+        className="inline-block mt-2 rounded-full"
+        style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+          padding: "2px 10px", lineHeight: 1.5,
+          backgroundColor: categoryColors[entry.category] + "30",
+          color: categoryColors[entry.category],
+        }}
+      >
+        {entry.category.toUpperCase()}
+      </span>
+
+      {/* Body preview */}
+      <p
+        className="mt-2"
+        style={{
+          fontSize: 12, fontWeight: 400, color: "rgba(240,240,240,0.50)",
+          lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+        }}
+      >
+        {entry.body}
+      </p>
+
+      {/* Date */}
+      <p className="mt-2" style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.30)" }}>
+        {entry.date}
+      </p>
+    </div>
+  );
+}
+
 /* ── Screen ── */
 export function RedBookScreen() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
+  const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
+  const { showToast } = useToast();
+  const { showDeleteConfirm } = useDeleteConfirm();
 
   const filtered = activeCategory === "All" ? entries : entries.filter((e) => e.category === activeCategory);
+
+  const allFilteredIds = filtered.map((e) => e.id);
+
+  const handleBulkFlag = () => {
+    showToast("success", `Flagged ${selectedIds.size} entries`);
+    clearSelection();
+    toggleSelectMode();
+  };
+
+  const handleBulkEdit = () => {
+    showToast("info", `Editing ${selectedIds.size} entries`);
+  };
+
+  const handleBulkDelete = () => {
+    showDeleteConfirm({
+      title: "Delete Entries",
+      message: `Are you sure you want to delete ${selectedIds.size} Red Book entr${selectedIds.size > 1 ? "ies" : "y"}? This cannot be undone.`,
+      confirmLabel: `Delete ${selectedIds.size}`,
+      onConfirm: () => {
+        showToast("success", `Deleted ${selectedIds.size} entries`);
+        clearSelection();
+        toggleSelectMode();
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
       {/* ── Toolbar ── */}
       <div className="flex items-center justify-end gap-2.5">
+        <SelectModeToggle active={selectMode} onToggle={toggleSelectMode} />
         <button
           type="button"
           onClick={() => navigate("/red-book/new")}
@@ -127,65 +217,57 @@ export function RedBookScreen() {
         {filtered.length} entries
       </p>
 
-      {/* ── Entry Cards (gradient) ── */}
-      <div className="space-y-2.5">
-        {filtered.map((entry) => (
-          <div
-            key={entry.id}
-            onClick={() => navigate(`/red-book/${entry.id}`)}
-            className="cursor-pointer active:scale-[0.99] transition-transform duration-100"
-          >
+      {/* ── Select All Bar ── */}
+      {selectMode && (
+        <SelectAllBar
+          selectedCount={selectedIds.size}
+          totalCount={filtered.length}
+          onToggleAll={() => toggleAll(allFilteredIds)}
+        />
+      )}
+
+      {/* ── Entry Cards ── */}
+      <div className={`space-y-2.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+        {filtered.map((entry) =>
+          selectMode ? (
             <div
-              className="rounded-xl px-4 py-4 font-['Inter'] relative"
-              style={{
-                background: "linear-gradient(155deg, #0E2646 0%, #163A5E 60%, #55BAAA 100%)",
-              }}
+              key={entry.id}
+              onClick={() => toggleItem(entry.id)}
+              className="cursor-pointer"
             >
-              {/* Pinned indicator */}
-              {entry.pinned && (
-                <span
-                  className="absolute top-3 right-3 rounded-full"
-                  style={{ width: 8, height: 8, backgroundColor: "#F3D12A" }}
-                />
-              )}
-
-              {/* Title */}
-              <p className="text-white truncate pr-4" style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
-                {entry.title}
-              </p>
-
-              {/* Category pill */}
-              <span
-                className="inline-block mt-2 rounded-full"
-                style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
-                  padding: "2px 10px", lineHeight: 1.5,
-                  backgroundColor: categoryColors[entry.category] + "30",
-                  color: categoryColors[entry.category],
-                }}
+              <SelectableCardWrapper
+                selected={selectedIds.has(entry.id)}
+                onToggle={() => toggleItem(entry.id)}
               >
-                {entry.category.toUpperCase()}
-              </span>
-
-              {/* Body preview */}
-              <p
-                className="mt-2"
-                style={{
-                  fontSize: 12, fontWeight: 400, color: "rgba(240,240,240,0.50)",
-                  lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-                }}
-              >
-                {entry.body}
-              </p>
-
-              {/* Date */}
-              <p className="mt-2" style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.30)" }}>
-                {entry.date}
-              </p>
+                <EntryCard entry={entry} />
+              </SelectableCardWrapper>
             </div>
-          </div>
-        ))}
+          ) : (
+            <div
+              key={entry.id}
+              onClick={() => navigate(`/red-book/${entry.id}`)}
+              className="cursor-pointer active:scale-[0.99] transition-transform duration-100"
+            >
+              <EntryCard entry={entry} />
+            </div>
+          )
+        )}
       </div>
+
+      {/* ── Bulk Action Bar ── */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+          <div className="max-w-[420px] mx-auto">
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              itemLabel={selectedIds.size === 1 ? "entry" : "entries"}
+              onFlag={handleBulkFlag}
+              onEdit={handleBulkEdit}
+              onDelete={handleBulkDelete}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

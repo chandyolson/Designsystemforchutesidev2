@@ -2,11 +2,16 @@ interface CalvingRecordCardProps {
   damTag: string;
   calfTag: string;
   date: string;
-  values: string[]; // e.g. ["Heifer", "Basin Payweight", "1 — No Assistance"]
+  sex: string;
+  notes: string;
+  memo: string;
   onClick?: () => void;
 }
 
-export function CalvingRecordCard({ damTag, calfTag, date, values, onClick }: CalvingRecordCardProps) {
+export function CalvingRecordCard({ damTag, calfTag, date, sex, notes, memo, onClick }: CalvingRecordCardProps) {
+  /* Pick the best preview text: notes first, memo as fallback */
+  const previewText = notes || memo || "";
+
   return (
     <div
       className="rounded-xl px-4 py-3.5 font-['Inter'] transition-all duration-150 active:scale-[0.98]"
@@ -57,6 +62,21 @@ export function CalvingRecordCard({ damTag, calfTag, date, values, onClick }: Ca
           >
             {calfTag}
           </span>
+
+          {/* Sex badge */}
+          <span
+            className="shrink-0 rounded-full"
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "1px 8px",
+              backgroundColor: sex === "Bull" ? "rgba(85,186,170,0.15)" : "rgba(232,160,191,0.2)",
+              color: sex === "Bull" ? "#55BAAA" : "#E8A0BF",
+              lineHeight: 1.5,
+            }}
+          >
+            {sex === "Bull" ? "B" : "H"}
+          </span>
         </div>
 
         {/* Right: date + chevron */}
@@ -79,18 +99,35 @@ export function CalvingRecordCard({ damTag, calfTag, date, values, onClick }: Ca
         </div>
       </div>
 
-      {/* Row 2 — Dot-separated values */}
-      <p
-        className="mt-1.5 truncate"
-        style={{
-          fontSize: 13,
-          fontWeight: 400,
-          color: "rgba(240,240,240,0.45)",
-          lineHeight: 1.4,
-        }}
-      >
-        {values.join("  ·  ")}
-      </p>
+      {/* Row 2 — Notes preview */}
+      {previewText && (
+        <p
+          className="mt-1.5 truncate"
+          style={{
+            fontSize: 13,
+            fontWeight: 400,
+            color: "rgba(240,240,240,0.45)",
+            lineHeight: 1.4,
+          }}
+        >
+          {previewText}
+        </p>
+      )}
+
+      {/* Row 3 — Memo (if different from notes) */}
+      {memo && memo !== notes && (
+        <p
+          className="mt-1 truncate"
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: "rgba(243,209,42,0.45)",
+            lineHeight: 1.4,
+          }}
+        >
+          {memo}
+        </p>
+      )}
     </div>
   );
 }

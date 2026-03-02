@@ -5,459 +5,7 @@ import { CollapsibleSection } from "./collapsible-section";
 import { FlagIcon } from "./flag-icon";
 import type { FlagColor } from "./flag-icon";
 import { PillButton } from "./pill-button";
-
-/* ── Mock calving detail data keyed by calf tag ── */
-interface CalvingDetail {
-  calfTag: string;
-  damTag: string;
-  sire: string;
-  sex: string;
-  birthDate: string;
-  birthWeight: string;
-  assistance: string;
-  assistanceCode: string;
-  notes: string;
-  location: string;
-  group: string;
-  calfStatus: string;
-  /* Dam info */
-  dam: {
-    tag: string;
-    tagColor: string;
-    sex: string;
-    animalType: string;
-    yearBorn: string;
-    status: string;
-    flag: FlagColor | null;
-    weight: string;
-    eid: string;
-    eid2: string;
-    otherId: string;
-    lifetimeId: string;
-    memo: string;
-    notes: string;
-    calvingHistory: {
-      date: string;
-      calfTag: string;
-      calfSex: string;
-      birthWeight: string;
-      assistance: string;
-      notes: string;
-    }[];
-    workHistory: {
-      date: string;
-      project: string;
-      weight: string;
-      preg: string;
-      notes: string;
-      flag: FlagColor | null;
-      treatments: { name: string; dosage: string; route: string }[];
-    }[];
-  };
-}
-
-const calvingDetails: Record<string, CalvingDetail> = {
-  "8841": {
-    calfTag: "8841",
-    damTag: "7801",
-    sire: "Basin Payweight",
-    sex: "Heifer",
-    birthDate: "Feb 26, 2026",
-    birthWeight: "78",
-    assistance: "No Assistance",
-    assistanceCode: "1 — No Assistance",
-    notes: "Normal birth — strong heifer calf, up and nursing within 20 min",
-    location: "Calving Pasture A",
-    group: "2026 Season",
-    calfStatus: "Active",
-    dam: {
-      tag: "7801",
-      tagColor: "Green",
-      sex: "Cow",
-      animalType: "Cow",
-      yearBorn: "2019",
-      status: "Active",
-      flag: "teal",
-      weight: "1,265",
-      eid: "982 000364507890",
-      eid2: "",
-      otherId: "SBR-7801",
-      lifetimeId: "USA7801-2019",
-      memo: "Consistent producer, easy calver. Good mother.",
-      notes: "Calved Feb 26 — heifer calf 8841, no issues",
-      calvingHistory: [
-        {
-          date: "Feb 26, 2026",
-          calfTag: "8841",
-          calfSex: "Heifer",
-          birthWeight: "78 lbs",
-          assistance: "None",
-          notes: "Normal birth — strong heifer calf",
-        },
-        {
-          date: "Mar 12, 2025",
-          calfTag: "7620",
-          calfSex: "Bull",
-          birthWeight: "85 lbs",
-          assistance: "None",
-          notes: "Normal birth — vigorous calf",
-        },
-        {
-          date: "Mar 5, 2024",
-          calfTag: "6401",
-          calfSex: "Heifer",
-          birthWeight: "72 lbs",
-          assistance: "None",
-          notes: "Normal birth",
-        },
-        {
-          date: "Feb 28, 2023",
-          calfTag: "5210",
-          calfSex: "Bull",
-          birthWeight: "88 lbs",
-          assistance: "Easy pull",
-          notes: "Slight assistance — large calf",
-        },
-      ],
-      workHistory: [
-        {
-          date: "Jan 14, 2026",
-          project: "Winter Vaccination",
-          weight: "1,245",
-          preg: "Confirmed",
-          notes: "Normal — routine vaccination, due late Feb",
-          flag: "teal",
-          treatments: [
-            { name: "Bovi-Shield Gold 5", dosage: "2 mL", route: "IM" },
-            { name: "Ivermectin Pour-On", dosage: "58 mL", route: "Topical" },
-          ],
-        },
-        {
-          date: "Oct 15, 2025",
-          project: "Fall Processing",
-          weight: "1,230",
-          preg: "Confirmed",
-          notes: "Preg confirmed, good condition heading into winter",
-          flag: null,
-          treatments: [
-            { name: "Dectomax Pour-On", dosage: "55 mL", route: "Topical" },
-          ],
-        },
-        {
-          date: "May 22, 2025",
-          project: "Spring Preg Check 2025",
-          weight: "1,198",
-          preg: "Confirmed",
-          notes: "Normal — healthy, weaned calf #7620",
-          flag: null,
-          treatments: [
-            { name: "Multimin 90", dosage: "12 mL", route: "SQ" },
-          ],
-        },
-      ],
-    },
-  },
-  "8842": {
-    calfTag: "8842",
-    damTag: "3091",
-    sire: "Connealy Consensus",
-    sex: "Bull",
-    birthDate: "Feb 25, 2026",
-    birthWeight: "84",
-    assistance: "No Assistance",
-    assistanceCode: "1 — No Assistance",
-    notes: "Normal delivery — bull calf, good vigor",
-    location: "Calving Pasture A",
-    group: "2026 Season",
-    calfStatus: "Active",
-    dam: {
-      tag: "3091",
-      tagColor: "Yellow",
-      sex: "Cow",
-      animalType: "Cow",
-      yearBorn: "2020",
-      status: "Active",
-      flag: "gold",
-      weight: "983",
-      eid: "982 000364508104",
-      eid2: "",
-      otherId: "SBR-3091",
-      lifetimeId: "USA3091-2020",
-      memo: "Mild cough, nasal discharge noted. Monitor closely.",
-      notes: "Calved Feb 25 — bull calf 8842, respiratory still present",
-      calvingHistory: [
-        {
-          date: "Feb 25, 2026",
-          calfTag: "8842",
-          calfSex: "Bull",
-          birthWeight: "84 lbs",
-          assistance: "None",
-          notes: "Normal delivery despite dam being monitored",
-        },
-      ],
-      workHistory: [
-        {
-          date: "Jan 14, 2026",
-          project: "Winter Vaccination",
-          weight: "965",
-          preg: "Confirmed",
-          notes: "Noted slight cough — monitor",
-          flag: "gold",
-          treatments: [
-            { name: "Bovi-Shield Gold 5", dosage: "2 mL", route: "IM" },
-          ],
-        },
-        {
-          date: "Oct 15, 2025",
-          project: "Fall Processing",
-          weight: "948",
-          preg: "Confirmed",
-          notes: "Below target weight, respiratory noted",
-          flag: "gold",
-          treatments: [
-            { name: "Dectomax Pour-On", dosage: "45 mL", route: "Topical" },
-          ],
-        },
-      ],
-    },
-  },
-  "8843": {
-    calfTag: "8843",
-    damTag: "4782",
-    sire: "SAV Resource",
-    sex: "Heifer",
-    birthDate: "Feb 24, 2026",
-    birthWeight: "72",
-    assistance: "Easy Pull",
-    assistanceCode: "2 — Easy Pull",
-    notes: "Slight assistance needed — calf positioned slightly back. Up quickly after.",
-    location: "Calving Pasture B",
-    group: "2026 Season",
-    calfStatus: "Active",
-    dam: {
-      tag: "4782",
-      tagColor: "Pink",
-      sex: "Cow",
-      animalType: "Cow",
-      yearBorn: "2020",
-      status: "Active",
-      flag: "teal",
-      weight: "1,247",
-      eid: "982 000364507221",
-      eid2: "",
-      otherId: "SBR-4782",
-      lifetimeId: "USA4782-2020",
-      memo: "Good disposition, easy handler",
-      notes: "Calved Feb 24 — heifer calf 8843, easy pull",
-      calvingHistory: [
-        {
-          date: "Feb 24, 2026",
-          calfTag: "8843",
-          calfSex: "Heifer",
-          birthWeight: "72 lbs",
-          assistance: "Easy pull",
-          notes: "Slight assistance — calf positioned back",
-        },
-        {
-          date: "May 10, 2025",
-          calfTag: "7890",
-          calfSex: "Bull",
-          birthWeight: "85 lbs",
-          assistance: "None",
-          notes: "Normal birth",
-        },
-      ],
-      workHistory: [
-        {
-          date: "Jan 14, 2026",
-          project: "Winter Vaccination",
-          weight: "1,210",
-          preg: "Confirmed",
-          notes: "Normal — routine vaccination",
-          flag: "teal",
-          treatments: [
-            { name: "Bovi-Shield Gold 5", dosage: "2 mL", route: "IM" },
-            { name: "Ivermectin Pour-On", dosage: "55 mL", route: "Topical" },
-          ],
-        },
-        {
-          date: "Oct 15, 2025",
-          project: "Fall Processing",
-          weight: "1,185",
-          preg: "Confirmed",
-          notes: "Pour-on dewormer applied, weaned calf",
-          flag: null,
-          treatments: [
-            { name: "Dectomax Pour-On", dosage: "50 mL", route: "Topical" },
-          ],
-        },
-      ],
-    },
-  },
-  "8846": {
-    calfTag: "8846",
-    damTag: "8812",
-    sire: "Connealy Consensus",
-    sex: "Bull",
-    birthDate: "Feb 21, 2026",
-    birthWeight: "92",
-    assistance: "Hard Pull",
-    assistanceCode: "3 — Hard Pull",
-    notes: "Difficult delivery — large calf, needed mechanical assistance. Dam and calf both recovered.",
-    location: "Calving Pasture A",
-    group: "2026 Season",
-    calfStatus: "Active",
-    dam: {
-      tag: "8812",
-      tagColor: "Orange",
-      sex: "Cow",
-      animalType: "Cow",
-      yearBorn: "2019",
-      status: "Active",
-      flag: "gold",
-      weight: "1,156",
-      eid: "982 000364511698",
-      eid2: "",
-      otherId: "SBR-8812",
-      lifetimeId: "USA8812-2019",
-      memo: "Monitor — hard pull on latest calf, check recovery",
-      notes: "Calved Feb 21 — bull calf 8846, hard pull, recovering",
-      calvingHistory: [
-        {
-          date: "Feb 21, 2026",
-          calfTag: "8846",
-          calfSex: "Bull",
-          birthWeight: "92 lbs",
-          assistance: "Hard pull",
-          notes: "Difficult delivery — mechanical assistance needed",
-        },
-        {
-          date: "May 2, 2025",
-          calfTag: "8855",
-          calfSex: "Bull",
-          birthWeight: "82 lbs",
-          assistance: "None",
-          notes: "Normal birth",
-        },
-        {
-          date: "Apr 12, 2024",
-          calfTag: "7601",
-          calfSex: "Heifer",
-          birthWeight: "75 lbs",
-          assistance: "None",
-          notes: "Normal birth, strong calf",
-        },
-      ],
-      workHistory: [
-        {
-          date: "Jan 14, 2026",
-          project: "Winter Vaccination",
-          weight: "1,130",
-          preg: "Confirmed",
-          notes: "Normal — routine",
-          flag: null,
-          treatments: [
-            { name: "Bovi-Shield Gold 5", dosage: "2 mL", route: "IM" },
-            { name: "Ivermectin Pour-On", dosage: "50 mL", route: "Topical" },
-          ],
-        },
-        {
-          date: "Oct 15, 2025",
-          project: "Fall Processing",
-          weight: "1,098",
-          preg: "Confirmed",
-          notes: "Normal — fall processing complete",
-          flag: null,
-          treatments: [
-            { name: "Dectomax Pour-On", dosage: "50 mL", route: "Topical" },
-            { name: "Multimin 90", dosage: "11 mL", route: "SQ" },
-          ],
-        },
-      ],
-    },
-  },
-  "8851": {
-    calfTag: "8851",
-    damTag: "5520",
-    sire: "SAV Resource",
-    sex: "Heifer",
-    birthDate: "Feb 16, 2026",
-    birthWeight: "68",
-    assistance: "Surgical",
-    assistanceCode: "4 — Surgical",
-    notes: "C-section required — calf breech. Both dam and calf survived. Dam flagged critical.",
-    location: "Barn / Vet Area",
-    group: "2026 Season",
-    calfStatus: "Active",
-    dam: {
-      tag: "5520",
-      tagColor: "Red",
-      sex: "Cow",
-      animalType: "Cow",
-      yearBorn: "2018",
-      status: "Active",
-      flag: "red",
-      weight: "1,102",
-      eid: "982 000364509337",
-      eid2: "",
-      otherId: "SBR-5520",
-      lifetimeId: "USA5520-2018",
-      memo: "Chronic limp, poor BCS — cull candidate. C-section Feb 2026.",
-      notes: "C-section Feb 16 — heifer calf 8851 survived. Dam recovering.",
-      calvingHistory: [
-        {
-          date: "Feb 16, 2026",
-          calfTag: "8851",
-          calfSex: "Heifer",
-          birthWeight: "68 lbs",
-          assistance: "Surgical",
-          notes: "C-section — calf breech, both survived",
-        },
-        {
-          date: "Apr 28, 2025",
-          calfTag: "9102",
-          calfSex: "Heifer",
-          birthWeight: "72 lbs",
-          assistance: "Mechanical",
-          notes: "Difficult pull — calf positioned backward",
-        },
-        {
-          date: "Mar 15, 2024",
-          calfTag: "7834",
-          calfSex: "Bull",
-          birthWeight: "90 lbs",
-          assistance: "None",
-          notes: "Normal birth",
-        },
-      ],
-      workHistory: [
-        {
-          date: "Jan 14, 2026",
-          project: "Winter Vaccination",
-          weight: "1,080",
-          preg: "Confirmed",
-          notes: "Limping — right rear, treated with Banamine",
-          flag: "red",
-          treatments: [
-            { name: "Banamine", dosage: "10 mL", route: "IV" },
-            { name: "Penicillin", dosage: "10 cc", route: "IM" },
-          ],
-        },
-        {
-          date: "Oct 15, 2025",
-          project: "Fall Processing",
-          weight: "1,065",
-          preg: "Confirmed",
-          notes: "Chronic limp noted, flagged for cull review",
-          flag: "red",
-          treatments: [
-            { name: "Dectomax Pour-On", dosage: "50 mL", route: "Topical" },
-          ],
-        },
-      ],
-    },
-  },
-};
+import { useCalvingData } from "./calving-data-context";
 
 /* Fallback to first record if tag not found */
 const fallbackTag = "8841";
@@ -488,19 +36,22 @@ const tagColorMap: Record<string, string> = {
 export function CalvingDetailScreen() {
   const navigate = useNavigate();
   const { calfTag } = useParams();
-  const data = calvingDetails[calfTag || fallbackTag] ?? calvingDetails[fallbackTag];
+  const { getDetail, updateDetail } = useCalvingData();
+
+  const data = getDetail(calfTag || fallbackTag) ?? getDetail(fallbackTag);
 
   const [activeTab, setActiveTab] = useState<"calf" | "dam">("calf");
 
-  /* Editable calf fields */
+  /* Editable calf fields — seeded from context data */
   const [calfFields, setCalfFields] = useState({
-    birthWeight: data.birthWeight,
-    size: data.assistance === "Surgical" ? "Small" : "Average",
-    notes: data.notes,
-    assistance: data.assistanceCode,
-    location: data.location,
-    group: data.group,
-    calfStatus: data.calfStatus,
+    birthWeight: data?.birthWeight ?? "",
+    size: data?.assistance === "Surgical" ? "Small" : "Average",
+    notes: data?.notes ?? "",
+    memo: data?.memo ?? "",
+    assistance: data?.assistanceCode ?? "",
+    location: data?.location ?? "",
+    group: data?.group ?? "",
+    calfStatus: data?.calfStatus ?? "",
   });
 
   const updateCalf = (key: keyof typeof calfFields) => (val: string) =>
@@ -512,7 +63,7 @@ export function CalvingDetailScreen() {
     "Weak calf", "Scours", "Bottle baby", "Graft", "Prolapse",
     "Retained placenta", "Slow to nurse", "Aggressive cow",
   ];
-  const [quickNotes, setQuickNotes] = useState<string[]>([]);
+  const [quickNotes, setQuickNotes] = useState<string[]>(data?.quickNotes ?? []);
   const toggleQuickNote = (note: string) =>
     setQuickNotes((prev) =>
       prev.includes(note) ? prev.filter((n) => n !== note) : [...prev, note]
@@ -520,8 +71,8 @@ export function CalvingDetailScreen() {
 
   /* Cow traits state */
   const [cowTraits, setCowTraits] = useState({
-    assistance: data.assistanceCode,
-    disposition: data.assistance === "No Assistance" ? "1 — Docile" : "2 — Restless",
+    assistance: data?.assistanceCode ?? "",
+    disposition: data?.assistance === "No Assistance" ? "1 — Docile" : "2 — Restless",
     udder: "6",
     teat: "5",
     claw: "5",
@@ -533,11 +84,41 @@ export function CalvingDetailScreen() {
 
   /* Calf traits state */
   const [calfTraits, setCalfTraits] = useState({
-    vigor: data.assistance === "No Assistance" ? "5" : "3",
-    size: data.assistance === "Surgical" ? "2" : "3",
+    vigor: data?.assistance === "No Assistance" ? "5" : "3",
+    size: data?.assistance === "Surgical" ? "2" : "3",
   });
   const updateCalfTrait = (key: keyof typeof calfTraits) => (val: string) =>
     setCalfTraits((prev) => ({ ...prev, [key]: val }));
+
+  /* Save handler — persists to shared context */
+  const handleSave = () => {
+    if (!data) return;
+    updateDetail(data.calfTag, {
+      notes: calfFields.notes,
+      memo: calfFields.memo,
+      birthWeight: calfFields.birthWeight,
+      location: calfFields.location,
+      group: calfFields.group,
+      calfStatus: calfFields.calfStatus,
+      assistanceCode: calfFields.assistance,
+      quickNotes,
+    });
+    navigate(-1);
+  };
+
+  /* If no data at all, show a minimal fallback */
+  if (!data) {
+    return (
+      <div className="py-10 text-center font-['Inter']">
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>
+          Record not found
+        </p>
+        <PillButton variant="outline" size="md" onClick={() => navigate(-1)} style={{ marginTop: 16 }}>
+          Back
+        </PillButton>
+      </div>
+    );
+  }
 
   const dam = data.dam;
 
@@ -661,7 +242,7 @@ export function CalvingDetailScreen() {
                       value={calfFields.size}
                       onChange={(e) => updateCalf("size")(e.target.value)}
                       className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all appearance-none cursor-pointer"
-                      style={{ fontSize: 14, fontWeight: 400, color: calfFields.size ? "#1A1A1A" : "rgba(26,26,26,0.30)" }}
+                      style={{ fontSize: 16, fontWeight: 400, color: calfFields.size ? "#1A1A1A" : "rgba(26,26,26,0.30)" }}
                     >
                       <option value="" disabled>Size</option>
                       {["Small", "Average", "Large"].map((opt) => (
@@ -681,7 +262,7 @@ export function CalvingDetailScreen() {
                     value={calfFields.birthWeight}
                     onChange={(e) => updateCalf("birthWeight")(e.target.value)}
                     className="w-[80px] h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-                    style={{ fontSize: 14, fontWeight: 400 }}
+                    style={{ fontSize: 16, fontWeight: 400 }}
                   />
                 </div>
               </div>
@@ -694,6 +275,7 @@ export function CalvingDetailScreen() {
                 options={["Active", "Dead", "Sold", "Grafted"]}
               />
               <FormFieldRow label="Notes" value={calfFields.notes} onChange={updateCalf("notes")} placeholder="Calving notes…" />
+              <FormFieldRow label="Memo" value={calfFields.memo} onChange={updateCalf("memo")} placeholder="Quick memo…" />
             </div>
 
             {/* ── Quick Notes (pills) ── */}
@@ -795,7 +377,7 @@ export function CalvingDetailScreen() {
               <PillButton variant="outline" size="md" onClick={() => navigate(-1)} style={{ flex: 1 }}>
                 Cancel
               </PillButton>
-              <PillButton size="md" onClick={() => navigate(-1)} style={{ flex: 1 }}>
+              <PillButton size="md" onClick={handleSave} style={{ flex: 1 }}>
                 Save Changes
               </PillButton>
             </div>
