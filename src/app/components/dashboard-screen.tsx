@@ -9,6 +9,33 @@ import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
 import { FormFieldRow, FormSelectRow } from "./form-field-row";
 
+/* ── Action Items Data ──────────────────────── */
+type ActionPriority = "Urgent" | "High" | "Medium" | "Low";
+interface ActionItem {
+  id: string;
+  title: string;
+  priority: ActionPriority;
+  assignTo: string;
+  linkedTo?: string;
+  completed: boolean;
+}
+
+const ACTION_PRIORITY_COLORS: Record<ActionPriority, string> = {
+  Urgent: "#C62828",
+  High: "#E65100",
+  Medium: "#B8860B",
+  Low: "#1565C0",
+};
+
+const initialActionItems: ActionItem[] = [
+  { id: "a1", title: "Tag 3309 feet need trimming", priority: "Urgent", assignTo: "Me", linkedTo: "Animal", completed: false },
+  { id: "a2", title: "Fence down section 3", priority: "High", assignTo: "Mike Torres", linkedTo: "North Pasture", completed: false },
+  { id: "a3", title: "Order Draxxin restock", priority: "Medium", assignTo: "Me", completed: false },
+  { id: "a4", title: "Water tank float broken — East Section", priority: "Medium", assignTo: "Mike Torres", linkedTo: "East Meadow", completed: false },
+  { id: "a5", title: "Move salt blocks to south pasture", priority: "Low", assignTo: "Emily Olson", completed: false },
+  { id: "a6", title: "Check on Tag 7801 — calving soon", priority: "Medium", assignTo: "Me", linkedTo: "Animal", completed: false },
+];
+
 /* ── Data ──────────────────────────────────── */
 const stats = [
   {
@@ -146,6 +173,7 @@ const herdStatusAnimals: {
 export function DashboardScreen() {
   const [search, setSearch] = useState("");
   const [herdExpanded, setHerdExpanded] = useState(false);
+  const [actionItems, setActionItems] = useState(initialActionItems);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
@@ -197,6 +225,144 @@ export function DashboardScreen() {
           </span>
         </button>
       </div>
+
+      {/* ── Action Items Card ── */}
+      {(() => {
+        const openItems = actionItems.filter((a) => !a.completed);
+        if (openItems.length === 0) return null;
+        const priorityOrder: ActionPriority[] = ["Urgent", "High", "Medium", "Low"];
+        const sorted = [...openItems].sort(
+          (a, b) => priorityOrder.indexOf(a.priority) - priorityOrder.indexOf(b.priority)
+        );
+        const top3 = sorted.slice(0, 3);
+        return (
+          <div
+            className="rounded-xl bg-white font-['Inter']"
+            style={{ border: "1px solid #D4D4D0", padding: 16 }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                  <path
+                    d="M3 1.5V14.5M3 1.5H12L9.5 5.25L12 9H3"
+                    stroke="#E74C3C"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#0E2646" }}>
+                  Action Items
+                </span>
+              </div>
+              <span
+                className="rounded-full inline-flex items-center justify-center"
+                style={{
+                  padding: "2px 10px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#C62828",
+                  backgroundColor: "#FFEBEE",
+                }}
+              >
+                {openItems.length} open
+              </span>
+            </div>
+
+            {/* Items */}
+            <div style={{ marginTop: 12 }}>
+              {top3.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3"
+                  style={{
+                    padding: "10px 0",
+                    borderBottom:
+                      idx < top3.length - 1
+                        ? "1px solid rgba(212,212,208,0.30)"
+                        : "none",
+                  }}
+                >
+                  {/* Left: priority dot + text */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className="shrink-0 rounded-full"
+                        style={{
+                          width: 8,
+                          height: 8,
+                          backgroundColor: ACTION_PRIORITY_COLORS[item.priority],
+                        }}
+                      />
+                      <p
+                        className="truncate"
+                        style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+                      >
+                        {item.title}
+                      </p>
+                    </div>
+                    <p
+                      className="truncate"
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 400,
+                        color: "rgba(26,26,26,0.35)",
+                        marginLeft: 18.5,
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.assignTo}
+                      {item.linkedTo ? ` · ${item.linkedTo}` : ""}
+                    </p>
+                  </div>
+
+                  {/* Right: checkbox circle */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionItems((prev) =>
+                        prev.map((a) =>
+                          a.id === item.id ? { ...a, completed: true } : a
+                        )
+                      );
+                      showToast("success", `"${item.title}" marked complete`);
+                    }}
+                    className="shrink-0 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.90] hover:border-[#55BAAA]!"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      border: "2px solid #D4D4D0",
+                      backgroundColor: "transparent",
+                      padding: 0,
+                    }}
+                    aria-label={`Mark "${item.title}" complete`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* View all link */}
+            <button
+              type="button"
+              onClick={() => navigate("/red-book?filter=Actions")}
+              className="cursor-pointer transition-opacity hover:opacity-80"
+              style={{
+                marginTop: 8,
+                background: "none",
+                border: "none",
+                padding: 0,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#55BAAA",
+              }}
+            >
+              View all {openItems.length} open actions →
+            </button>
+          </div>
+        );
+      })()}
 
       {/* ── Herd Summary Row ── */}
       <button
