@@ -6,6 +6,11 @@ import { FlagIcon } from "./flag-icon";
 import type { FlagColor } from "./flag-icon";
 import { PillButton } from "./pill-button";
 import { useCalvingData } from "./calving-data-context";
+import {
+  CalvingQuickNotes,
+  getActiveFlagColor,
+  type NoteFlag,
+} from "./calving-quick-notes";
 
 /* Fallback to first record if tag not found */
 const fallbackTag = "8841";
@@ -32,6 +37,13 @@ const tagColorMap: Record<string, string> = {
   Purple: "#8B5FBF",
 };
 
+/* Flag label map */
+const FLAG_LABEL_MAP: Record<string, string> = {
+  cull: "Cull",
+  production: "Production",
+  management: "Management",
+};
+
 /* ── Component ── */
 export function CalvingDetailScreen() {
   const navigate = useNavigate();
@@ -47,7 +59,6 @@ export function CalvingDetailScreen() {
     birthWeight: data?.birthWeight ?? "",
     size: data?.assistance === "Surgical" ? "Small" : "Average",
     notes: data?.notes ?? "",
-    memo: data?.memo ?? "",
     assistance: data?.assistanceCode ?? "",
     location: data?.location ?? "",
     group: data?.group ?? "",
@@ -57,35 +68,29 @@ export function CalvingDetailScreen() {
   const updateCalf = (key: keyof typeof calfFields) => (val: string) =>
     setCalfFields((prev) => ({ ...prev, [key]: val }));
 
-  /* Quick notes */
-  const quickNoteOptions = [
-    "Breach", "Backwards", "Twins", "Pulled", "C-Section",
-    "Weak calf", "Scours", "Bottle baby", "Graft", "Prolapse",
-    "Retained placenta", "Slow to nurse", "Aggressive cow",
-  ];
-  const [quickNotes, setQuickNotes] = useState<string[]>(data?.quickNotes ?? []);
-  const toggleQuickNote = (note: string) =>
-    setQuickNotes((prev) =>
-      prev.includes(note) ? prev.filter((n) => n !== note) : [...prev, note]
-    );
+  /* Quick notes — color-coded with flag behavior */
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(
+    data?.quickNotes?.length ? [] : ["qn2", "qn11"] // Bad Bag + Needs Tag as mock default
+  );
+  const [activeFlag, setActiveFlag] = useState<NoteFlag>("production");
 
   /* Cow traits state */
   const [cowTraits, setCowTraits] = useState({
     assistance: data?.assistanceCode ?? "",
     disposition: data?.assistance === "No Assistance" ? "1 — Docile" : "2 — Restless",
-    udder: "6",
-    teat: "5",
-    claw: "5",
-    foot: "6",
-    mothering: "4",
+    udder: "6 — Above average",
+    teat: "5 — Average",
+    claw: "5 — Average",
+    foot: "6 — Above average",
+    mothering: "4 — Good/Attentive",
   });
   const updateCowTrait = (key: keyof typeof cowTraits) => (val: string) =>
     setCowTraits((prev) => ({ ...prev, [key]: val }));
 
   /* Calf traits state */
   const [calfTraits, setCalfTraits] = useState({
-    vigor: data?.assistance === "No Assistance" ? "5" : "3",
-    size: data?.assistance === "Surgical" ? "2" : "3",
+    vigor: data?.assistance === "No Assistance" ? "5 — Vigorous/Up quickly" : "3 — Average",
+    size: data?.assistance === "Surgical" ? "2 — Small" : "3 — Average",
   });
   const updateCalfTrait = (key: keyof typeof calfTraits) => (val: string) =>
     setCalfTraits((prev) => ({ ...prev, [key]: val }));
@@ -95,13 +100,12 @@ export function CalvingDetailScreen() {
     if (!data) return;
     updateDetail(data.calfTag, {
       notes: calfFields.notes,
-      memo: calfFields.memo,
       birthWeight: calfFields.birthWeight,
       location: calfFields.location,
       group: calfFields.group,
       calfStatus: calfFields.calfStatus,
       assistanceCode: calfFields.assistance,
-      quickNotes,
+      quickNotes: selectedNoteIds,
     });
     navigate(-1);
   };
@@ -121,6 +125,7 @@ export function CalvingDetailScreen() {
   }
 
   const dam = data.dam;
+  const flagColor = getActiveFlagColor(selectedNoteIds);
 
   return (
     <div className="space-y-0">
@@ -185,6 +190,15 @@ export function CalvingDetailScreen() {
             </span>
           </div>
         </div>
+        {/* Flag indicator row */}
+        {flagColor && (
+          <div className="flex items-center gap-1.5 mt-3 pt-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <FlagIcon color={flagColor} size="sm" />
+            <span style={{ fontSize: 11, fontWeight: 700, color: flagColor === "red" ? "#F8A0A0" : flagColor === "gold" ? "#F3D12A" : "#A8E6DA" }}>
+              {FLAG_LABEL_MAP[activeFlag]} Flag
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ══ TABS ══ */}
@@ -275,75 +289,44 @@ export function CalvingDetailScreen() {
                 options={["Active", "Dead", "Sold", "Grafted"]}
               />
               <FormFieldRow label="Notes" value={calfFields.notes} onChange={updateCalf("notes")} placeholder="Calving notes…" />
-              <FormFieldRow label="Memo" value={calfFields.memo} onChange={updateCalf("memo")} placeholder="Quick memo…" />
             </div>
 
             {/* ── Quick Notes (pills) ── */}
-            <CollapsibleSection
-              title="Quick Notes"
-              collapsedContent={
-                quickNotes.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 pt-2">
-                    {quickNotes.map((note) => (
-                      <span
-                        key={note}
-                        className="px-2.5 py-1 rounded-full font-['Inter']"
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          backgroundColor: "#0E2646",
-                          color: "white",
-                        }}
-                      >
-                        {note}
-                      </span>
-                    ))}
-                  </div>
-                ) : undefined
-              }
-            >
-              <div className="flex flex-wrap gap-2 pt-2">
-                {quickNoteOptions.map((note) => {
-                  const isSelected = quickNotes.includes(note);
-                  return (
-                    <button
-                      key={note}
-                      type="button"
-                      onClick={() => toggleQuickNote(note)}
-                      className="px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150 font-['Inter']"
-                      style={{
-                        fontSize: 13,
-                        fontWeight: isSelected ? 700 : 500,
-                        backgroundColor: isSelected ? "#0E2646" : "white",
-                        borderColor: isSelected ? "#0E2646" : "#D4D4D0",
-                        color: isSelected ? "white" : "#1A1A1A",
-                      }}
-                    >
-                      {note}
-                    </button>
-                  );
-                })}
+            <div className="flex items-start gap-3">
+              <label
+                className="shrink-0 text-[#1A1A1A] font-['Inter']"
+                style={{ width: 105, fontSize: 14, fontWeight: 600, paddingTop: 7 }}
+              >
+                Quick Notes
+              </label>
+              <div className="flex-1 min-w-0">
+                <CalvingQuickNotes
+                  selectedIds={selectedNoteIds}
+                  onSelectedChange={setSelectedNoteIds}
+                  tag={data.calfTag}
+                  onFlagChange={setActiveFlag}
+                />
               </div>
-            </CollapsibleSection>
+            </div>
 
             {/* ── Cow Traits (collapsed) ── */}
             <CollapsibleSection title="Cow Traits (7)">
               <div className="space-y-2.5 pt-2">
                 <FormSelectRow label="Assistance" value={cowTraits.assistance} onChange={updateCowTrait("assistance")} placeholder="Select level" options={["1 — None", "2 — Easy pull", "3 — Moderate", "4 — Hard pull", "5 — Surgery"]} />
                 <FormSelectRow label="Disposition" value={cowTraits.disposition} onChange={updateCowTrait("disposition")} placeholder="Select score" options={["1 — Docile", "2 — Restless", "3 — Nervous", "4 — Flighty", "5 — Aggressive", "6 — Very aggressive"]} />
-                <FormFieldRow label="Udder Score" value={cowTraits.udder} onChange={updateCowTrait("udder")} placeholder="1-9" />
-                <FormFieldRow label="Teat Score" value={cowTraits.teat} onChange={updateCowTrait("teat")} placeholder="1-9" />
-                <FormFieldRow label="Claw Score" value={cowTraits.claw} onChange={updateCowTrait("claw")} placeholder="1-9" />
-                <FormFieldRow label="Foot Score" value={cowTraits.foot} onChange={updateCowTrait("foot")} placeholder="1-9" />
-                <FormFieldRow label="Mothering" value={cowTraits.mothering} onChange={updateCowTrait("mothering")} placeholder="1-5" />
+                <FormSelectRow label="Udder Score" value={cowTraits.udder} onChange={updateCowTrait("udder")} placeholder="Select score" options={["1 — Very pendulous", "2 — Pendulous", "3 — Moderate/Low", "4 — Moderate", "5 — Average", "6 — Above average", "7 — Good", "8 — Very good", "9 — Ideal/Tight"]} />
+                <FormSelectRow label="Teat Score" value={cowTraits.teat} onChange={updateCowTrait("teat")} placeholder="Select score" options={["1 — Very large/ballooned", "2 — Large", "3 — Moderate/Large", "4 — Moderate", "5 — Average", "6 — Above average", "7 — Good", "8 — Very good", "9 — Ideal/Small"]} />
+                <FormSelectRow label="Claw Score" value={cowTraits.claw} onChange={updateCowTrait("claw")} placeholder="Select score" options={["1 — Very poor", "2 — Poor", "3 — Below average", "4 — Moderate", "5 — Average", "6 — Above average", "7 — Good", "8 — Very good", "9 — Ideal"]} />
+                <FormSelectRow label="Foot Score" value={cowTraits.foot} onChange={updateCowTrait("foot")} placeholder="Select score" options={["1 — Very poor", "2 — Poor", "3 — Below average", "4 — Moderate", "5 — Average", "6 — Above average", "7 — Good", "8 — Very good", "9 — Ideal"]} />
+                <FormSelectRow label="Mothering" value={cowTraits.mothering} onChange={updateCowTrait("mothering")} placeholder="Select score" options={["1 — Abandons calf", "2 — Poor/Inattentive", "3 — Average", "4 — Good/Attentive", "5 — Excellent/Protective"]} />
               </div>
             </CollapsibleSection>
 
             {/* ── Calf Traits (collapsed) ── */}
             <CollapsibleSection title="Calf Traits (2)">
               <div className="space-y-2.5 pt-2">
-                <FormFieldRow label="Calf Vigor" value={calfTraits.vigor} onChange={updateCalfTrait("vigor")} placeholder="1-5" />
-                <FormFieldRow label="Calf Size" value={calfTraits.size} onChange={updateCalfTrait("size")} placeholder="1-5" />
+                <FormSelectRow label="Calf Vigor" value={calfTraits.vigor} onChange={updateCalfTrait("vigor")} placeholder="Select score" options={["1 — Dead/No response", "2 — Weak/Slow to stand", "3 — Average", "4 — Alert/Active", "5 — Vigorous/Up quickly"]} />
+                <FormSelectRow label="Calf Size" value={calfTraits.size} onChange={updateCalfTrait("size")} placeholder="Select score" options={["1 — Very small", "2 — Small", "3 — Average", "4 — Large", "5 — Very large"]} />
               </div>
             </CollapsibleSection>
 
@@ -434,17 +417,6 @@ export function CalvingDetailScreen() {
                 </p>
                 <p className="text-[#1A1A1A]/70 font-['Inter']" style={{ fontSize: 13, lineHeight: 1.5 }}>
                   {dam.notes || "No notes"}
-                </p>
-              </div>
-              <div style={{ borderTop: "1px solid rgba(26,26,26,0.06)", paddingTop: 12 }}>
-                <p
-                  className="font-['Inter'] uppercase mb-1.5"
-                  style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#1A1A1A40" }}
-                >
-                  Dam Memo
-                </p>
-                <p className="text-[#1A1A1A]/50 font-['Inter']" style={{ fontSize: 13, lineHeight: 1.5 }}>
-                  {dam.memo || "No memo"}
                 </p>
               </div>
             </div>

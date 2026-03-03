@@ -236,7 +236,7 @@ export function ProjectReportScreen() {
                   fontWeight: 600,
                   color: "#1A1A1A",
                   marginTop: 1,
-                  fontFamily: (kv as any).mono ? "'Geist Mono', monospace" : "'Inter', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   wordBreak: "break-all",
                 }}
               >
@@ -427,7 +427,7 @@ export function ProjectReportScreen() {
                   {/* Weight */}
                   <span
                     className="w-[60px] text-center"
-                    style={{ fontSize: 13, fontWeight: 400, color: "#1A1A1A", fontFamily: "'Geist Mono', monospace" }}
+                    style={{ fontSize: 13, fontWeight: 400, color: "#1A1A1A", fontFamily: "'Inter', sans-serif" }}
                   >
                     {a.weight}
                   </span>

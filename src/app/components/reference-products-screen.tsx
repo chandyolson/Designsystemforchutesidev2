@@ -2,6 +2,10 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
+import { useSelectMode } from "./hooks/use-select-mode";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { SelectAllBar } from "./select-all-bar";
+import { BulkActionBar } from "./bulk-action-bar";
 
 /* ══════════════════════════════════════════
    Types & Data
@@ -74,16 +78,6 @@ function PlusIcon() {
   );
 }
 
-function DotsIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="3.5" r="1.25" fill="#0E2646" fillOpacity="0.45" />
-      <circle cx="8" cy="8" r="1.25" fill="#0E2646" fillOpacity="0.45" />
-      <circle cx="8" cy="12.5" r="1.25" fill="#0E2646" fillOpacity="0.45" />
-    </svg>
-  );
-}
-
 function ChevronRight() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -143,18 +137,25 @@ function WithdrawalPill({ days }: { days: number }) {
 }
 
 /* ══════════════════════════════════════════
-   Filter Dropdown
+   3-Dot Actions Dropdown (canonical pattern)
    ══════════════════════════════════════════ */
-function FilterDropdown({
-  value,
-  onChange,
+function ActionsDropdown({
+  selectMode,
+  onToggleSelect,
+  sortBy,
+  onSortChange,
+  onExport,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  selectMode: boolean;
+  onToggleSelect: () => void;
+  sortBy: string;
+  onSortChange: (v: string) => void;
+  onExport: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [showSortSub, setShowSortSub] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const options = ["Name A-Z", "Name Z-A", "Category", "Withdrawal Days"];
+  const sortOptions = ["Name A-Z", "Name Z-A", "Category", "Withdrawal Days"];
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -164,58 +165,8 @@ function FilterDropdown({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 cursor-pointer rounded-lg border border-[#D4D4D0] bg-white px-3 font-['Inter'] transition-colors hover:bg-[#F5F5F0]"
-        style={{ height: 36, fontSize: 12, fontWeight: 600, color: "#0E2646" }}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M1.75 3.5H12.25M3.5 7H10.5M5.25 10.5H8.75" stroke="#0E2646" strokeOpacity="0.5" strokeWidth="1.3" strokeLinecap="round" />
-        </svg>
-        Sort
-        <ChevronDown />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-[40px] z-20 w-40 rounded-xl bg-white border border-[#D4D4D0] shadow-lg overflow-hidden font-['Inter']">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className="w-full text-left px-3.5 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-              style={{
-                fontSize: 13,
-                fontWeight: opt === value ? 600 : 400,
-                color: "#1A1A1A",
-                background: opt === value ? "#F5F5F0" : "none",
-                border: "none",
-              }}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════
-   3-Dot Actions Dropdown
-   ══════════════════════════════════════════ */
-function ActionsDropdown({ onExport }: { onExport: () => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    if (!open) setShowSortSub(false);
   }, [open]);
 
   return (
@@ -223,14 +174,79 @@ function ActionsDropdown({ onExport }: { onExport: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-center cursor-pointer rounded-lg border border-[#D4D4D0] bg-white transition-colors hover:bg-[#F5F5F0]"
-        style={{ width: 32, height: 36 }}
+        className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.97] flex items-center justify-center"
+        style={{
+          width: 34,
+          height: 34,
+          backgroundColor: "white",
+          border: "1px solid rgba(14,38,70,0.12)",
+        }}
         aria-label="Actions"
       >
-        <DotsIcon />
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="3.5" r="1.3" fill="#0E2646" />
+          <circle cx="8" cy="8" r="1.3" fill="#0E2646" />
+          <circle cx="8" cy="12.5" r="1.3" fill="#0E2646" />
+        </svg>
       </button>
       {open && (
-        <div className="absolute right-0 top-[40px] z-20 w-44 rounded-xl bg-white border border-[#D4D4D0] shadow-lg overflow-hidden font-['Inter']">
+        <div
+          className="absolute right-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-20 font-['Inter']"
+          style={{ minWidth: 185, boxShadow: "0 8px 24px rgba(14,38,70,0.12)" }}
+        >
+          {/* Select Mode toggle */}
+          <button
+            type="button"
+            onClick={() => { onToggleSelect(); setOpen(false); }}
+            className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
+            style={{ fontSize: 13, fontWeight: selectMode ? 700 : 500, color: selectMode ? "#55BAAA" : "#1A1A1A" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+              {selectMode ? (
+                <>
+                  <rect x="1.5" y="1.5" width="11" height="11" rx="2.5" fill="#55BAAA" />
+                  <path d="M4.5 7L6.25 8.75L9.5 5.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </>
+              ) : (
+                <rect x="1.75" y="1.75" width="10.5" height="10.5" rx="2.25" stroke="#0E2646" strokeOpacity="0.35" strokeWidth="1.5" />
+              )}
+            </svg>
+            {selectMode ? "Exit Select Mode" : "Select Mode"}
+          </button>
+          <div className="mx-3 my-1 border-t border-[#D4D4D0]/40" />
+          {/* Filter/Sort sub-menu */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowSortSub(!showSortSub)}
+              className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center justify-between"
+              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+            >
+              Filter/Sort
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0" style={{ transform: showSortSub ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+                <path d="M2.5 3.75L5 6.25L7.5 3.75" stroke="#0E2646" strokeOpacity="0.35" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {showSortSub && (
+              <div className="bg-[#F5F5F0]/60">
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => { onSortChange(opt); setShowSortSub(false); setOpen(false); }}
+                    className="w-full text-left px-6 py-2 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: opt === sortBy ? 700 : 400,
+                      color: opt === sortBy ? "#55BAAA" : "rgba(26,26,26,0.60)",
+                    }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {["Export Products", "Import Products"].map((item) => (
             <button
               key={item}
@@ -240,7 +256,7 @@ function ActionsDropdown({ onExport }: { onExport: () => void }) {
                 if (item === "Export Products") onExport();
               }}
               className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", background: "none", border: "none" }}
+              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
             >
               {item}
             </button>
@@ -286,6 +302,7 @@ export function ReferenceProductsScreen() {
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
   const navigate = useNavigate();
+  const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
 
   /* ── Add Form state ── */
   const [formName, setFormName] = useState("");
@@ -337,6 +354,27 @@ export function ReferenceProductsScreen() {
 
     return list;
   }, [products, activeFilter, search, sortBy]);
+
+  /* ── Bulk Actions ── */
+  const allFilteredIds = displayed.map((p) => p.id);
+
+  const handleBulkEdit = () => {
+    showToast("info", `Editing ${selectedIds.size} products`);
+  };
+
+  const handleBulkDelete = () => {
+    showDeleteConfirm({
+      title: "Delete Products",
+      message: `Are you sure you want to delete ${selectedIds.size} product${selectedIds.size > 1 ? "s" : ""}? This cannot be undone.`,
+      confirmLabel: `Delete ${selectedIds.size}`,
+      onConfirm: () => {
+        setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+        showToast("success", `Deleted ${selectedIds.size} products`);
+        clearSelection();
+        toggleSelectMode();
+      },
+    });
+  };
 
   /* ── Helpers ── */
   function formatDosage(p: Product): string {
@@ -415,26 +453,22 @@ export function ReferenceProductsScreen() {
       {/* ═══════════════════════════════
          TOOLBAR
          ═══════════════════════════════ */}
-      <div className="flex items-center gap-2 mb-4">
-        {/* + Add button */}
+      <div className="flex items-center justify-end gap-2.5 mb-4">
         <button
           type="button"
           onClick={handleOpenForm}
-          className="flex items-center justify-center rounded-full cursor-pointer transition-all hover:brightness-95 active:scale-[0.97]"
-          style={{
-            width: 36,
-            height: 36,
-            backgroundColor: "#F3D12A",
-            border: "none",
-          }}
+          className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
+          style={{ width: 34, height: 34, fontSize: 20, fontWeight: 400, lineHeight: 1, color: "#1A1A1A", backgroundColor: "#F3D12A", boxShadow: "0 2px 8px rgba(243,209,42,0.30)" }}
         >
-          <PlusIcon />
+          +
         </button>
-
-        <div className="flex-1" />
-
-        <FilterDropdown value={sortBy} onChange={setSortBy} />
-        <ActionsDropdown onExport={() => showToast("info", "Export started")} />
+        <ActionsDropdown
+          selectMode={selectMode}
+          onToggleSelect={toggleSelectMode}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          onExport={() => showToast("info", "Export started")}
+        />
       </div>
 
       {/* ═══════════════════════════════
@@ -491,45 +525,100 @@ export function ReferenceProductsScreen() {
         )}
       </div>
 
+      {/* ── Result Count ── */}
+      <p className="text-[#1A1A1A]/30 font-['Inter'] px-1 mb-3" style={{ fontSize: 11, fontWeight: 600 }}>
+        {displayed.length} {displayed.length === 1 ? "product" : "products"}
+      </p>
+
+      {/* ── Select All Bar ── */}
+      {selectMode && (
+        <div className="mb-3">
+          <SelectAllBar
+            selectedCount={selectedIds.size}
+            totalCount={displayed.length}
+            onToggleAll={() => toggleAll(allFilteredIds)}
+          />
+        </div>
+      )}
+
       {/* ═══════════════════════════════
          PRODUCT LIST
          ═══════════════════════════════ */}
       {displayed.length > 0 ? (
-        <div className="rounded-xl bg-white border border-[#D4D4D0]/60 overflow-hidden divide-y divide-[#D4D4D0]/40 mb-6">
-          {displayed.map((product) => (
-            <div
-              key={product.id}
-              className="flex items-center gap-3 transition-colors hover:bg-[#F5F5F0] cursor-pointer"
-              style={{ padding: "14px 16px" }}
-              onClick={() => navigate(`/reference/products/${product.id}`)}
-            >
-              {/* Left content */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className="truncate"
-                  style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", lineHeight: 1.3 }}
+        <div className={`mb-6 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+          {selectMode ? (
+            <div className="space-y-2.5">
+              {displayed.map((product) => (
+                <div
+                  key={product.id}
+                  onClick={() => toggleItem(product.id)}
+                  className="cursor-pointer"
                 >
-                  {product.name}
-                </p>
-                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <CategoryPill category={product.category} />
-                  <span
-                    style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)" }}
+                  <SelectableCardWrapper
+                    selected={selectedIds.has(product.id)}
+                    onToggle={() => toggleItem(product.id)}
                   >
-                    {product.route} · {formatDosage(product)}
-                  </span>
+                    <div
+                      className="rounded-xl bg-white overflow-hidden"
+                      style={{ border: "1px solid rgba(212,212,208,0.60)", padding: "14px 16px" }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="truncate"
+                            style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", lineHeight: 1.3 }}
+                          >
+                            {product.name}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <CategoryPill category={product.category} />
+                            <span style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)" }}>
+                              {product.route} · {formatDosage(product)}
+                            </span>
+                          </div>
+                        </div>
+                        {product.meatWithdrawal && (
+                          <WithdrawalPill days={product.meatWithdrawal} />
+                        )}
+                      </div>
+                    </div>
+                  </SelectableCardWrapper>
                 </div>
-              </div>
-
-              {/* Right side */}
-              <div className="flex items-center gap-2.5 shrink-0">
-                {product.meatWithdrawal && (
-                  <WithdrawalPill days={product.meatWithdrawal} />
-                )}
-                <ChevronRight />
-              </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="rounded-xl bg-white border border-[#D4D4D0]/60 overflow-hidden divide-y divide-[#D4D4D0]/40">
+              {displayed.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-3 transition-colors hover:bg-[#F5F5F0] cursor-pointer"
+                  style={{ padding: "14px 16px" }}
+                  onClick={() => navigate(`/reference/products/${product.id}`)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="truncate"
+                      style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", lineHeight: 1.3 }}
+                    >
+                      {product.name}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <CategoryPill category={product.category} />
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)" }}>
+                        {product.route} · {formatDosage(product)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    {product.meatWithdrawal && (
+                      <WithdrawalPill days={product.meatWithdrawal} />
+                    )}
+                    <ChevronRight />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -546,6 +635,20 @@ export function ReferenceProductsScreen() {
           <p className="mt-1" style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.20)" }}>
             {search ? "Try a different search term" : "Add a product to get started"}
           </p>
+        </div>
+      )}
+
+      {/* ── Bulk Action Bar ── */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+          <div className="max-w-[420px] mx-auto">
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              itemLabel={selectedIds.size === 1 ? "product" : "products"}
+              onEdit={handleBulkEdit}
+              onDelete={handleBulkDelete}
+            />
+          </div>
         </div>
       )}
 

@@ -346,12 +346,23 @@ export function ReferenceGroupsScreen() {
 
   const [groups, setGroups] = useState<GroupItem[]>(initialGroups);
   const [filter, setFilter] = useState<FilterValue>("All");
+  const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
 
   /* ── Filtering ── */
-  const filteredGroups = filter === "All"
-    ? groups
-    : groups.filter((g) => g.type === filter);
+  const filteredGroups = (() => {
+    let list = filter === "All" ? groups : groups.filter((g) => g.type === filter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (g) =>
+          g.name.toLowerCase().includes(q) ||
+          g.type.toLowerCase().includes(q) ||
+          g.dateRange.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  })();
 
   /* ── Handlers ── */
   function handleAdd(data: Omit<GroupItem, "id" | "headCount">) {
@@ -379,8 +390,8 @@ export function ReferenceGroupsScreen() {
           onClick={() => setShowAddForm(true)}
           className="flex items-center justify-center cursor-pointer rounded-lg transition-colors hover:brightness-95"
           style={{
-            width: 38,
-            height: 38,
+            width: 34,
+            height: 34,
             backgroundColor: "#F3D12A",
             border: "none",
           }}
@@ -392,6 +403,42 @@ export function ReferenceGroupsScreen() {
 
       {/* ── Filter Chips ── */}
       <FilterChips active={filter} onChange={setFilter} />
+
+      {/* ── Search Bar ── */}
+      <div className="relative mb-4">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+            <circle cx="7" cy="7" r="5" stroke="#1A1A1A" strokeOpacity="0.30" strokeWidth="1.4" />
+            <path d="M11 11L14 14" stroke="#1A1A1A" strokeOpacity="0.30" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          placeholder="Search groups..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full bg-white border border-[#D4D4D0] rounded-xl pl-9 pr-9 font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#55BAAA] focus:ring-2 focus:ring-[#55BAAA]/20"
+          style={{ height: 40, fontSize: 16, fontWeight: 400, color: "#1A1A1A" }}
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+            style={{ background: "none", border: "none" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6" fill="#1A1A1A" fillOpacity="0.10" />
+              <path d="M5 5L9 9M9 5L5 9" stroke="#1A1A1A" strokeOpacity="0.45" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* ── Result Count ── */}
+      <p className="text-[#1A1A1A]/30 font-['Inter'] px-1 mb-3" style={{ fontSize: 11, fontWeight: 600 }}>
+        {filteredGroups.length} {filteredGroups.length === 1 ? "group" : "groups"}
+      </p>
 
       {/* ── List Card ── */}
       <div className="rounded-xl bg-white border border-[#D4D4D0] overflow-hidden divide-y divide-[#D4D4D0]/40">
@@ -409,9 +456,11 @@ export function ReferenceGroupsScreen() {
               No groups found
             </p>
             <p className="mt-1 text-center" style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.20)" }}>
-              {filter !== "All"
-                ? `No ${filter.toLowerCase()} groups yet`
-                : "Tap + to create your first group"}
+              {search.trim()
+                ? "Try a different search term"
+                : filter !== "All"
+                  ? `No ${filter.toLowerCase()} groups yet`
+                  : "Tap + to create your first group"}
             </p>
           </div>
         )}

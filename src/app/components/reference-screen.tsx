@@ -124,7 +124,7 @@ export function ReferenceScreen() {
           { name: "Products", description: "Vaccines, antibiotics, supplements", onClick: () => navigate("/reference/products") },
           { name: "Diseases", description: "Disease lookup table", onClick: () => navigate("/reference/diseases") },
           { name: "Quick Notes", description: "Calving, cow, and project notes", onClick: () => navigate("/reference/quick-notes") },
-          { name: "Project Templates", description: "Default work session configurations" },
+          { name: "Project Templates", description: "Default work session configurations", onClick: () => navigate("/cow-work/templates") },
         ]}
       />
 
@@ -132,8 +132,8 @@ export function ReferenceScreen() {
         title="Account"
         items={[
           { name: "User Profile", description: "Display name, phone, avatar", onClick: () => navigate("/user-profile") },
-          { name: "Switch Operation", description: "Change active operation" },
-          { name: "Sign Out", description: "Log out of ChuteSide" },
+          { name: "Switch Operation", description: "Change active operation", onClick: () => window.dispatchEvent(new Event("open-operation-picker")) },
+          { name: "Sign Out", description: "Log out of ChuteSide", onClick: () => window.dispatchEvent(new Event("app-sign-out")) },
         ]}
       />
     </div>

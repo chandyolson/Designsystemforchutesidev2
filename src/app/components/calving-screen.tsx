@@ -151,7 +151,7 @@ function ActionsDropdown({
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  const items = ["Export Records", "Season Summary", "Print Report", "Import CSV"];
+  const items = ["Filter/Sort", "Export Records", "Season Summary", "Print Report", "Import CSV"];
 
   return (
     <div ref={ref} className="relative">
@@ -236,8 +236,7 @@ export function CalvingScreen() {
       r.calfTag.toLowerCase().includes(q) ||
       r.sire.toLowerCase().includes(q) ||
       r.sex.toLowerCase().includes(q) ||
-      r.notes.toLowerCase().includes(q) ||
-      r.memo.toLowerCase().includes(q)
+      r.notes.toLowerCase().includes(q)
     );
   });
 
@@ -316,8 +315,8 @@ export function CalvingScreen() {
             onClick={() => navigate("/calving/new")}
             className="shrink-0 rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter'] flex items-center justify-center"
             style={{
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               fontSize: 20,
               fontWeight: 400,
               lineHeight: 1,
@@ -364,7 +363,6 @@ export function CalvingScreen() {
                   date={r.date}
                   sex={r.sex}
                   notes={r.notes}
-                  memo={r.memo}
                 />
               </SelectableCardWrapper>
             </div>
@@ -376,7 +374,6 @@ export function CalvingScreen() {
               date={r.date}
               sex={r.sex}
               notes={r.notes}
-              memo={r.memo}
               onClick={() => navigate(`/calving/${r.calfTag}`)}
             />
           )

@@ -4,14 +4,10 @@ interface CalvingRecordCardProps {
   date: string;
   sex: string;
   notes: string;
-  memo: string;
   onClick?: () => void;
 }
 
-export function CalvingRecordCard({ damTag, calfTag, date, sex, notes, memo, onClick }: CalvingRecordCardProps) {
-  /* Pick the best preview text: notes first, memo as fallback */
-  const previewText = notes || memo || "";
-
+export function CalvingRecordCard({ damTag, calfTag, date, sex, notes, onClick }: CalvingRecordCardProps) {
   return (
     <div
       className="rounded-xl px-4 py-3.5 font-['Inter'] transition-all duration-150 active:scale-[0.98]"
@@ -100,7 +96,7 @@ export function CalvingRecordCard({ damTag, calfTag, date, sex, notes, memo, onC
       </div>
 
       {/* Row 2 — Notes preview */}
-      {previewText && (
+      {notes && (
         <p
           className="mt-1.5 truncate"
           style={{
@@ -110,22 +106,7 @@ export function CalvingRecordCard({ damTag, calfTag, date, sex, notes, memo, onC
             lineHeight: 1.4,
           }}
         >
-          {previewText}
-        </p>
-      )}
-
-      {/* Row 3 — Memo (if different from notes) */}
-      {memo && memo !== notes && (
-        <p
-          className="mt-1 truncate"
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: "rgba(243,209,42,0.45)",
-            lineHeight: 1.4,
-          }}
-        >
-          {memo}
+          {notes}
         </p>
       )}
     </div>

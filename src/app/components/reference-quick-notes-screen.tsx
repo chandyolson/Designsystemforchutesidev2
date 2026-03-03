@@ -2,230 +2,226 @@ import { useState, useRef, useEffect } from "react";
 import { FormFieldRow, FormSelectRow } from "./form-field-row";
 import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
+import { FlagIcon } from "./flag-icon";
+import type { FlagColor } from "./flag-icon";
 
-/* ── Types ── */
-type NoteCategory = "Calving Notes" | "Cow Work Notes" | "General Notes";
+/* ══════════════════════════════════════════
+   Types & Data
+   ══════════════════════════════════════════ */
+type NoteFlag = "cull" | "production" | "management" | "none";
+type Availability = "All" | "Calving Only";
 
-interface NoteItem {
+interface QuickNote {
   id: string;
   text: string;
-  category: NoteCategory;
+  flag: NoteFlag;
+  availability: Availability;
+  calvingLabel?: string; // e.g. "(Calving)" shown inside pill
 }
 
-/* ── Category display order ── */
-const CATEGORIES: NoteCategory[] = ["Calving Notes", "Cow Work Notes", "General Notes"];
-const CATEGORY_OPTIONS = CATEGORIES as unknown as string[];
+const FLAG_PILL_STYLES: Record<NoteFlag, { bg: string; border: string; color: string; xColor: string }> = {
+  cull: {
+    bg: "rgba(155,35,53,0.12)",
+    border: "rgba(155,35,53,0.25)",
+    color: "#9B2335",
+    xColor: "rgba(155,35,53,0.50)",
+  },
+  production: {
+    bg: "rgba(243,209,42,0.12)",
+    border: "rgba(243,209,42,0.30)",
+    color: "#B8860B",
+    xColor: "rgba(184,134,11,0.50)",
+  },
+  management: {
+    bg: "rgba(85,186,170,0.12)",
+    border: "rgba(85,186,170,0.25)",
+    color: "#55BAAA",
+    xColor: "rgba(85,186,170,0.50)",
+  },
+  none: {
+    bg: "#F5F5F0",
+    border: "#D4D4D0",
+    color: "rgba(26,26,26,0.55)",
+    xColor: "rgba(26,26,26,0.30)",
+  },
+};
 
-/* ── Mock data ── */
-const initialNotes: NoteItem[] = [
-  { id: "n1", text: "Normal birth", category: "Calving Notes" },
-  { id: "n2", text: "Assisted", category: "Calving Notes" },
-  { id: "n3", text: "C-section", category: "Calving Notes" },
-  { id: "n4", text: "Stillborn", category: "Calving Notes" },
-  { id: "n5", text: "Weak calf", category: "Calving Notes" },
-  { id: "n6", text: "Scours", category: "Calving Notes" },
-  { id: "n7", text: "Retained placenta", category: "Calving Notes" },
-  { id: "n8", text: "Twins", category: "Calving Notes" },
-  { id: "n9", text: "Healthy", category: "Cow Work Notes" },
-  { id: "n10", text: "Lame", category: "Cow Work Notes" },
-  { id: "n11", text: "Thin", category: "Cow Work Notes" },
-  { id: "n12", text: "Open", category: "Cow Work Notes" },
-  { id: "n13", text: "Aggressive", category: "Cow Work Notes" },
-  { id: "n14", text: "Poor teeth", category: "Cow Work Notes" },
-  { id: "n15", text: "Docile", category: "General Notes" },
-  { id: "n16", text: "Good mother", category: "General Notes" },
-  { id: "n17", text: "Poor mother", category: "General Notes" },
-  { id: "n18", text: "Hard keeper", category: "General Notes" },
+const FLAG_TO_FLAG_COLOR: Record<Exclude<NoteFlag, "none">, FlagColor> = {
+  cull: "red",
+  production: "gold",
+  management: "teal",
+};
+
+/* ── 17 spec notes in exact order ── */
+const initialNotes: QuickNote[] = [
+  // Cull-flagged (red)
+  { id: "n1", text: "Cull", flag: "cull", availability: "All" },
+  // Production-flagged (yellow)
+  { id: "n2", text: "Bad Bag", flag: "production", availability: "All" },
+  { id: "n3", text: "Bad Feet", flag: "production", availability: "All" },
+  { id: "n4", text: "Lame", flag: "production", availability: "All" },
+  { id: "n5", text: "Lump Jaw", flag: "production", availability: "All" },
+  { id: "n6", text: "Bad Disposition", flag: "production", availability: "All" },
+  { id: "n7", text: "Bad Mother", flag: "production", availability: "All" },
+  { id: "n8", text: "Old", flag: "production", availability: "All" },
+  { id: "n9", text: "Poor Calf", flag: "production", availability: "All" },
+  { id: "n10", text: "Poor Condition", flag: "production", availability: "All" },
+  // Management-flagged (teal)
+  { id: "n11", text: "Needs Tag", flag: "management", availability: "All" },
+  { id: "n12", text: "DNA", flag: "management", availability: "All" },
+  { id: "n13", text: "Needs Treated", flag: "management", availability: "All" },
+  // No flag (neutral)
+  { id: "n14", text: "Sorted", flag: "none", availability: "All" },
+  { id: "n15", text: "Treated", flag: "none", availability: "All" },
+  { id: "n16", text: "Twin", flag: "none", availability: "Calving Only", calvingLabel: "(Calving)" },
+  { id: "n17", text: "Freemartin", flag: "none", availability: "All" },
 ];
 
-/* ── Icons ── */
-function DotsIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="3.5" r="1.25" fill="#0E2646" fillOpacity="0.45" />
-      <circle cx="8" cy="8" r="1.25" fill="#0E2646" fillOpacity="0.45" />
-      <circle cx="8" cy="12.5" r="1.25" fill="#0E2646" fillOpacity="0.45" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M9 3.75V14.25M3.75 9H14.25" stroke="#0E2646" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChevronDown({ rotated }: { rotated?: boolean }) {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      className="shrink-0 transition-transform duration-200"
-      style={{ transform: rotated ? "rotate(180deg)" : "rotate(0deg)" }}
-    >
-      <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="#0E2646" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" opacity={0.25} />
-    </svg>
-  );
-}
-
-/* ── Actions dropdown ── */
-function ActionsDropdown() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-center cursor-pointer rounded-lg border border-[#D4D4D0] bg-white transition-colors hover:bg-[#F5F5F0]"
-        style={{ width: 32, height: 38 }}
-        aria-label="Actions"
-      >
-        <DotsIcon />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-[42px] z-20 w-44 rounded-xl bg-white border border-[#D4D4D0] shadow-lg overflow-hidden font-['Inter']">
-          {["Select Mode", "Export List", "Sort A–Z"].map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setOpen(false)}
-              className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ═══════════════ Note Pill ═══════════════ */
+/* ══════════════════════════════════════════
+   Note Pill
+   ══════════════════════════════════════════ */
 function NotePill({
   note,
   onDelete,
 }: {
-  note: NoteItem;
+  note: QuickNote;
   onDelete: () => void;
 }) {
+  const s = FLAG_PILL_STYLES[note.flag];
+
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#D4D4D0] font-['Inter'] transition-colors hover:bg-[#F5F5F0] group"
-      style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+      className="inline-flex items-center gap-1.5 rounded-full font-['Inter'] transition-colors group"
+      style={{
+        padding: "6px 14px",
+        fontSize: 13,
+        fontWeight: 600,
+        color: s.color,
+        backgroundColor: s.bg,
+        border: `1px solid ${s.border}`,
+      }}
     >
       {note.text}
+      {note.calvingLabel && (
+        <>
+          <span
+            className="shrink-0"
+            style={{
+              width: 1,
+              height: 12,
+              backgroundColor: s.xColor,
+              margin: "0 2px",
+            }}
+          />
+          <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.7 }}>
+            {note.calvingLabel}
+          </span>
+        </>
+      )}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
         }}
-        className="flex items-center justify-center cursor-pointer rounded-full transition-colors hover:bg-[#E74C3C]/10 shrink-0"
-        style={{ width: 14, height: 14 }}
+        className="flex items-center justify-center cursor-pointer rounded-full shrink-0 transition-opacity opacity-60 hover:opacity-100"
+        style={{ width: 14, height: 14, marginLeft: 2 }}
         aria-label={`Delete "${note.text}"`}
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="#1A1A1A" strokeOpacity="0.30" strokeWidth="1.3" strokeLinecap="round" />
+          <path
+            d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5"
+            stroke={s.xColor}
+            strokeWidth="1.3"
+            strokeLinecap="round"
+          />
         </svg>
       </button>
     </span>
   );
 }
 
-/* ═══════════════ Category Section ═══════════════ */
-function CategorySection({
-  category,
-  notes,
-  defaultOpen,
-  onDeleteNote,
+/* ══════════════════════════════════════════
+   Flag Selector (for Add form)
+   ══════════════════════════════════════════ */
+const FLAG_OPTIONS: { value: NoteFlag; label: string; hex?: string }[] = [
+  { value: "none", label: "None" },
+  { value: "management", label: "Management", hex: "#55BAAA" },
+  { value: "production", label: "Production", hex: "#D4A017" },
+  { value: "cull", label: "Cull", hex: "#9B2335" },
+];
+
+function FlagSelector({
+  value,
+  onChange,
 }: {
-  category: NoteCategory;
-  notes: NoteItem[];
-  defaultOpen: boolean;
-  onDeleteNote: (note: NoteItem) => void;
+  value: NoteFlag;
+  onChange: (v: NoteFlag) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
   return (
-    <section className="mb-5">
-      {/* Header */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between mb-2.5 px-1 cursor-pointer"
-      >
-        <p
-          className="text-[#0E2646] font-['Inter'] uppercase"
-          style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", opacity: 0.35 }}
-        >
-          {category}
-        </p>
-        <div className="flex items-center gap-1.5">
-          <span
-            className="font-['Inter'] text-[#0E2646]/25"
-            style={{ fontSize: 10, fontWeight: 600 }}
-          >
-            {notes.length}
-          </span>
-          <ChevronDown rotated={isOpen} />
-        </div>
-      </button>
+    <div className="flex items-center gap-3">
+      {FLAG_OPTIONS.map((opt) => {
+        const isSelected = value === opt.value;
+        const selectedBorder = opt.hex || "#D4D4D0";
+        const selectedBg = opt.hex ? `${opt.hex}1A` : "transparent";
 
-      {/* Pill grid */}
-      <div
-        className="overflow-hidden transition-all duration-200"
-        style={{
-          maxHeight: isOpen ? 500 : 0,
-          opacity: isOpen ? 1 : 0,
-        }}
-      >
-        <div className="flex flex-wrap gap-2">
-          {notes.map((note) => (
-            <NotePill
-              key={note.id}
-              note={note}
-              onDelete={() => onDeleteNote(note)}
-            />
-          ))}
-          {notes.length === 0 && (
-            <p
-              className="font-['Inter'] px-1"
-              style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.30)" }}
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className="flex flex-col items-center gap-1 cursor-pointer"
+          >
+            <div
+              className="flex items-center justify-center rounded-full transition-all"
+              style={{
+                width: 32,
+                height: 32,
+                border: isSelected
+                  ? `2px solid ${selectedBorder}`
+                  : "1.5px solid #D4D4D0",
+                backgroundColor: isSelected ? selectedBg : "transparent",
+              }}
             >
-              No notes in this category
-            </p>
-          )}
-        </div>
-      </div>
-    </section>
+              {opt.value !== "none" && (
+                <FlagIcon
+                  color={FLAG_TO_FLAG_COLOR[opt.value as Exclude<NoteFlag, "none">]}
+                  size="sm"
+                />
+              )}
+            </div>
+            <span
+              className="font-['Inter']"
+              style={{
+                fontSize: 9,
+                fontWeight: isSelected ? 700 : 500,
+                color: isSelected
+                  ? opt.hex || "#1A1A1A"
+                  : "rgba(26,26,26,0.40)",
+              }}
+            >
+              {opt.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
-/* ═══════════════ Add Note Form ═══════════════ */
+/* ══════════════════════════════════════════
+   Add Note Form
+   ══════════════════════════════════════════ */
 function AddNoteForm({
   onCancel,
   onSave,
 }: {
   onCancel: () => void;
-  onSave: (data: { text: string; category: NoteCategory }) => void;
+  onSave: (data: { text: string; availability: Availability; flag: NoteFlag }) => void;
 }) {
   const [text, setText] = useState("");
-  const [category, setCategory] = useState("");
+  const [availability, setAvailability] = useState<string>("All");
+  const [flag, setFlag] = useState<NoteFlag>("none");
   const [textError, setTextError] = useState("");
 
   function handleSave() {
@@ -236,7 +232,8 @@ function AddNoteForm({
     setTextError("");
     onSave({
       text: text.trim(),
-      category: (category || "General Notes") as NoteCategory,
+      availability: availability as Availability,
+      flag,
     });
   }
 
@@ -244,9 +241,14 @@ function AddNoteForm({
     <div>
       <p
         className="font-['Inter'] uppercase mb-2 px-1"
-        style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#0E2646" }}
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          color: "rgba(14,38,70,0.35)",
+        }}
       >
-        Add Note
+        Add Quick Note
       </p>
 
       <div
@@ -256,19 +258,41 @@ function AddNoteForm({
         <div className="space-y-3">
           <FormFieldRow
             label="Note Text"
-            placeholder="e.g. Prolapse"
+            placeholder="e.g. Bad Eyes"
             value={text}
-            onChange={setText}
+            onChange={(v) => {
+              setText(v);
+              if (textError) setTextError("");
+            }}
             required
             error={textError}
           />
           <FormSelectRow
-            label="Category"
-            placeholder="Select category"
-            value={category}
-            onChange={setCategory}
-            options={CATEGORY_OPTIONS}
+            label="Available In"
+            placeholder="Select..."
+            value={availability}
+            onChange={setAvailability}
+            options={["All", "Calving Only"]}
           />
+
+          {/* Flag row */}
+          <div
+            className="flex items-center"
+            style={{ minHeight: 44 }}
+          >
+            <label
+              className="shrink-0 font-['Inter']"
+              style={{
+                width: 105,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "rgba(26,26,26,0.45)",
+              }}
+            >
+              Flag
+            </label>
+            <FlagSelector value={flag} onChange={setFlag} />
+          </div>
         </div>
 
         {/* Buttons */}
@@ -311,35 +335,40 @@ function AddNoteForm({
   );
 }
 
-/* ══════════════════ SCREEN ══════════════════ */
+/* ══════════════════════════════════════════
+   SCREEN
+   ══════════════════════════════════════════ */
 export function ReferenceQuickNotesScreen() {
-  const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
+  const [notes, setNotes] = useState<QuickNote[]>(initialNotes);
   const [showAddForm, setShowAddForm] = useState(false);
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
+  const formRef = useRef<HTMLDivElement>(null);
 
-  function handleAdd(data: { text: string; category: NoteCategory }) {
-    // Duplicate check
+  function handleAdd(data: { text: string; availability: Availability; flag: NoteFlag }) {
     const exists = notes.some(
-      (n) => n.text.toLowerCase() === data.text.toLowerCase() && n.category === data.category
+      (n) => n.text.toLowerCase() === data.text.toLowerCase()
     );
     if (exists) {
-      showToast("error", `"${data.text}" already exists in ${data.category}`);
+      showToast("error", `"${data.text}" already exists`);
       return;
     }
-    const newNote: NoteItem = {
-      ...data,
+    const newNote: QuickNote = {
       id: `n${Date.now()}`,
+      text: data.text,
+      flag: data.flag,
+      availability: data.availability,
+      calvingLabel: data.availability === "Calving Only" ? "(Calving)" : undefined,
     };
     setNotes((prev) => [...prev, newNote]);
     setShowAddForm(false);
-    showToast("success", `"${data.text}" added to ${data.category}`);
+    showToast("success", `"${data.text}" added`);
   }
 
-  function handleDeleteNote(note: NoteItem) {
+  function handleDeleteNote(note: QuickNote) {
     showDeleteConfirm({
       title: "Delete Note",
-      message: `Remove "${note.text}" from ${note.category}?`,
+      message: `Remove "${note.text}"?`,
       confirmLabel: "Delete",
       onConfirm: () => {
         setNotes((prev) => prev.filter((n) => n.id !== note.id));
@@ -348,47 +377,198 @@ export function ReferenceQuickNotesScreen() {
     });
   }
 
-  // Group notes by category
-  const grouped = CATEGORIES.map((cat) => ({
-    category: cat,
-    notes: notes.filter((n) => n.category === cat),
-  }));
+  function handleOpenForm() {
+    setShowAddForm(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
 
   return (
     <div className="font-['Inter']" style={{ padding: 20 }}>
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-end gap-2.5 mb-4">
+      <div className="flex items-center justify-end gap-2.5 mb-3">
         <button
           type="button"
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center justify-center cursor-pointer rounded-lg transition-colors hover:brightness-95"
+          onClick={handleOpenForm}
+          className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
           style={{
-            width: 38,
-            height: 38,
+            width: 34,
+            height: 34,
+            fontSize: 20,
+            fontWeight: 400,
+            lineHeight: 1,
+            color: "#1A1A1A",
             backgroundColor: "#F3D12A",
-            border: "none",
+            boxShadow: "0 2px 8px rgba(243,209,42,0.30)",
           }}
-          aria-label="Add note"
         >
-          <PlusIcon />
+          +
         </button>
-        <ActionsDropdown />
       </div>
 
-      {/* ── Category Sections ── */}
-      {grouped.map((group, idx) => (
-        <CategorySection
-          key={group.category}
-          category={group.category}
-          notes={group.notes}
-          defaultOpen={idx === 0}
-          onDeleteNote={handleDeleteNote}
-        />
-      ))}
+      {/* ── Info Card ── */}
+      <div
+        className="flex items-start gap-2.5 rounded-lg mb-4"
+        style={{
+          padding: "12px 16px",
+          backgroundColor: "#E3F2FD",
+        }}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          className="shrink-0 mt-0.5"
+        >
+          <circle cx="8" cy="8" r="7" stroke="#2196F3" strokeWidth="1.4" />
+          <path
+            d="M8 7V11.5"
+            stroke="#2196F3"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+          <circle cx="8" cy="4.75" r="0.85" fill="#2196F3" />
+        </svg>
+        <p
+          style={{
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#0D47A1",
+            lineHeight: 1.5,
+          }}
+        >
+          Colored notes automatically flag animals when selected during data
+          entry.
+        </p>
+      </div>
 
-      {/* ── Inline Add Form ── */}
+      {/* ── Notes Card ── */}
+      <div
+        className="rounded-xl bg-white border border-[#D4D4D0]"
+        style={{ padding: 16 }}
+      >
+        <div className="flex flex-wrap gap-2">
+          {notes.map((note) => (
+            <NotePill
+              key={note.id}
+              note={note}
+              onDelete={() => handleDeleteNote(note)}
+            />
+          ))}
+        </div>
+
+        {notes.length === 0 && (
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{ padding: "24px 0" }}
+          >
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "rgba(26,26,26,0.30)",
+              }}
+            >
+              No quick notes
+            </p>
+            <p
+              className="mt-1"
+              style={{
+                fontSize: 12,
+                fontWeight: 400,
+                color: "rgba(26,26,26,0.20)",
+              }}
+            >
+              Tap + to create your first note
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Legend ── */}
+      <div className="mt-4">
+        <p
+          className="font-['Inter'] uppercase mb-2.5 px-1"
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            color: "rgba(14,38,70,0.35)",
+          }}
+        >
+          Flag Mapping
+        </p>
+        <div className="flex items-center gap-4 px-1">
+          {/* Red = Cull */}
+          <div className="flex items-center gap-1.5">
+            <FlagIcon color="red" size="sm" />
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "rgba(26,26,26,0.50)",
+              }}
+            >
+              Cull
+            </span>
+          </div>
+          {/* Gold = Production */}
+          <div className="flex items-center gap-1.5">
+            <FlagIcon color="gold" size="sm" />
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "rgba(26,26,26,0.50)",
+              }}
+            >
+              Production
+            </span>
+          </div>
+          {/* Teal = Management */}
+          <div className="flex items-center gap-1.5">
+            <FlagIcon color="teal" size="sm" />
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "rgba(26,26,26,0.50)",
+              }}
+            >
+              Management
+            </span>
+          </div>
+          {/* No flag */}
+          <div className="flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <line
+                x1="3"
+                y1="7"
+                x2="11"
+                y2="7"
+                stroke="#D4D4D0"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "rgba(26,26,26,0.50)",
+              }}
+            >
+              No flag
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Add Note Form ── */}
       {showAddForm && (
-        <div className="mt-2">
+        <div ref={formRef} className="mt-5">
           <AddNoteForm
             onCancel={() => setShowAddForm(false)}
             onSave={handleAdd}

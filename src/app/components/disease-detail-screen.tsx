@@ -356,6 +356,61 @@ export function DiseaseDetailScreen() {
         </p>
       </div>
 
+      {/* ══ SECTION: IN YOUR HERD (top) ══ */}
+      <div style={{ marginTop: 16 }}>
+        <SectionLabel text="In Your Herd" />
+        <div
+          className="rounded-xl bg-white"
+          style={{ border: "1.5px solid rgba(85,186,170,0.20)", padding: 16 }}
+        >
+          {/* Stats row */}
+          <div className="flex">
+            {[
+              {
+                value: String(disease.herdStats.activeCases),
+                label: "Active Cases",
+                valueColor: disease.herdStats.activeCases > 0 ? "#E74C3C" : "#0E2646",
+              },
+              {
+                value: String(disease.herdStats.treated12mo),
+                label: "Treated (12 mo)",
+                valueColor: "#0E2646",
+              },
+              {
+                value: disease.herdStats.incidenceRate,
+                label: "Incidence Rate",
+                valueColor: "#0E2646",
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="flex-1 text-center">
+                <p style={{ fontSize: 18, fontWeight: 800, color: stat.valueColor }}>
+                  {stat.value}
+                </p>
+                <p
+                  className="mt-0.5"
+                  style={{ fontSize: 10, fontWeight: 600, color: "rgba(26,26,26,0.35)" }}
+                >
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Link */}
+          <button
+            type="button"
+            onClick={() => {/* future: navigate to filtered animals list */}}
+            className="flex items-center gap-1.5 mt-3 cursor-pointer"
+            style={{ background: "none", border: "none", padding: 0 }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#55BAAA" }}>
+              View affected animals
+            </span>
+            <ArrowRightIcon />
+          </button>
+        </div>
+      </div>
+
       {/* ══ SECTION 1: SYMPTOMS ══ */}
       <div style={{ marginTop: 16 }}>
         <SectionLabel text="Symptoms" />
@@ -473,61 +528,6 @@ export function DiseaseDetailScreen() {
               </span>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* ══ SECTION 5: IN YOUR HERD ══ */}
-      <div style={{ marginTop: 16 }}>
-        <SectionLabel text="In Your Herd" />
-        <div
-          className="rounded-xl bg-white"
-          style={{ border: "1.5px solid rgba(85,186,170,0.20)", padding: 16 }}
-        >
-          {/* Stats row */}
-          <div className="flex">
-            {[
-              {
-                value: String(disease.herdStats.activeCases),
-                label: "Active Cases",
-                valueColor: disease.herdStats.activeCases > 0 ? "#E74C3C" : "#0E2646",
-              },
-              {
-                value: String(disease.herdStats.treated12mo),
-                label: "Treated (12 mo)",
-                valueColor: "#0E2646",
-              },
-              {
-                value: disease.herdStats.incidenceRate,
-                label: "Incidence Rate",
-                valueColor: "#0E2646",
-              },
-            ].map((stat) => (
-              <div key={stat.label} className="flex-1 text-center">
-                <p style={{ fontSize: 18, fontWeight: 800, color: stat.valueColor }}>
-                  {stat.value}
-                </p>
-                <p
-                  className="mt-0.5"
-                  style={{ fontSize: 10, fontWeight: 600, color: "rgba(26,26,26,0.35)" }}
-                >
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Link */}
-          <button
-            type="button"
-            onClick={() => {/* future: navigate to filtered animals list */}}
-            className="flex items-center gap-1.5 mt-3 cursor-pointer"
-            style={{ background: "none", border: "none", padding: 0 }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#55BAAA" }}>
-              View affected animals
-            </span>
-            <ArrowRightIcon />
-          </button>
         </div>
       </div>
 

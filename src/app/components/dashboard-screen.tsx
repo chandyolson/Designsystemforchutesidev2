@@ -10,30 +10,28 @@ import { useDeleteConfirm } from "./delete-confirmation";
 import { FormFieldRow, FormSelectRow } from "./form-field-row";
 
 /* ── Action Items Data ──────────────────────── */
-type ActionPriority = "Urgent" | "High" | "Medium" | "Low";
+type ActionFlag = "red" | "gold";
 interface ActionItem {
   id: string;
   title: string;
-  priority: ActionPriority;
+  flag: ActionFlag;
   assignTo: string;
   linkedTo?: string;
   completed: boolean;
 }
 
-const ACTION_PRIORITY_COLORS: Record<ActionPriority, string> = {
-  Urgent: "#C62828",
-  High: "#E65100",
-  Medium: "#B8860B",
-  Low: "#1565C0",
+const FLAG_SORT_ORDER: Record<ActionFlag, number> = {
+  red: 0,
+  gold: 1,
 };
 
 const initialActionItems: ActionItem[] = [
-  { id: "a1", title: "Tag 3309 feet need trimming", priority: "Urgent", assignTo: "Me", linkedTo: "Animal", completed: false },
-  { id: "a2", title: "Fence down section 3", priority: "High", assignTo: "Mike Torres", linkedTo: "North Pasture", completed: false },
-  { id: "a3", title: "Order Draxxin restock", priority: "Medium", assignTo: "Me", completed: false },
-  { id: "a4", title: "Water tank float broken — East Section", priority: "Medium", assignTo: "Mike Torres", linkedTo: "East Meadow", completed: false },
-  { id: "a5", title: "Move salt blocks to south pasture", priority: "Low", assignTo: "Emily Olson", completed: false },
-  { id: "a6", title: "Check on Tag 7801 — calving soon", priority: "Medium", assignTo: "Me", linkedTo: "Animal", completed: false },
+  { id: "a1", title: "Tag 3309 feet need trimming", flag: "red", assignTo: "Me", linkedTo: "Animal", completed: false },
+  { id: "a2", title: "Fence down section 3", flag: "gold", assignTo: "Mike T.", linkedTo: "North Pasture", completed: false },
+  { id: "a3", title: "Order Draxxin restock", flag: "gold", assignTo: "Me", completed: false },
+  { id: "a4", title: "Water tank float broken — East Section", flag: "gold", assignTo: "Mike T.", linkedTo: "East Meadow", completed: false },
+  { id: "a5", title: "Move salt blocks to south pasture", flag: "gold", assignTo: "Emily O.", completed: false },
+  { id: "a6", title: "Check on Tag 7801 — calving soon", flag: "gold", assignTo: "Me", linkedTo: "Animal", completed: false },
 ];
 
 /* ── Data ──────────────────────────────────── */
@@ -230,9 +228,8 @@ export function DashboardScreen() {
       {(() => {
         const openItems = actionItems.filter((a) => !a.completed);
         if (openItems.length === 0) return null;
-        const priorityOrder: ActionPriority[] = ["Urgent", "High", "Medium", "Low"];
         const sorted = [...openItems].sort(
-          (a, b) => priorityOrder.indexOf(a.priority) - priorityOrder.indexOf(b.priority)
+          (a, b) => FLAG_SORT_ORDER[a.flag] - FLAG_SORT_ORDER[b.flag]
         );
         const top3 = sorted.slice(0, 3);
         return (
@@ -284,17 +281,12 @@ export function DashboardScreen() {
                         : "none",
                   }}
                 >
-                  {/* Left: priority dot + text */}
+                  {/* Left: flag icon + text */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span
-                        className="shrink-0 rounded-full"
-                        style={{
-                          width: 8,
-                          height: 8,
-                          backgroundColor: ACTION_PRIORITY_COLORS[item.priority],
-                        }}
-                      />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="shrink-0">
+                        <FlagIcon color={item.flag} size="sm" />
+                      </div>
                       <p
                         className="truncate"
                         style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
@@ -308,7 +300,7 @@ export function DashboardScreen() {
                         fontSize: 11,
                         fontWeight: 400,
                         color: "rgba(26,26,26,0.35)",
-                        marginLeft: 18.5,
+                        marginLeft: 22,
                         marginTop: 2,
                       }}
                     >

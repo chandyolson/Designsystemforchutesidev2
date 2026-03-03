@@ -303,8 +303,8 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
             onClick={() => navigate("/animals/new")}
             className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
             style={{
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               fontSize: 20,
               fontWeight: 400,
               lineHeight: 1,

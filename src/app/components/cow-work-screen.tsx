@@ -11,9 +11,13 @@ import { useDeleteConfirm } from "./delete-confirmation";
 function ActionsDropdown({
   selectMode,
   onToggleSelect,
+  onFilterSort,
+  hasActiveFilter,
 }: {
   selectMode: boolean;
   onToggleSelect: () => void;
+  onFilterSort: () => void;
+  hasActiveFilter?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -44,6 +48,12 @@ function ActionsDropdown({
           <circle cx="8" cy="8" r="1.3" fill="#0E2646" />
           <circle cx="8" cy="12.5" r="1.3" fill="#0E2646" />
         </svg>
+        {hasActiveFilter && (
+          <span
+            className="absolute -top-0.5 -right-0.5 rounded-full"
+            style={{ width: 7, height: 7, backgroundColor: "#55BAAA", border: "1.5px solid #F5F5F0" }}
+          />
+        )}
       </button>
       {open && (
         <div
@@ -72,6 +82,33 @@ function ActionsDropdown({
 
           <div className="mx-3 my-1 border-t border-[#D4D4D0]/40" />
 
+          {/* Filter/Sort */}
+          <button
+            type="button"
+            onClick={() => { onFilterSort(); setOpen(false); }}
+            className="w-full text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
+            style={{ fontSize: 13, fontWeight: hasActiveFilter ? 700 : 500, color: hasActiveFilter ? "#55BAAA" : "#1A1A1A" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+              <path
+                d="M1.75 3h10.5M3.5 5.75h7M5.25 8.5h3.5M6.125 11.25h1.75"
+                stroke={hasActiveFilter ? "#55BAAA" : "#0E2646"}
+                strokeOpacity={hasActiveFilter ? 1 : 0.35}
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+            Filter/Sort
+            {hasActiveFilter && (
+              <span
+                className="ml-auto rounded-full"
+                style={{ width: 6, height: 6, backgroundColor: "#55BAAA" }}
+              />
+            )}
+          </button>
+
+          <div className="mx-3 my-1 border-t border-[#D4D4D0]/40" />
+
           {/* Standard actions */}
           {["Export Projects", "Archive Completed", "Print Summary"].map((item) => (
             <button
@@ -90,162 +127,128 @@ function ActionsDropdown({
   );
 }
 
-/* ── Filter/Sort Dropdown ── */
+/* ── Filter/Sort Panel ── */
 type SortOption = "status" | "date" | "name" | "headCount";
 type StatusFilter = "all" | "In Progress" | "Pending" | "Completed";
 
-function FilterSortDropdown({
+function FilterSortPanel({
   statusFilter,
   setStatusFilter,
   sortBy,
   setSortBy,
+  onClose,
 }: {
   statusFilter: StatusFilter;
   setStatusFilter: (v: StatusFilter) => void;
   sortBy: SortOption;
   setSortBy: (v: SortOption) => void;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function close(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
-
   const hasActiveFilter = statusFilter !== "all" || sortBy !== "status";
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.97] flex items-center justify-center"
-        style={{
-          width: 32,
-          height: 32,
-          backgroundColor: hasActiveFilter ? "rgba(85,186,170,0.08)" : "white",
-          border: hasActiveFilter ? "1px solid rgba(85,186,170,0.3)" : "1px solid rgba(14,38,70,0.12)",
-        }}
-      >
-        {/* Filter funnel + sort lines icon */}
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M2 3.5h12M4 6.5h8M6 9.5h4M7 12.5h2"
-            stroke={hasActiveFilter ? "#55BAAA" : "#0E2646"}
-            strokeWidth="1.4"
-            strokeLinecap="round"
-          />
-        </svg>
-        {hasActiveFilter && (
-          <span
-            className="absolute -top-0.5 -right-0.5 rounded-full"
-            style={{
-              width: 7,
-              height: 7,
-              backgroundColor: "#55BAAA",
-              border: "1.5px solid #F5F5F0",
-            }}
-          />
-        )}
-      </button>
-      {open && (
-        <div
-          className="absolute left-0 top-full mt-1.5 rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden z-30 font-['Inter']"
-          style={{ minWidth: 210, boxShadow: "0 8px 24px rgba(14,38,70,0.12)" }}
+    <div
+      className="rounded-xl bg-white border border-[#D4D4D0]/80 overflow-hidden font-['Inter']"
+      style={{ boxShadow: "0 4px 16px rgba(14,38,70,0.08)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-1.5">
+        <p className="uppercase" style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#1A1A1A", opacity: 0.35 }}>
+          Filter by Status
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="cursor-pointer"
+          style={{ background: "none", border: "none", padding: 0 }}
+          aria-label="Close filter panel"
         >
-          {/* Filter section */}
-          <div className="px-4 pt-3 pb-1.5">
-            <p className="uppercase" style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#1A1A1A", opacity: 0.35 }}>
-              Filter by Status
-            </p>
-          </div>
-          {(["all", "In Progress", "Pending", "Completed"] as StatusFilter[]).map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { setStatusFilter(opt); }}
-              className="w-full text-left px-4 py-2 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
-              style={{ fontSize: 13, fontWeight: statusFilter === opt ? 700 : 500, color: statusFilter === opt ? "#55BAAA" : "#1A1A1A" }}
-            >
-              <span
-                className="rounded-full border shrink-0 flex items-center justify-center"
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderColor: statusFilter === opt ? "#55BAAA" : "#D4D4D0",
-                  backgroundColor: statusFilter === opt ? "#55BAAA" : "transparent",
-                }}
-              >
-                {statusFilter === opt && (
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                    <path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-              {opt === "all" ? "All Statuses" : opt}
-            </button>
-          ))}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M4 4L10 10M10 4L4 10" stroke="#1A1A1A" strokeOpacity="0.3" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+      {(["all", "In Progress", "Pending", "Completed"] as StatusFilter[]).map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => setStatusFilter(opt)}
+          className="w-full text-left px-4 py-2 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
+          style={{ fontSize: 13, fontWeight: statusFilter === opt ? 700 : 500, color: statusFilter === opt ? "#55BAAA" : "#1A1A1A" }}
+        >
+          <span
+            className="rounded-full border shrink-0 flex items-center justify-center"
+            style={{
+              width: 14,
+              height: 14,
+              borderColor: statusFilter === opt ? "#55BAAA" : "#D4D4D0",
+              backgroundColor: statusFilter === opt ? "#55BAAA" : "transparent",
+            }}
+          >
+            {statusFilter === opt && (
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                <path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </span>
+          {opt === "all" ? "All Statuses" : opt}
+        </button>
+      ))}
 
-          {/* Divider */}
+      {/* Divider */}
+      <div className="mx-3 my-1.5 border-t border-[#D4D4D0]/40" />
+
+      {/* Sort section */}
+      <div className="px-4 pt-1.5 pb-1.5">
+        <p className="uppercase" style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#1A1A1A", opacity: 0.35 }}>
+          Sort by
+        </p>
+      </div>
+      {([
+        { key: "status" as SortOption, label: "Status (default)" },
+        { key: "date" as SortOption, label: "Date" },
+        { key: "name" as SortOption, label: "Name A–Z" },
+        { key: "headCount" as SortOption, label: "Head Count" },
+      ]).map((opt) => (
+        <button
+          key={opt.key}
+          type="button"
+          onClick={() => setSortBy(opt.key)}
+          className="w-full text-left px-4 py-2 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
+          style={{ fontSize: 13, fontWeight: sortBy === opt.key ? 700 : 500, color: sortBy === opt.key ? "#55BAAA" : "#1A1A1A" }}
+        >
+          <span
+            className="rounded-full border shrink-0 flex items-center justify-center"
+            style={{
+              width: 14,
+              height: 14,
+              borderColor: sortBy === opt.key ? "#55BAAA" : "#D4D4D0",
+              backgroundColor: sortBy === opt.key ? "#55BAAA" : "transparent",
+            }}
+          >
+            {sortBy === opt.key && (
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                <path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </span>
+          {opt.label}
+        </button>
+      ))}
+
+      {/* Reset */}
+      {hasActiveFilter && (
+        <>
           <div className="mx-3 my-1.5 border-t border-[#D4D4D0]/40" />
-
-          {/* Sort section */}
-          <div className="px-4 pt-1.5 pb-1.5">
-            <p className="uppercase" style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#1A1A1A", opacity: 0.35 }}>
-              Sort by
-            </p>
-          </div>
-          {([
-            { key: "status" as SortOption, label: "Status (default)" },
-            { key: "date" as SortOption, label: "Date" },
-            { key: "name" as SortOption, label: "Name A–Z" },
-            { key: "headCount" as SortOption, label: "Head Count" },
-          ]).map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => { setSortBy(opt.key); }}
-              className="w-full text-left px-4 py-2 cursor-pointer transition-colors hover:bg-[#F5F5F0] flex items-center gap-2.5"
-              style={{ fontSize: 13, fontWeight: sortBy === opt.key ? 700 : 500, color: sortBy === opt.key ? "#55BAAA" : "#1A1A1A" }}
-            >
-              <span
-                className="rounded-full border shrink-0 flex items-center justify-center"
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderColor: sortBy === opt.key ? "#55BAAA" : "#D4D4D0",
-                  backgroundColor: sortBy === opt.key ? "#55BAAA" : "transparent",
-                }}
-              >
-                {sortBy === opt.key && (
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                    <path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-              {opt.label}
-            </button>
-          ))}
-
-          {/* Reset */}
-          {hasActiveFilter && (
-            <>
-              <div className="mx-3 my-1.5 border-t border-[#D4D4D0]/40" />
-              <button
-                type="button"
-                onClick={() => { setStatusFilter("all"); setSortBy("status"); setOpen(false); }}
-                className="w-full text-center px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-                style={{ fontSize: 12, fontWeight: 700, color: "#E74C3C" }}
-              >
-                Reset All
-              </button>
-            </>
-          )}
-        </div>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter("all"); setSortBy("status"); }}
+            className="w-full text-center px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
+            style={{ fontSize: 12, fontWeight: 700, color: "#E74C3C" }}
+          >
+            Reset All
+          </button>
+        </>
       )}
     </div>
   );
@@ -338,6 +341,9 @@ export function CowWorkScreen() {
   const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+
+  const hasActiveFilter = statusFilter !== "all" || sortBy !== "status";
 
   const filteredSorted = useMemo(() => {
     let list = [...projects];
@@ -405,17 +411,8 @@ export function CowWorkScreen() {
   return (
     <div className="space-y-4">
       {/* ── Toolbar Row ── */}
-      <div className="flex items-center justify-between gap-2.5">
-        {/* Left: Filter/Sort */}
-        <FilterSortDropdown
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-        />
-
-        {/* Right: Templates, + FAB, Actions (with Select inside) */}
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-end gap-2.5">
+        {/* Templates, + FAB, Actions (with Select & Filter/Sort inside) */}
           {/* Templates button */}
           <button
             type="button"
@@ -438,7 +435,7 @@ export function CowWorkScreen() {
             onClick={() => navigate("/cow-work/new")}
             className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
             style={{
-              width: 38, height: 38, fontSize: 22, fontWeight: 400, lineHeight: 1,
+              width: 34, height: 34, fontSize: 20, fontWeight: 400, lineHeight: 1,
               color: "#1A1A1A", backgroundColor: "#F3D12A",
               boxShadow: "0 2px 8px rgba(243,209,42,0.30)",
             }}
@@ -448,9 +445,21 @@ export function CowWorkScreen() {
           <ActionsDropdown
             selectMode={selectMode}
             onToggleSelect={toggleSelectMode}
+            onFilterSort={() => setShowFilterPanel((v) => !v)}
+            hasActiveFilter={hasActiveFilter}
           />
-        </div>
       </div>
+
+      {/* ── Filter/Sort Panel (toggled from Actions) ── */}
+      {showFilterPanel && (
+        <FilterSortPanel
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          onClose={() => setShowFilterPanel(false)}
+        />
+      )}
 
       {/* ── Search Bar ── */}
       <div className="relative">

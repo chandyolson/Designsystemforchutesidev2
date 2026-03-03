@@ -842,7 +842,7 @@ export function ReferenceLocationsScreen() {
             type="button"
             onClick={() => { setEditingId(null); setShowAddForm(true); }}
             className="flex items-center justify-center cursor-pointer rounded-lg transition-colors hover:brightness-95"
-            style={{ width: 38, height: 38, backgroundColor: "#F3D12A", border: "none" }}
+            style={{ width: 34, height: 34, backgroundColor: "#F3D12A", border: "none" }}
             aria-label="Add location"
           >
             <PlusIcon />

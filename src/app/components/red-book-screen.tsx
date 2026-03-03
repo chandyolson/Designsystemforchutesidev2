@@ -6,11 +6,12 @@ import { BulkActionBar } from "./bulk-action-bar";
 import { useSelectMode } from "./hooks/use-select-mode";
 import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
+import { FlagIcon } from "./flag-icon";
+import type { FlagColor } from "./flag-icon";
 
 /* ═══════════════════════════════════════════
    Types & Data
    ═══════════════════════════════════════════ */
-type Priority = "Low" | "Medium" | "High" | "Urgent";
 type NoteCategory = "General" | "Animal" | "Maintenance" | "Expense" | "Weather" | "Other";
 type ActionStatus = "Open" | "Complete" | "Won't Do";
 
@@ -20,69 +21,52 @@ interface RedBookEntry {
   category: NoteCategory;
   body: string;
   date: string;
+  flag?: FlagColor; // teal = Info, gold = Action, red = Urgent
   /* action item fields */
   actionRequired: boolean;
-  priority?: Priority;
-  assignTo?: string;
+  assignTo?: string;     // short name for display
   assignToSelf?: boolean;
   status?: ActionStatus;
 }
 
-const PRIORITY_COLORS: Record<Priority, string> = {
-  Low: "#1565C0",
-  Medium: "#B8860B",
-  High: "#E65100",
-  Urgent: "#C62828",
+const FLAG_BORDER_COLOR: Record<FlagColor, string> = {
+  teal: "#55BAAA",
+  gold: "#F3D12A",
+  red: "#E74C3C",
 };
 
-const PRIORITY_PILL_STYLES: Record<Priority, { bg: string; border: string; color: string }> = {
-  Low: { bg: "#E3F2FD", border: "#1565C0", color: "#1565C0" },
-  Medium: { bg: "#FFF8E1", border: "#B8860B", color: "#B8860B" },
-  High: { bg: "#FFF3E0", border: "#E65100", color: "#E65100" },
-  Urgent: { bg: "#FFEBEE", border: "#C62828", color: "#C62828" },
-};
-
-const CATEGORY_PILL_STYLES: Record<NoteCategory, { bg: string; color: string }> = {
-  General: { bg: "rgba(14,38,70,0.08)", color: "#0E2646" },
-  Animal: { bg: "#E8F5E9", color: "#2E7D32" },
-  Maintenance: { bg: "#FFF3E0", color: "#E65100" },
-  Expense: { bg: "#FFF8E1", color: "#B8860B" },
-  Weather: { bg: "#E3F2FD", color: "#1565C0" },
-  Other: { bg: "#F3E5F5", color: "#6A1B9A" },
-};
-
-const FILTER_CHIPS: string[] = ["All", "Actions", "General", "Animal", "Maintenance", "Expense"];
+const FILTER_CHIPS: string[] = ["All", "Actions", "Info", "Urgent", "Maintenance", "Animal"];
 
 const entries: RedBookEntry[] = [
   {
     id: "rb1",
-    title: "Fence down section 3",
-    category: "Maintenance",
-    body: "Found 3 posts down on the north fence line near the creek crossing. Cattle could push through. Need to repair before moving pairs.",
-    date: "Feb 28, 2026",
+    title: "Tag 3309 feet need trimming",
+    category: "Animal",
+    body: "Noticed limping in south pasture, left rear hoof looks overgrown. Need to get her in and trim before it gets worse.",
+    date: "Feb 27, 2026",
+    flag: "red",
     actionRequired: true,
-    priority: "High",
-    assignTo: "Mike Torres",
-    assignToSelf: false,
+    assignTo: "Me",
+    assignToSelf: true,
     status: "Open",
   },
   {
     id: "rb2",
-    title: "Tag 3309 feet need trimming",
-    category: "Animal",
-    body: "Noticed limping in south pasture, left rear hoof overgrown. Needs trimming at next working.",
-    date: "Feb 27, 2026",
+    title: "Fence down section 3",
+    category: "Maintenance",
+    body: "Found 3 posts down on the north fence line near the creek crossing. Cattle could push through.",
+    date: "Feb 28, 2026",
+    flag: "gold",
     actionRequired: true,
-    priority: "Urgent",
-    assignTo: "Me",
-    assignToSelf: true,
+    assignTo: "Mike T.",
+    assignToSelf: false,
     status: "Open",
   },
   {
     id: "rb3",
     title: "Hay delivery confirmed",
     category: "Expense",
-    body: "40 round bales arriving Thursday from Johnson's. $85/bale delivered. Total: $3,400.",
+    body: "40 round bales arriving Thursday from Johnson's. Need to clear the south stack yard.",
     date: "Feb 26, 2026",
     actionRequired: false,
   },
@@ -90,10 +74,10 @@ const entries: RedBookEntry[] = [
     id: "rb4",
     title: "Order Draxxin restock",
     category: "General",
-    body: "Down to 2 bottles, need at least 6 for spring processing. Check with Valley Vet for bulk pricing.",
+    body: "Down to 2 bottles, need at least 6 for spring processing. Check with Prairie Vet on pricing.",
     date: "Feb 25, 2026",
+    flag: "gold",
     actionRequired: true,
-    priority: "Medium",
     assignTo: "Me",
     assignToSelf: true,
     status: "Open",
@@ -102,11 +86,11 @@ const entries: RedBookEntry[] = [
     id: "rb5",
     title: "Water tank float broken — East Section",
     category: "Maintenance",
-    body: "Tank overflowing, float valve stuck open. Replaced valve and cleaned tank. Working properly now.",
+    body: "Tank overflowing, float valve stuck open. Shut off manual valve for now.",
     date: "Feb 24, 2026",
+    flag: "gold",
     actionRequired: true,
-    priority: "Medium",
-    assignTo: "Mike Torres",
+    assignTo: "Mike T.",
     assignToSelf: false,
     status: "Complete",
   },
@@ -114,45 +98,42 @@ const entries: RedBookEntry[] = [
     id: "rb6",
     title: "Coyote activity near calving pasture",
     category: "General",
-    body: "Spotted 3 coyotes along the tree line at dusk. Calving season starting soon — may need to set up night watch.",
+    body: "Spotted 3 coyotes along the tree line at dusk. May need to increase night checks.",
     date: "Feb 23, 2026",
+    flag: "teal",
     actionRequired: false,
   },
   {
     id: "rb7",
     title: "Move salt blocks to south pasture",
     category: "Maintenance",
-    body: "Current blocks nearly gone, need to relocate before cattle move south next week.",
+    body: "Current blocks nearly gone, need to relocate before moving pairs.",
     date: "Feb 22, 2026",
+    flag: "gold",
     actionRequired: true,
-    priority: "Low",
-    assignTo: "Emily Olson",
+    assignTo: "Emily O.",
     assignToSelf: false,
     status: "Open",
   },
   {
     id: "rb8",
-    title: "Check on Tag 7801 — calving soon",
-    category: "Animal",
-    body: "Bagged up heavy, probably within 48 hours. Keep in close pen for observation.",
-    date: "Feb 21, 2026",
-    actionRequired: true,
-    priority: "Medium",
-    assignTo: "Me",
-    assignToSelf: true,
-    status: "Won't Do",
+    title: "Checked windmill pump",
+    category: "Maintenance",
+    body: "Running fine, greased bearings. Next service in 6 months.",
+    date: "Feb 20, 2026",
+    actionRequired: false,
   },
 ];
 
 /* ═══════════════════════════════════════════
    Icons
    ═══════════════════════════════════════════ */
-function FlagIcon({ size = 16, color = "#E74C3C" }: { size?: number; color?: string }) {
+function SummaryFlagIcon() {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
       <path
         d="M3 1.5V14.5M3 1.5H12L9.5 5.25L12 9H3"
-        stroke={color}
+        stroke="#E74C3C"
         strokeWidth="1.3"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -179,27 +160,19 @@ function ClearIcon() {
   );
 }
 
-function ChevronRight() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-      <path d="M6 4L10 8L6 12" stroke="#1A1A1A" strokeOpacity="0.20" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /* Status indicator icons */
 function OpenCircle({ color }: { color: string }) {
   return (
     <span
       className="shrink-0 rounded-full"
-      style={{ width: 12, height: 12, border: `2px solid ${color}`, display: "block" }}
+      style={{ width: 10, height: 10, border: `1.5px solid ${color}`, display: "block" }}
     />
   );
 }
 
 function CompleteCircle() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" className="shrink-0">
       <circle cx="7" cy="7" r="6" fill="#55BAAA" />
       <path d="M4.5 7L6.25 8.75L9.5 5.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -208,7 +181,7 @@ function CompleteCircle() {
 
 function WontDoCircle() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" className="shrink-0">
       <circle cx="7" cy="7" r="6" fill="#9E9E9E" />
       <path d="M4.5 7H9.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
@@ -235,7 +208,7 @@ function ActionsDropdown({
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  const items = ["Export Entries", "Search All", "Print"];
+  const items = ["Filter/Sort", "Export Entries", "Search All", "Print"];
 
   return (
     <div ref={ref} className="relative">
@@ -244,8 +217,8 @@ function ActionsDropdown({
         onClick={() => setOpen((v) => !v)}
         className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.97] flex items-center justify-center"
         style={{
-          width: 32,
-          height: 32,
+          width: 34,
+          height: 34,
           backgroundColor: "white",
           border: "1px solid rgba(14,38,70,0.12)",
         }}
@@ -289,133 +262,90 @@ function ActionsDropdown({
 }
 
 /* ═══════════════════════════════════════════
-   Note Row
+   Dark Note Card
    ═══════════════════════════════════════════ */
-function NoteRow({ entry, onClick }: { entry: RedBookEntry; onClick: () => void }) {
-  const catStyle = CATEGORY_PILL_STYLES[entry.category] || CATEGORY_PILL_STYLES.General;
+function NoteCard({ entry, onClick }: { entry: RedBookEntry; onClick: () => void }) {
+  const flagColor = entry.flag ? FLAG_BORDER_COLOR[entry.flag] : undefined;
 
-  if (entry.actionRequired && entry.priority) {
-    const prioColor = PRIORITY_COLORS[entry.priority];
-    const prioPill = PRIORITY_PILL_STYLES[entry.priority];
-
-    return (
-      <div
-        onClick={onClick}
-        className="flex items-center gap-3 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-        style={{ padding: "14px 16px", borderLeft: `3px solid ${prioColor}` }}
-      >
-        {/* Left content */}
-        <div className="flex-1 min-w-0">
-          {/* Title + priority pill */}
-          <div className="flex items-center gap-2 min-w-0">
-            <p
-              className="truncate"
-              style={{ fontSize: 14, fontWeight: 500, color: "#1A1A1A", lineHeight: 1.3 }}
-            >
-              {entry.title}
-            </p>
-            <span
-              className="shrink-0 inline-flex items-center rounded-full font-['Inter']"
-              style={{
-                padding: "1px 8px",
-                fontSize: 10,
-                fontWeight: 700,
-                backgroundColor: prioPill.bg,
-                border: `1px solid ${prioPill.border}`,
-                color: prioPill.color,
-              }}
-            >
-              {entry.priority}
-            </span>
-          </div>
-
-          {/* Body preview */}
-          <p
-            className="mt-1 truncate"
-            style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)", lineHeight: 1.4 }}
-          >
-            {entry.body}
-          </p>
-
-          {/* Assignee (if not self) */}
-          {!entry.assignToSelf && entry.assignTo && (
-            <p className="mt-1" style={{ fontSize: 11, fontWeight: 600, color: "#55BAAA" }}>
-              → {entry.assignTo}
-            </p>
-          )}
-
-          {/* Category + date */}
-          <div className="flex items-center gap-2 mt-1.5">
-            <span
-              className="inline-flex items-center rounded-full font-['Inter']"
-              style={{ padding: "1px 8px", fontSize: 10, fontWeight: 700, backgroundColor: catStyle.bg, color: catStyle.color }}
-            >
-              {entry.category}
-            </span>
-            <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(26,26,26,0.30)" }}>
-              {entry.date}
-            </span>
-          </div>
-        </div>
-
-        {/* Right — status indicator */}
-        <div className="shrink-0">
-          {entry.status === "Complete" ? (
-            <CompleteCircle />
-          ) : entry.status === "Won't Do" ? (
-            <WontDoCircle />
-          ) : (
-            <OpenCircle color={prioColor} />
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* Regular note row */
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-3 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-      style={{ padding: "14px 16px" }}
+      className="rounded-xl cursor-pointer transition-all hover:brightness-110 active:scale-[0.99] font-['Inter']"
+      style={{
+        background: "linear-gradient(135deg, #0E2646 0%, #153566 100%)",
+        padding: "14px 16px",
+      }}
     >
-      <div className="flex-1 min-w-0">
+      {/* Row 1: Title + Flag */}
+      <div className="flex items-start justify-between gap-3">
         <p
-          className="truncate"
-          style={{ fontSize: 14, fontWeight: 500, color: "#1A1A1A", lineHeight: 1.3 }}
+          className="flex-1 min-w-0"
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#FFFFFF",
+            lineHeight: 1.3,
+          }}
         >
           {entry.title}
         </p>
-        <p
-          className="mt-1 truncate"
-          style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)", lineHeight: 1.4 }}
-        >
-          {entry.body}
-        </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span
-            className="inline-flex items-center rounded-full font-['Inter']"
-            style={{ padding: "1px 8px", fontSize: 10, fontWeight: 700, backgroundColor: catStyle.bg, color: catStyle.color }}
-          >
+        {entry.flag && (
+          <div className="shrink-0 pt-0.5">
+            <FlagIcon color={entry.flag} size="sm" />
+          </div>
+        )}
+      </div>
+
+      {/* Row 2: Note preview (2 lines max) */}
+      <p
+        className="mt-1"
+        style={{
+          fontSize: 12,
+          fontWeight: 400,
+          color: "rgba(255,255,255,0.45)",
+          lineHeight: 1.5,
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}
+      >
+        {entry.body}
+      </p>
+
+      {/* Row 3: Category + Date | Status + Assignee */}
+      <div className="flex items-center justify-between mt-2">
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.20)" }}>
+          <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.25)" }}>
             {entry.category}
           </span>
-          <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(26,26,26,0.30)" }}>
-            {entry.date}
-          </span>
-        </div>
-      </div>
-      <ChevronRight />
-    </div>
-  );
-}
+          {" · "}
+          <span style={{ fontWeight: 400 }}>{entry.date}</span>
+        </span>
 
-/* ═══════════════════════════════════════════
-   Entry Card (select mode wrapper)
-   ═══════════════════════════════════════════ */
-function EntryCardWrapper({ entry, onClick }: { entry: RedBookEntry; onClick: () => void }) {
-  return (
-    <div className="rounded-xl bg-white overflow-hidden" style={{ border: "1px solid rgba(212,212,208,0.60)" }}>
-      <NoteRow entry={entry} onClick={onClick} />
+        {/* Status + Assignee (only on action items) */}
+        {entry.actionRequired && entry.status && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {entry.status === "Complete" ? (
+              <CompleteCircle />
+            ) : entry.status === "Won't Do" ? (
+              <WontDoCircle />
+            ) : (
+              <OpenCircle color={flagColor || "#FFFFFF"} />
+            )}
+            {!entry.assignToSelf && entry.assignTo && (
+              <span style={{ fontSize: 10, fontWeight: 600, color: "#55BAAA" }}>
+                → {entry.assignTo}
+              </span>
+            )}
+            {entry.assignToSelf && (
+              <span style={{ fontSize: 10, fontWeight: 600, color: "#55BAAA" }}>
+                → Me
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -434,20 +364,21 @@ export function RedBookScreen() {
   const { showDeleteConfirm } = useDeleteConfirm();
 
   /* ── Action counts ── */
-  const actionEntries = entries.filter((e) => e.actionRequired && e.status === "Open");
-  const urgentCount = actionEntries.filter((e) => e.priority === "Urgent").length;
-  const highCount = actionEntries.filter((e) => e.priority === "High").length;
-  const mediumCount = actionEntries.filter((e) => e.priority === "Medium").length;
+  const openActions = entries.filter((e) => e.actionRequired && e.status === "Open");
+  const urgentCount = openActions.filter((e) => e.flag === "red").length;
+  const actionCount = openActions.filter((e) => e.flag === "gold").length;
 
   /* ── Filtering ── */
   const filtered = entries.filter((entry) => {
-    // Category / action filter
     if (activeFilter === "Actions") {
       if (!entry.actionRequired) return false;
+    } else if (activeFilter === "Info") {
+      if (entry.flag !== "teal") return false;
+    } else if (activeFilter === "Urgent") {
+      if (entry.flag !== "red") return false;
     } else if (activeFilter !== "All") {
       if (entry.category !== activeFilter) return false;
     }
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       if (
@@ -494,7 +425,7 @@ export function RedBookScreen() {
           type="button"
           onClick={() => navigate("/red-book/new")}
           className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.95] font-['Inter']"
-          style={{ width: 38, height: 38, fontSize: 22, fontWeight: 400, lineHeight: 1, color: "#1A1A1A", backgroundColor: "#F3D12A", boxShadow: "0 2px 8px rgba(243,209,42,0.30)" }}
+          style={{ width: 34, height: 34, fontSize: 20, fontWeight: 400, lineHeight: 1, color: "#1A1A1A", backgroundColor: "#F3D12A", boxShadow: "0 2px 8px rgba(243,209,42,0.30)" }}
         >
           +
         </button>
@@ -504,7 +435,7 @@ export function RedBookScreen() {
       {/* ═══════════════════════════════
          ACTION ITEMS SUMMARY BAR
          ═══════════════════════════════ */}
-      {actionEntries.length > 0 && (
+      {openActions.length > 0 && (
         <button
           type="button"
           onClick={() => setActiveFilter("Actions")}
@@ -516,7 +447,7 @@ export function RedBookScreen() {
           }}
         >
           <div className="flex items-center gap-2">
-            <FlagIcon size={16} color="#E74C3C" />
+            <SummaryFlagIcon />
             <span style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF" }}>
               Open Actions
             </span>
@@ -530,20 +461,12 @@ export function RedBookScreen() {
                 {urgentCount}
               </span>
             )}
-            {highCount > 0 && (
+            {actionCount > 0 && (
               <span
                 className="inline-flex items-center justify-center rounded-full font-['Inter']"
-                style={{ minWidth: 22, height: 22, padding: "0 6px", fontSize: 11, fontWeight: 700, color: "#FFFFFF", backgroundColor: "#E65100" }}
+                style={{ minWidth: 22, height: 22, padding: "0 6px", fontSize: 11, fontWeight: 700, color: "#1A1A1A", backgroundColor: "#F3D12A" }}
               >
-                {highCount}
-              </span>
-            )}
-            {mediumCount > 0 && (
-              <span
-                className="inline-flex items-center justify-center rounded-full font-['Inter']"
-                style={{ minWidth: 22, height: 22, padding: "0 6px", fontSize: 11, fontWeight: 700, color: "#FFFFFF", backgroundColor: "#B8860B" }}
-              >
-                {mediumCount}
+                {actionCount}
               </span>
             )}
           </div>
@@ -556,7 +479,6 @@ export function RedBookScreen() {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         {FILTER_CHIPS.map((chip) => {
           const isActive = activeFilter === chip;
-          const isActions = chip === "Actions";
           return (
             <button
               key={chip}
@@ -567,17 +489,9 @@ export function RedBookScreen() {
                 fontSize: 12,
                 fontWeight: 600,
                 padding: "5px 14px",
-                color: isActive
-                  ? isActions ? "#FFFFFF" : "#FFFFFF"
-                  : "rgba(26,26,26,0.4)",
-                backgroundColor: isActive
-                  ? isActions ? "#E74C3C" : "#0E2646"
-                  : "rgba(26,26,26,0.05)",
-                border: `1.5px solid ${
-                  isActive
-                    ? isActions ? "#E74C3C" : "#0E2646"
-                    : "transparent"
-                }`,
+                color: isActive ? "#FFFFFF" : "rgba(26,26,26,0.4)",
+                backgroundColor: isActive ? "#0E2646" : "#FFFFFF",
+                border: `1px solid ${isActive ? "#0E2646" : "#D4D4D0"}`,
               }}
             >
               {chip}
@@ -644,15 +558,15 @@ export function RedBookScreen() {
                     selected={selectedIds.has(entry.id)}
                     onToggle={() => toggleItem(entry.id)}
                   >
-                    <EntryCardWrapper entry={entry} onClick={() => {}} />
+                    <NoteCard entry={entry} onClick={() => {}} />
                   </SelectableCardWrapper>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-xl bg-white overflow-hidden divide-y divide-[#D4D4D0]/40" style={{ border: "1px solid rgba(212,212,208,0.60)" }}>
+            <div className="space-y-2.5">
               {filtered.map((entry) => (
-                <NoteRow
+                <NoteCard
                   key={entry.id}
                   entry={entry}
                   onClick={() => navigate(`/red-book/${entry.id}`)}

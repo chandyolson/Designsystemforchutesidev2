@@ -136,7 +136,7 @@ export function CowHistoryPanel({ animal, defaultExpanded = false }: CowHistoryP
       {/* Subtitle below header */}
       <div className="px-4 -mt-2 pb-3">
         <p style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.45)" }}>
-          {animal.type} · {animal.yearBorn} · EID: {animal.eid}
+          {animal.tagColor} · {animal.otherId}
         </p>
       </div>
 
@@ -179,12 +179,9 @@ export function CowHistoryPanel({ animal, defaultExpanded = false }: CowHistoryP
               <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 {[
                   { label: "Type", value: animal.type },
-                  { label: "Breed", value: animal.breed },
                   { label: "Year Born", value: animal.yearBorn },
                   { label: "Tag Color", value: animal.tagColor },
-                  { label: "Group", value: animal.group },
                   { label: "Flag Status", value: animal.flag ? animal.flag.charAt(0).toUpperCase() + animal.flag.slice(1) : "None" },
-                  { label: "EID", value: animal.eid },
                   { label: "Other ID", value: animal.otherId },
                 ].map((kv) => (
                   <div key={kv.label}>

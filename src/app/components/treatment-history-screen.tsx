@@ -192,85 +192,68 @@ export function TreatmentHistoryScreen() {
       {/* ═══════════════════════════════════════════
           TOOLBAR
           ═══════════════════════════════════════════ */}
-      <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
-        {/* Filter dropdown (left) */}
+      <div className="flex items-center justify-end gap-2.5" style={{ marginBottom: 14 }}>
+        {/* + New Treatment FAB */}
+        <button
+          type="button"
+          onClick={() => navigate("/treatment/new")}
+          className="flex items-center justify-center rounded-lg cursor-pointer transition-colors hover:opacity-90"
+          style={{
+            width: 34,
+            height: 34,
+            backgroundColor: "#F3D12A",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3V13M3 8H13" stroke="#0E2646" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        {/* 3-dot actions */}
         <div className="relative">
           <button
             type="button"
-            className="flex items-center gap-1.5 cursor-pointer rounded-lg transition-colors hover:bg-[#0E2646]/6"
-            style={{ padding: "6px 10px" }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4H14M4 8H12M6 12H10" stroke="#0E2646" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span
-              className="font-['Inter']"
-              style={{ fontSize: 13, fontWeight: 600, color: "#0E2646" }}
-            >
-              Filter
-            </span>
-          </button>
-        </div>
-
-        {/* Right: + button, 3-dot actions */}
-        <div className="flex items-center gap-2">
-          {/* + New Treatment FAB */}
-          <button
-            type="button"
-            onClick={() => navigate("/treatment/new")}
-            className="flex items-center justify-center rounded-lg cursor-pointer transition-colors hover:opacity-90"
+            onClick={() => setShowActions(!showActions)}
+            className="rounded-lg cursor-pointer transition-all duration-150 active:scale-[0.97] flex items-center justify-center"
             style={{
-              width: 34,
-              height: 34,
-              backgroundColor: "#F3D12A",
+              width: 32,
+              height: 32,
+              backgroundColor: "white",
+              border: "1px solid rgba(14,38,70,0.12)",
             }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3V13M3 8H13" stroke="#0E2646" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="8" cy="3.5" r="1.3" fill="#0E2646" />
+              <circle cx="8" cy="8" r="1.3" fill="#0E2646" />
+              <circle cx="8" cy="12.5" r="1.3" fill="#0E2646" />
             </svg>
           </button>
 
-          {/* 3-dot actions */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowActions(!showActions)}
-              className="flex items-center justify-center rounded-lg cursor-pointer transition-colors hover:bg-[#0E2646]/6"
-              style={{ width: 34, height: 34 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3.5" r="1.25" fill="#0E2646" />
-                <circle cx="8" cy="8" r="1.25" fill="#0E2646" />
-                <circle cx="8" cy="12.5" r="1.25" fill="#0E2646" />
-              </svg>
-            </button>
-
-            {showActions && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                <div
-                  className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl overflow-hidden"
-                  style={{
-                    width: 180,
-                    border: "1px solid #D4D4D0",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
-                  }}
-                >
-                  {["Export CSV", "Select Mode", "Print Report"].map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setShowActions(false)}
-                      className="w-full text-left px-4 py-3 font-['Inter'] cursor-pointer hover:bg-[#0E2646]/4 transition-colors"
-                      style={{ fontSize: 14, fontWeight: 500, color: "#1A1A1A" }}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          {showActions && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+              <div
+                className="absolute right-0 top-full mt-1.5 z-50 bg-white rounded-xl overflow-hidden font-['Inter']"
+                style={{
+                  minWidth: 185,
+                  border: "1px solid rgba(212,212,208,0.80)",
+                  boxShadow: "0 8px 24px rgba(14,38,70,0.12)",
+                }}
+              >
+                {["Filter/Sort", "Select Mode", "Export CSV", "Print Report"].map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setShowActions(false)}
+                    className="w-full text-left px-4 py-2.5 cursor-pointer hover:bg-[#F5F5F0] transition-colors"
+                    style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

@@ -3,6 +3,19 @@ import { useNavigate } from "react-router";
 import { FormFieldRow, FormSelectRow } from "./form-field-row";
 import { CollapsibleSection } from "./collapsible-section";
 import { PillButton } from "./pill-button";
+import { FlagIcon } from "./flag-icon";
+import {
+  CalvingQuickNotes,
+  getActiveFlagColor,
+  type NoteFlag,
+} from "./calving-quick-notes";
+
+/* Flag label map */
+const FLAG_LABEL_MAP: Record<string, string> = {
+  cull: "Cull",
+  production: "Production",
+  management: "Management",
+};
 
 export function AddCalfScreen() {
   const navigate = useNavigate();
@@ -28,19 +41,9 @@ export function AddCalfScreen() {
     notes: "",
   });
 
-  const [quickNotes, setQuickNotes] = useState<string[]>([]);
-
-  const quickNoteOptions = [
-    "Breach", "Backwards", "Twins", "Pulled", "C-Section",
-    "Weak calf", "Scours", "Bottle baby", "Graft", "Prolapse",
-    "Retained placenta", "Slow to nurse", "Aggressive cow",
-  ];
-
-  const toggleQuickNote = (note: string) => {
-    setQuickNotes((prev) =>
-      prev.includes(note) ? prev.filter((n) => n !== note) : [...prev, note]
-    );
-  };
+  /* Quick notes — color-coded with flag behavior */
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(["qn2", "qn11"]); // Bad Bag + Needs Tag mock
+  const [activeFlag, setActiveFlag] = useState<NoteFlag>("production"); // production wins
 
   const [cowTraits, setCowTraits] = useState({
     udderScore: "",
@@ -65,19 +68,35 @@ export function AddCalfScreen() {
   const tabs = ["entry", "dam"] as const;
   const tabLabels = { entry: "Entry", dam: "Dam Info" };
 
+  const displayTag = fields.calfTag || "—";
+  const flagColor = getActiveFlagColor(selectedNoteIds);
+
   return (
     <div className="space-y-0">
-      {/* ══ CALVING DATE BADGE ══ */}
+      {/* ══ CALVING DATE BADGE + FLAG INDICATOR ══ */}
       <div
-        className="flex items-center justify-center gap-2 py-2.5 mb-4 rounded-xl font-['Inter']"
+        className="flex items-center justify-between py-2.5 px-4 mb-4 rounded-xl font-['Inter']"
         style={{ backgroundColor: "rgba(14,38,70,0.06)" }}
       >
-        <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(26,26,26,0.45)" }}>
-          Calving Date
-        </span>
-        <span style={{ fontSize: 14, fontWeight: 700, color: "#0E2646" }}>
-          {calvingDate}
-        </span>
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(26,26,26,0.45)" }}>
+            Calving Date
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#0E2646" }}>
+            {calvingDate}
+          </span>
+        </div>
+        {flagColor && (
+          <div className="flex items-center gap-1.5">
+            <FlagIcon color={flagColor} size="sm" />
+            <span
+              className="font-['Inter']"
+              style={{ fontSize: 10, fontWeight: 700, color: flagColor === "red" ? "#9B2335" : flagColor === "gold" ? "#B8860B" : "#55BAAA" }}
+            >
+              {FLAG_LABEL_MAP[activeFlag]}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ══ TABS ══ */}
@@ -162,53 +181,23 @@ export function AddCalfScreen() {
               </div>
             </div>
 
-            {/* ── Quick Notes (pills) ── */}
-            <CollapsibleSection
-              title="Quick Notes"
-              collapsedContent={
-                quickNotes.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 pt-2">
-                    {quickNotes.map((note) => (
-                      <span
-                        key={note}
-                        className="px-2.5 py-1 rounded-full font-['Inter']"
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          backgroundColor: "#0E2646",
-                          color: "white",
-                        }}
-                      >
-                        {note}
-                      </span>
-                    ))}
-                  </div>
-                ) : undefined
-              }
-            >
-              <div className="flex flex-wrap gap-2 pt-2">
-                {quickNoteOptions.map((note) => {
-                  const isSelected = quickNotes.includes(note);
-                  return (
-                    <button
-                      key={note}
-                      type="button"
-                      onClick={() => toggleQuickNote(note)}
-                      className="px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150 font-['Inter']"
-                      style={{
-                        fontSize: 13,
-                        fontWeight: isSelected ? 700 : 500,
-                        backgroundColor: isSelected ? "#0E2646" : "white",
-                        borderColor: isSelected ? "#0E2646" : "#D4D4D0",
-                        color: isSelected ? "white" : "#1A1A1A",
-                      }}
-                    >
-                      {note}
-                    </button>
-                  );
-                })}
+            {/* ── Quick Notes (color-coded pills) ── */}
+            <div className="flex items-start gap-3">
+              <label
+                className="shrink-0 text-[#1A1A1A] font-['Inter']"
+                style={{ width: 105, fontSize: 14, fontWeight: 600, paddingTop: 7 }}
+              >
+                Quick Notes
+              </label>
+              <div className="flex-1 min-w-0">
+                <CalvingQuickNotes
+                  selectedIds={selectedNoteIds}
+                  onSelectedChange={setSelectedNoteIds}
+                  tag={displayTag}
+                  onFlagChange={setActiveFlag}
+                />
               </div>
-            </CollapsibleSection>
+            </div>
 
             {/* ── Notes ── */}
             <div className="space-y-2">

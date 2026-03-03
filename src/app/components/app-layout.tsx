@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { NavDrawer } from "./nav-drawer";
 import { OperationPicker } from "./operation-picker";
@@ -63,7 +63,7 @@ function getHeaderConfig(pathname: string): HeaderConfig {
     return { title: "Calving Record", subtitle: `Calf ${tag}`, showBack: true };
   }
   if (pathname === "/cow-work") return { title: "Cow Work", subtitle: "5 Active Projects" };
-  if (pathname === "/cow-work/new") return { title: "New Project", subtitle: "Create a new work project", showBack: true };
+  if (pathname === "/cow-work/new") return { title: "New Project", subtitle: "Cow Work", showBack: true };
   if (pathname === "/cow-work/templates") return { title: "Work Templates", subtitle: "Saved project configurations", showBack: true };
   if (pathname === "/cow-work/templates/new") return { title: "New Template", subtitle: "Configure project defaults", showBack: true };
   if (pathname.match(/^\/cow-work\/templates\/[^/]+$/) && pathname !== "/cow-work/templates/new") {
@@ -90,7 +90,7 @@ function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname === "/reference/groups") return { title: "Groups", subtitle: "Reference · 6 Groups", showBack: true };
   if (pathname.startsWith("/reference/groups/")) return { title: "2026 Spring Calving", subtitle: "Season Group · 87 Head", showBack: true };
   if (pathname === "/reference/locations") return { title: "Locations", subtitle: "Reference · 8 Locations", showBack: true };
-  if (pathname === "/reference/quick-notes") return { title: "Quick Notes", subtitle: "Reference · 3 Categories", showBack: true };
+  if (pathname === "/reference/quick-notes") return { title: "Quick Notes", subtitle: "Reference · 17 Notes", showBack: true };
   if (pathname === "/reference/diseases") return { title: "Diseases", subtitle: "Reference · Global List", showBack: true };
   if (pathname.startsWith("/reference/diseases/")) {
     const DISEASE_NAMES: Record<string, string> = {
@@ -166,6 +166,23 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+
+  /* Listen for global "open operation picker" event */
+  useEffect(() => {
+    const handler = () => setOperationPickerOpen(true);
+    window.addEventListener("open-operation-picker", handler);
+    return () => window.removeEventListener("open-operation-picker", handler);
+  }, []);
+
+  /* Listen for global "sign out" event */
+  useEffect(() => {
+    const handler = () => {
+      logout();
+      navigate("/sign-in");
+    };
+    window.addEventListener("app-sign-out", handler);
+    return () => window.removeEventListener("app-sign-out", handler);
+  }, [logout, navigate]);
 
   const config = getHeaderConfig(location.pathname);
 

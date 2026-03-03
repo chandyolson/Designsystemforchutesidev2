@@ -7,6 +7,121 @@ import { FlagIcon } from "./flag-icon";
 import { FloatingMicButton } from "./floating-mic-button";
 import { CowHistoryPanel, mockAnimals, alreadyProcessedTags } from "./cow-history-panel";
 import { useToast } from "./toast-context";
+import {
+  CalvingQuickNotes,
+  getActiveFlagColor,
+  CALVING_QUICK_NOTES,
+  type NoteFlag,
+} from "./calving-quick-notes";
+
+/* ═══════════════════════════════════════════════
+   PROJECT FIELD CONFIGURATION
+   ═══════════════════════════════════════════════ */
+
+/** Locked fields per work type — always ON, rendered first under teal sub-header */
+interface LockedFieldConfig {
+  label: string; // sub-header text
+  fields: LockedField[];
+}
+
+interface LockedField {
+  key: string;
+  label: string;
+  type: "select" | "number" | "text";
+  options?: string[];
+  placeholder?: string;
+  defaultValue?: string;
+  /** For BSE Pass/Fail color coding */
+  colorFn?: (val: string) => string | undefined;
+}
+
+const LOCKED_CONFIGS: Record<string, LockedFieldConfig> = {
+  "Pregnancy Check": {
+    label: "PREGNANCY CHECK FIELDS",
+    fields: [
+      {
+        key: "pregStage",
+        label: "Preg Stage",
+        type: "select",
+        options: ["Open", "AI", "Bred", "Late", "Short", "Medium", "Long"],
+        defaultValue: "Bred",
+      },
+      {
+        key: "daysGest",
+        label: "Days of Gestation",
+        type: "number",
+        placeholder: "days",
+        defaultValue: "142",
+      },
+      {
+        key: "fetalSex",
+        label: "Fetal Sex",
+        type: "select",
+        options: ["Bull", "Heifer", "Twin - BB", "Twin - HH", "Twin - BH", "Unknown"],
+        defaultValue: "Bull",
+      },
+    ],
+  },
+  "Breeding / Bull Turnout": {
+    label: "BREEDING FIELDS",
+    fields: [
+      { key: "technician", label: "Technician", type: "text", placeholder: "Name" },
+      { key: "breedingSire", label: "Breeding Sire", type: "text", placeholder: "Bull tag or name" },
+      { key: "estrusStatus", label: "Estrus Status", type: "select", options: ["Standing", "Not Standing", "Unknown"] },
+      { key: "breedingType", label: "Breeding Type", type: "select", options: ["Natural", "AI", "ET"] },
+    ],
+  },
+  "Breeding Soundness Exam": {
+    label: "BREEDING SOUNDNESS EXAM FIELDS",
+    fields: [
+      { key: "scrotal", label: "Scrotal", type: "number", placeholder: "cm" },
+      {
+        key: "passFail",
+        label: "Pass/Fail",
+        type: "select",
+        options: ["Pass", "Fail", "Defer"],
+        defaultValue: "Pass",
+        colorFn: (v) => v === "Pass" ? "#55BAAA" : v === "Fail" ? "#E74C3C" : v === "Defer" ? "#F3D12A" : undefined,
+      },
+      { key: "motility", label: "Motility", type: "number", placeholder: "%" },
+      { key: "morphology", label: "Morphology", type: "number", placeholder: "%" },
+      { key: "semenDefects", label: "Semen Defects", type: "text", placeholder: "Describe defects if any" },
+      { key: "physicalDefects", label: "Physical Defects", type: "text", placeholder: "Describe defects if any" },
+    ],
+  },
+};
+
+/** Optional "All" fields that can be toggled on/off and reordered */
+type OptionalFieldKey = "weight" | "quickNotes" | "notes" | "dna" | "tagColor" | "lot" | "sample" | "pen" | "data1" | "data2" | "traits";
+
+interface ProjectConfig {
+  workType: string;
+  optionalFields: OptionalFieldKey[]; // ordered list of enabled optional fields
+}
+
+/* Mock project configs */
+const PREG_CONFIG: ProjectConfig = {
+  workType: "Pregnancy Check",
+  optionalFields: ["weight", "quickNotes", "notes", "dna", "tagColor"],
+};
+
+const BSE_CONFIG: ProjectConfig = {
+  workType: "Breeding Soundness Exam",
+  optionalFields: ["weight", "quickNotes", "notes"],
+};
+
+/* Use preg config for the primary mock */
+const PROJECT_CONFIG = PREG_CONFIG;
+
+/* ── Tag Color options ── */
+const TAG_COLORS = ["Pink", "Yellow", "Green", "Orange", "Blue", "White", "Red", "Purple"];
+
+/* ── Flag label map ── */
+const FLAG_LABEL_MAP: Record<string, string> = {
+  cull: "Cull",
+  production: "Production",
+  management: "Management",
+};
 
 /* ── Mock worked animals ── */
 const workedAnimals = [
@@ -26,12 +141,51 @@ const projectProducts = [
   { name: "GnRH (Cystorelin)", dosage: "2 mL", route: "IM", inventory: "25 mL" },
 ];
 
-/* ── Processing type for this project (mock: Pregnancy Check) ── */
-const PROJECT_PROCESSING_TYPE = "Pregnancy Check";
+/* ── Lock icon (10px, teal at 30%) ── */
+function LockIconSmall() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0">
+      <rect x="2" y="4.5" width="6" height="4.5" rx="1" stroke="#55BAAA" strokeOpacity="0.3" strokeWidth="1" />
+      <path d="M3.5 4.5V3C3.5 1.9 4.2 1 5 1C5.8 1 6.5 1.9 6.5 3V4.5" stroke="#55BAAA" strokeOpacity="0.3" strokeWidth="1" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-/* ── Quick notes options ── */
-const quickNoteOptions = ["Normal", "Free Martin", "Twin", "Cull - no milk", "White face", "Follow-up"];
+/* ── Mic icon ── */
+function MicIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0">
+      <rect x="6" y="2" width="6" height="9" rx="3" stroke="#55BAAA" strokeWidth="1.5" />
+      <path d="M3.5 8.5C3.5 11.5 6 14 9 14C12 14 14.5 11.5 14.5 8.5" stroke="#55BAAA" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 14V16.5" stroke="#55BAAA" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
+/* ═══════════════════════════════════════════════
+   Quick Notes pills for inline rendering
+   ═══════════════════════════════════════════════ */
+const PILL_COLORS: Record<string, { bg: string; bgSel: string; border: string; borderSel: string; color: string }> = {
+  cull:       { bg: "rgba(155,35,53,0.12)", bgSel: "rgba(155,35,53,0.20)", border: "rgba(155,35,53,0.25)", borderSel: "#9B2335", color: "#9B2335" },
+  production: { bg: "rgba(243,209,42,0.12)", bgSel: "rgba(243,209,42,0.22)", border: "rgba(243,209,42,0.30)", borderSel: "#B8860B", color: "#B8860B" },
+  management: { bg: "rgba(85,186,170,0.12)", bgSel: "rgba(85,186,170,0.20)", border: "rgba(85,186,170,0.25)", borderSel: "#55BAAA", color: "#55BAAA" },
+  none:       { bg: "#F5F5F0", bgSel: "rgba(26,26,26,0.08)", border: "#D4D4D0", borderSel: "rgba(26,26,26,0.40)", color: "rgba(26,26,26,0.55)" },
+};
+
+/* Cow-work quick notes: all except "Twin" (calving-only) */
+const COWWORK_QUICK_NOTES = CALVING_QUICK_NOTES.filter((n) => n.text !== "Twin");
+
+function CheckIcon({ color }: { color: string }) {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0">
+      <path d="M2 5.5L4 7.5L8 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   PROJECT DETAIL SCREEN
+   ═══════════════════════════════════════════════ */
 export function ProjectDetailScreen() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -41,42 +195,49 @@ export function ProjectDetailScreen() {
 
   /* ── Input tab state ── */
   const [tag, setTag] = useState("4782");
-  const [weight, setWeight] = useState("1,247");
-  const [quickNotes, setQuickNotes] = useState("");
-  const [dnaSample, setDnaSample] = useState("");
-  const [memo, setMemo] = useState("");
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(["qn4"]); // "Lame" pre-selected
+  const [activeFlag, setActiveFlag] = useState<NoteFlag>("production");
 
-  /* ── Pregnancy Check conditional fields (default view) ── */
-  const [pregStage, setPregStage] = useState("Bred");
-  const [daysGest, setDaysGest] = useState("142");
-  const [calfSex, setCalfSex] = useState("Bull");
+  /* Quick Notes collapsible state */
+  const [quickNotesOpen, setQuickNotesOpen] = useState(false);
 
-  /* ── Breeding conditional fields ── */
-  const [sireBull, setSireBull] = useState("");
-  const [breedingDate, setBreedingDate] = useState("");
-  const [breedingMethod, setBreedingMethod] = useState("");
+  /* Dynamic field values stored in a map */
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
+    // Pre-fill defaults from locked config + optional defaults
+    const defaults: Record<string, string> = {};
+    const lockedConfig = LOCKED_CONFIGS[PROJECT_CONFIG.workType];
+    if (lockedConfig) {
+      for (const f of lockedConfig.fields) {
+        if (f.defaultValue) defaults[f.key] = f.defaultValue;
+      }
+    }
+    // Pre-fill optional field defaults for mock
+    defaults.weight = "1,247";
+    defaults.tagColor = "";
+    defaults.dna = "";
+    defaults.notes = "";
+    defaults.lot = "";
+    defaults.sample = "";
+    defaults.pen = "";
+    defaults.data1 = "";
+    defaults.data2 = "";
+    defaults.traits = "";
+    return defaults;
+  });
 
-  /* ── Cull / Sale conditional fields ── */
-  const [cullReason, setCullReason] = useState("");
-  const [disposition, setDisposition] = useState("");
-  const [saleWeight, setSaleWeight] = useState("");
+  const setFieldValue = (key: string, val: string) => {
+    setFieldValues((prev) => ({ ...prev, [key]: val }));
+  };
 
-  /* ── BSE conditional fields ── */
-  const [bseResult, setBseResult] = useState("");
-  const [scrotalCirc, setScrotalCirc] = useState("");
-  const [motility, setMotility] = useState("");
-  const [morphology, setMorphology] = useState("");
-
-  /* ── Generic conditional fields ── */
-  const [data1, setData1] = useState("");
-  const [data2, setData2] = useState("");
+  /* ── Summary card collapsible state ── */
+  const [summaryCardOpen, setSummaryCardOpen] = useState(false);
 
   /* ── Derive matched animal ── */
   const trimmedTag = tag.trim();
   const matchedAnimal = trimmedTag ? mockAnimals[trimmedTag] ?? null : null;
   const isDuplicate = trimmedTag ? alreadyProcessedTags.includes(trimmedTag) : false;
 
-  /* Focus tag input on mount and tab switch */
+  /* Focus tag input on tab switch */
   useEffect(() => {
     if (activeTab === "input") {
       // Don't auto-focus on initial load with pre-filled data
@@ -86,25 +247,13 @@ export function ProjectDetailScreen() {
   /* ── Clear form ── */
   const clearForm = () => {
     setTag("");
-    setWeight("");
-    setQuickNotes("");
-    setDnaSample("");
-    setMemo("");
-    setPregStage("");
-    setDaysGest("");
-    setCalfSex("");
-    setSireBull("");
-    setBreedingDate("");
-    setBreedingMethod("");
-    setCullReason("");
-    setDisposition("");
-    setSaleWeight("");
-    setBseResult("");
-    setScrotalCirc("");
-    setMotility("");
-    setMorphology("");
-    setData1("");
-    setData2("");
+    setSelectedNoteIds([]);
+    setActiveFlag("production");
+    setFieldValues((prev) => {
+      const next: Record<string, string> = {};
+      for (const k of Object.keys(prev)) next[k] = "";
+      return next;
+    });
     setTimeout(() => tagInputRef.current?.focus(), 50);
   };
 
@@ -118,56 +267,333 @@ export function ProjectDetailScreen() {
 
   /* ── Save & Done ── */
   const handleSaveDone = () => {
-    if (trimmedTag) {
-      showToast("success", `${trimmedTag} saved`);
-    }
+    if (trimmedTag) showToast("success", `${trimmedTag} saved`);
     navigate("/cow-work");
   };
 
   const tabs = ["input", "animals", "stats", "details"] as const;
   const tabLabels = { input: "Input", animals: "Animals", stats: "Stats", details: "Details" };
 
-  /* ── BSE result color helper ── */
-  const bseColor = (val: string) => {
-    if (val === "Pass") return "#55BAAA";
-    if (val === "Fail") return "#E74C3C";
-    if (val === "Defer") return "#F3D12A";
-    return undefined;
+  /* ── Quick Notes toggle handler ── */
+  const handleNoteToggle = (noteId: string) => {
+    setSelectedNoteIds((prev) => {
+      const next = prev.includes(noteId) ? prev.filter((id) => id !== noteId) : [...prev, noteId];
+      // Compute active flag from selection
+      const note = CALVING_QUICK_NOTES.find((n) => n.id === noteId);
+      if (note && note.flag !== "none" && !prev.includes(noteId)) {
+        // Just selected a flagged note
+        const flagLabel = FLAG_LABEL_MAP[note.flag] || note.flag;
+        showToast("success", `${flagLabel} flag applied to Tag ${trimmedTag || "—"}`);
+      }
+      // Update active flag
+      let highest: NoteFlag = "none";
+      const prio: Record<NoteFlag, number> = { cull: 3, production: 2, management: 1, none: 0 };
+      for (const nid of next) {
+        const n = CALVING_QUICK_NOTES.find((x) => x.id === nid);
+        if (n && prio[n.flag] > prio[highest]) highest = n.flag;
+      }
+      setActiveFlag(highest);
+      return next;
+    });
+  };
+
+  /* ── Config-driven field rendering ── */
+  const lockedConfig = LOCKED_CONFIGS[PROJECT_CONFIG.workType];
+  const hasLockedFields = !!lockedConfig && lockedConfig.fields.length > 0;
+
+  /* Render a locked field row with lock icon */
+  const renderLockedField = (field: LockedField) => {
+    const val = fieldValues[field.key] || "";
+    if (field.type === "select") {
+      return (
+        <div key={field.key} className="flex items-start gap-3">
+          <label
+            className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1"
+            style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+          >
+            {field.label}
+            <LockIconSmall />
+          </label>
+          <div className="flex-1 min-w-0">
+            <div className="relative">
+              <select
+                value={val}
+                onChange={(e) => setFieldValue(field.key, e.target.value)}
+                className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] font-['Inter'] outline-none transition-all appearance-none cursor-pointer focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25"
+                style={{
+                  fontSize: 16,
+                  fontWeight: field.colorFn && val ? 700 : 400,
+                  color: field.colorFn ? (field.colorFn(val) || (val ? "#1A1A1A" : "rgba(26,26,26,0.30)")) : (val ? "#1A1A1A" : "rgba(26,26,26,0.30)"),
+                }}
+              >
+                <option value="" disabled>Select…</option>
+                {(field.options || []).map((opt) => (
+                  <option key={opt} value={opt} style={{ color: "#1A1A1A" }}>{opt}</option>
+                ))}
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // number or text
+    return (
+      <div key={field.key} className="flex items-start gap-3">
+        <label
+          className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1"
+          style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+        >
+          {field.label}
+          <LockIconSmall />
+        </label>
+        <div className="flex-1 min-w-0">
+          <input
+            type={field.type === "number" ? "number" : "text"}
+            value={val}
+            onChange={(e) => setFieldValue(field.key, e.target.value)}
+            placeholder={field.placeholder || ""}
+            className="w-full h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25"
+            style={{ fontSize: 16, fontWeight: 400 }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  /* Render an optional field by key */
+  const renderOptionalField = (key: OptionalFieldKey) => {
+    switch (key) {
+      case "weight":
+        return (
+          <FormFieldRow
+            key="weight"
+            label="Weight"
+            type="number"
+            value={fieldValues.weight || ""}
+            onChange={(v) => setFieldValue("weight", v)}
+            placeholder="lbs"
+          />
+        );
+
+      case "quickNotes":
+        return (
+          <div key="quickNotes" className="flex items-start gap-3">
+            <button
+              type="button"
+              onClick={() => setQuickNotesOpen(!quickNotesOpen)}
+              className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1.5 cursor-pointer"
+              style={{ width: 105, fontSize: 14, fontWeight: 600, paddingTop: 7, background: "none", border: "none", padding: "7px 0 0 0", textAlign: "left" }}
+            >
+              Quick Notes
+              <svg
+                width="12" height="12" viewBox="0 0 12 12" fill="none"
+                className="shrink-0 transition-transform duration-200"
+                style={{ transform: quickNotesOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+              >
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <div className="flex-1 min-w-0">
+              {quickNotesOpen ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {COWWORK_QUICK_NOTES.map((note) => {
+                    const isSelected = selectedNoteIds.includes(note.id);
+                    const c = PILL_COLORS[note.flag] || PILL_COLORS.none;
+                    return (
+                      <button
+                        key={note.id}
+                        type="button"
+                        onClick={() => handleNoteToggle(note.id)}
+                        className="rounded-full font-['Inter'] cursor-pointer inline-flex items-center gap-1 transition-all active:scale-[0.96]"
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          backgroundColor: isSelected ? c.bgSel : c.bg,
+                          border: `${isSelected ? "2px" : "1px"} solid ${isSelected ? c.borderSel : c.border}`,
+                          color: c.color,
+                        }}
+                      >
+                        {isSelected && <CheckIcon color={c.color} />}
+                        {note.text}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div
+                  className="flex flex-wrap gap-1.5 min-h-[30px] items-center cursor-pointer"
+                  onClick={() => setQuickNotesOpen(true)}
+                >
+                  {selectedNoteIds.length === 0 ? (
+                    <span className="font-['Inter']" style={{ fontSize: 13, color: "rgba(26,26,26,0.3)" }}>
+                      Tap to add notes…
+                    </span>
+                  ) : (
+                    selectedNoteIds.map((nid) => {
+                      const note = CALVING_QUICK_NOTES.find((n) => n.id === nid);
+                      if (!note) return null;
+                      const c = PILL_COLORS[note.flag] || PILL_COLORS.none;
+                      return (
+                        <span
+                          key={nid}
+                          className="rounded-full font-['Inter']"
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "3px 10px",
+                            backgroundColor: c.bgSel,
+                            border: `1px solid ${c.borderSel}`,
+                            color: c.color,
+                          }}
+                        >
+                          {note.text}
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case "notes":
+        return (
+          <div key="notes" className="flex items-start gap-3">
+            <label
+              className="shrink-0 text-[#1A1A1A] font-['Inter']"
+              style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+            >
+              Notes
+            </label>
+            <div className="flex-1 min-w-0 relative">
+              <textarea
+                value={fieldValues.notes || ""}
+                onChange={(e) => setFieldValue("notes", e.target.value)}
+                placeholder="Notes…"
+                rows={2}
+                className="w-full px-3 py-2.5 pr-10 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 resize-none"
+                style={{ fontSize: 16, fontWeight: 400, minHeight: 64 }}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-3 cursor-pointer"
+                style={{ background: "none", border: "none", padding: 0 }}
+                aria-label="Voice input"
+              >
+                <MicIcon />
+              </button>
+            </div>
+          </div>
+        );
+
+      case "dna":
+        return (
+          <FormFieldRow
+            key="dna"
+            label="DNA"
+            value={fieldValues.dna || ""}
+            onChange={(v) => setFieldValue("dna", v)}
+            placeholder="Sample ID"
+          />
+        );
+
+      case "tagColor":
+        return (
+          <FormSelectRow
+            key="tagColor"
+            label="Tag Color"
+            value={fieldValues.tagColor || ""}
+            onChange={(v) => setFieldValue("tagColor", v)}
+            placeholder="Select…"
+            options={TAG_COLORS}
+          />
+        );
+
+      case "lot":
+        return (
+          <FormFieldRow key="lot" label="Lot" value={fieldValues.lot || ""} onChange={(v) => setFieldValue("lot", v)} placeholder="Lot number" />
+        );
+
+      case "sample":
+        return (
+          <FormFieldRow key="sample" label="Sample" value={fieldValues.sample || ""} onChange={(v) => setFieldValue("sample", v)} placeholder="Sample ID" />
+        );
+
+      case "pen":
+        return (
+          <FormFieldRow key="pen" label="Pen" value={fieldValues.pen || ""} onChange={(v) => setFieldValue("pen", v)} placeholder="Pen ID" />
+        );
+
+      case "data1":
+        return (
+          <FormFieldRow key="data1" label="Data 1" value={fieldValues.data1 || ""} onChange={(v) => setFieldValue("data1", v)} placeholder="Custom field" />
+        );
+
+      case "data2":
+        return (
+          <FormFieldRow key="data2" label="Data 2" value={fieldValues.data2 || ""} onChange={(v) => setFieldValue("data2", v)} placeholder="Custom field" />
+        );
+
+      case "traits":
+        return (
+          <FormFieldRow key="traits" label="Traits" value={fieldValues.traits || ""} onChange={(v) => setFieldValue("traits", v)} placeholder="Trait codes" />
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="space-y-0">
-      {/* ══ GRADIENT TOTAL CARD ══ */}
+      {/* ══ GRADIENT TOTAL CARD — collapsible ══ */}
       <div
-        className="rounded-2xl px-5 py-5 font-['Inter'] mb-5"
+        className="rounded-xl overflow-hidden font-['Inter'] mb-5 cursor-pointer"
         style={{ background: "linear-gradient(145deg, #0E2646 0%, #163A5E 55%, #55BAAA 100%)" }}
+        onClick={() => setSummaryCardOpen(!summaryCardOpen)}
       >
-        <p
-          className="uppercase"
-          style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(255,255,255,0.35)" }}
-        >
-          Total Animals Worked
-        </p>
-        <p className="text-white mt-1" style={{ fontSize: 42, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
-          {workedAnimals.length}
-        </p>
-        <p className="mt-1.5" style={{ fontSize: 12, fontWeight: 500, color: "#A8E6DA" }}>
-          Spring Preg Check · In Progress
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate(`/cow-work/${id || "spring-preg"}/close-out`)}
-          className="mt-4 w-full rounded-xl py-2.5 cursor-pointer font-['Inter'] transition-all active:scale-[0.98]"
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            backgroundColor: "rgba(255,255,255,0.15)",
-            color: "#FFFFFF",
-            border: "1px solid rgba(255,255,255,0.2)",
-          }}
-        >
-          Complete Project
-        </button>
+        <div className="flex items-center justify-between px-3.5 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <span className="text-white" style={{ fontSize: 22, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
+              {workedAnimals.length}
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>
+              worked
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#A8E6DA" }}>
+              Spring Preg Check
+            </span>
+            <svg
+              width="14" height="14" viewBox="0 0 14 14" fill="none"
+              className="shrink-0 transition-transform duration-200"
+              style={{ transform: summaryCardOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+            >
+              <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="#F0F0F0" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+        {summaryCardOpen && (
+          <div className="px-3.5 pb-3 -mt-0.5" onClick={(e) => e.stopPropagation()}>
+            <p style={{ fontSize: 10, fontWeight: 500, color: "rgba(168,230,218,0.5)" }}>
+              In Progress
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate(`/cow-work/${id || "spring-preg"}/close-out`)}
+              className="mt-2.5 rounded-lg py-1.5 px-4 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+              style={{ fontSize: 11, fontWeight: 700, backgroundColor: "#F3D12A", color: "#1A1A1A", border: "none" }}
+            >
+              Complete Project
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ══ TABS ══ */}
@@ -180,11 +606,7 @@ export function ProjectDetailScreen() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className="flex-1 pb-3 cursor-pointer transition-colors duration-150 font-['Inter'] relative"
-              style={{
-                fontSize: 13,
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? "#0E2646" : "rgba(26,26,26,0.35)",
-              }}
+              style={{ fontSize: 13, fontWeight: isActive ? 700 : 500, color: isActive ? "#0E2646" : "rgba(26,26,26,0.35)" }}
             >
               {tabLabels[tab]}
               {isActive && (
@@ -201,10 +623,15 @@ export function ProjectDetailScreen() {
       {/* ══ TAB CONTENT ══ */}
       <div className="py-5">
         {/* ──────────────────────────────────────
-            INPUT TAB — Full chuteside entry
+            INPUT TAB — Dynamic field rendering
            ────────────────────────────────────── */}
         {activeTab === "input" && (
           <div className="space-y-4">
+            {/* ── COW HISTORY PANEL (above tag input) ── */}
+            {matchedAnimal && !isDuplicate && (
+              <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
+            )}
+
             {/* ── ANIMAL LOOKUP ── */}
             <div className="space-y-2.5">
               {/* Tag / EID scan field */}
@@ -226,20 +653,17 @@ export function ProjectDetailScreen() {
                 />
               </div>
 
-              {/* ── Match status ── */}
+              {/* Match status */}
               {trimmedTag && !isDuplicate && matchedAnimal && (
                 <div
                   className="rounded-full font-['Inter'] inline-flex items-center"
                   style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#55BAAA",
-                    backgroundColor: "rgba(85,186,170,0.08)",
-                    border: "1.5px solid rgba(85,186,170,0.25)",
+                    fontSize: 12, fontWeight: 600, color: "#55BAAA",
+                    backgroundColor: "rgba(85,186,170,0.08)", border: "1.5px solid rgba(85,186,170,0.25)",
                     padding: "5px 14px",
                   }}
                 >
-                  ✓ {matchedAnimal.tag} — {matchedAnimal.tagColor} — {matchedAnimal.type} — {matchedAnimal.yearBorn}
+                  ✓ {matchedAnimal.tag} — {matchedAnimal.tagColor} — Matched
                 </div>
               )}
 
@@ -248,11 +672,8 @@ export function ProjectDetailScreen() {
                   <div
                     className="rounded-lg font-['Inter'] w-full"
                     style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#8B7A00",
-                      backgroundColor: "rgba(243,209,42,0.1)",
-                      border: "1px solid rgba(243,209,42,0.4)",
+                      fontSize: 12, fontWeight: 600, color: "#8B7A00",
+                      backgroundColor: "rgba(243,209,42,0.1)", border: "1px solid rgba(243,209,42,0.4)",
                       padding: "8px 12px",
                     }}
                   >
@@ -269,56 +690,37 @@ export function ProjectDetailScreen() {
               )}
             </div>
 
-            {/* ── COW HISTORY PANEL ── */}
-            {matchedAnimal && !isDuplicate && (
-              <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
+            {/* ── LOCKED WORK-TYPE FIELDS ── */}
+            {hasLockedFields && (
+              <>
+                <div style={{ borderTop: "1px solid rgba(212,212,208,0.40)", paddingTop: 12 }}>
+                  <p
+                    className="font-['Inter'] uppercase mb-3"
+                    style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#55BAAA" }}
+                  >
+                    {lockedConfig!.label}
+                  </p>
+                  <div className="space-y-2.5">
+                    {lockedConfig!.fields.map((f) => renderLockedField(f))}
+                  </div>
+                </div>
+              </>
             )}
 
-            {/* ── COMMON FIELDS ── */}
-            <div className="space-y-2.5">
-              <FormFieldRow
-                label="Weight"
-                type="number"
-                value={weight}
-                onChange={setWeight}
-                placeholder="lbs"
-              />
-              <FormSelectRow
-                label="Quick Notes"
-                value={quickNotes}
-                onChange={setQuickNotes}
-                placeholder="Select…"
-                options={quickNoteOptions}
-              />
-              <FormFieldRow
-                label="DNA / Sample"
-                value={dnaSample}
-                onChange={setDnaSample}
-                placeholder="Sample ID"
-              />
-              {/* Memo textarea */}
-              <div className="flex items-start gap-3">
-                <label
-                  className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                  style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+            {/* ── OPTIONAL PROJECT FIELDS ── */}
+            {PROJECT_CONFIG.optionalFields.length > 0 && (
+              <div style={{ borderTop: "1px solid rgba(212,212,208,0.40)", paddingTop: 12 }}>
+                <p
+                  className="font-['Inter'] uppercase mb-3"
+                  style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(14,38,70,0.35)" }}
                 >
-                  Memo
-                </label>
-                <div className="flex-1 min-w-0">
-                  <textarea
-                    value={memo}
-                    onChange={(e) => setMemo(e.target.value)}
-                    placeholder="Notes…"
-                    rows={2}
-                    className="w-full px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 resize-none"
-                    style={{ fontSize: 16, fontWeight: 400, minHeight: 64 }}
-                  />
+                  Project Fields
+                </p>
+                <div className="space-y-2.5">
+                  {PROJECT_CONFIG.optionalFields.map((key) => renderOptionalField(key))}
                 </div>
               </div>
-            </div>
-
-            {/* ── CONDITIONAL FIELDS ── */}
-            {renderConditionalFields()}
+            )}
 
             {/* ── ACTION BUTTONS ── */}
             <div className="space-y-3 pt-2">
@@ -327,7 +729,7 @@ export function ProjectDetailScreen() {
                   Skip
                 </PillButton>
                 <PillButton size="md" onClick={handleSaveNext} style={{ flex: 1 }}>
-                  Save & Next
+                  Save &amp; Next
                 </PillButton>
               </div>
               <button
@@ -336,7 +738,7 @@ export function ProjectDetailScreen() {
                 className="w-full cursor-pointer font-['Inter'] text-center"
                 style={{ fontSize: 13, fontWeight: 600, color: "#55BAAA", background: "none", border: "none", padding: "4px 0" }}
               >
-                Save & Done →
+                Save &amp; Done →
               </button>
             </div>
 
@@ -421,36 +823,23 @@ export function ProjectDetailScreen() {
                     style={{ backgroundColor: "#0E2646" }}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p
-                        className="text-[#F0F0F0] min-w-0 flex-1"
-                        style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}
-                      >
+                      <p className="text-[#F0F0F0] min-w-0 flex-1" style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>
                         {p.name}
                       </p>
                       <span
                         className="shrink-0 rounded-full"
                         style={{
-                          fontSize: 9,
-                          fontWeight: 700,
-                          letterSpacing: "0.06em",
-                          padding: "2px 8px",
-                          backgroundColor: "rgba(85,186,170,0.15)",
-                          color: "#55BAAA",
+                          fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", padding: "2px 8px",
+                          backgroundColor: "rgba(85,186,170,0.15)", color: "#55BAAA",
                         }}
                       >
                         {p.route}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mt-1">
-                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.45)" }}>
-                        {p.dosage}
-                      </span>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.30)" }}>
-                        ·
-                      </span>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.35)" }}>
-                        {p.inventory} remaining
-                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.45)" }}>{p.dosage}</span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.30)" }}>·</span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(240,240,240,0.35)" }}>{p.inventory} remaining</span>
                     </div>
                   </div>
                 ))}
@@ -470,197 +859,4 @@ export function ProjectDetailScreen() {
       </div>
     </div>
   );
-
-  /* ═══════════════════════════════════════════════
-     CONDITIONAL FIELDS RENDERER
-     ═══════════════════════════════════════════════ */
-  function renderConditionalFields() {
-    const type = PROJECT_PROCESSING_TYPE;
-
-    /* Section header */
-    const SectionHeader = ({ label }: { label: string }) => (
-      <div className="pt-1">
-        <div className="border-t border-[#D4D4D0]/40 pt-3 mb-2">
-          <p
-            className="font-['Inter'] uppercase"
-            style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              color: "rgba(26,26,26,0.35)",
-            }}
-          >
-            {label}
-          </p>
-        </div>
-      </div>
-    );
-
-    if (type === "Pregnancy Check") {
-      return (
-        <>
-          <SectionHeader label="Pregnancy Check" />
-          <div className="space-y-2.5">
-            <FormSelectRow
-              label="Preg Stage"
-              value={pregStage}
-              onChange={setPregStage}
-              placeholder="Select…"
-              options={["Open", "AI", "Bred", "Late", "Short", "Medium", "Long"]}
-              required
-            />
-            <FormFieldRow
-              label="Days Gest"
-              type="number"
-              value={daysGest}
-              onChange={setDaysGest}
-              placeholder="days"
-            />
-            <FormSelectRow
-              label="Calf Sex"
-              value={calfSex}
-              onChange={setCalfSex}
-              placeholder="Select…"
-              options={["Bull", "Heifer", "Twin - BB", "Twin - HH", "Twin - BH", "Unknown"]}
-            />
-          </div>
-        </>
-      );
-    }
-
-    if (type === "Breeding / Bull Turnout") {
-      return (
-        <>
-          <SectionHeader label="Breeding / Bull Turnout" />
-          <div className="space-y-2.5">
-            <FormFieldRow
-              label="Sire / Bull"
-              value={sireBull}
-              onChange={setSireBull}
-              placeholder="Bull tag or name"
-            />
-            <FormFieldRow
-              label="Breeding Date"
-              type="date"
-              value={breedingDate}
-              onChange={setBreedingDate}
-              placeholder=""
-            />
-            <FormSelectRow
-              label="Method"
-              value={breedingMethod}
-              onChange={setBreedingMethod}
-              placeholder="Select…"
-              options={["Natural", "AI", "ET"]}
-            />
-          </div>
-        </>
-      );
-    }
-
-    if (type === "Cull / Sale") {
-      return (
-        <>
-          <SectionHeader label="Cull / Sale" />
-          <div className="space-y-2.5">
-            <FormFieldRow
-              label="Cull Reason"
-              value={cullReason}
-              onChange={setCullReason}
-              placeholder="e.g. Open, Lame, Age"
-            />
-            <FormSelectRow
-              label="Disposition"
-              value={disposition}
-              onChange={setDisposition}
-              placeholder="Select…"
-              options={["Sold", "Kept", "Dead", "Shipped"]}
-            />
-            <FormFieldRow
-              label="Sale Weight"
-              type="number"
-              value={saleWeight}
-              onChange={setSaleWeight}
-              placeholder="lbs"
-            />
-          </div>
-        </>
-      );
-    }
-
-    if (type === "Bull Testing (BSE)") {
-      return (
-        <>
-          <SectionHeader label="Bull Testing (BSE)" />
-          <div className="space-y-2.5">
-            <div className="flex items-start gap-3">
-              <label
-                className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
-              >
-                BSE Result<span style={{ fontSize: 14, fontWeight: 600, color: "#E74C3C", marginLeft: 2 }}>*</span>
-              </label>
-              <div className="flex-1 min-w-0">
-                <div className="relative">
-                  <select
-                    value={bseResult}
-                    onChange={(e) => setBseResult(e.target.value)}
-                    className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] font-['Inter'] outline-none transition-all appearance-none cursor-pointer focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25"
-                    style={{
-                      fontSize: 16,
-                      fontWeight: bseResult ? 700 : 400,
-                      color: bseResult ? (bseColor(bseResult) || "#1A1A1A") : "rgba(26,26,26,0.30)",
-                    }}
-                  >
-                    <option value="" disabled>Select…</option>
-                    {["Pass", "Fail", "Defer"].map((opt) => (
-                      <option key={opt} value={opt} style={{ color: "#1A1A1A" }}>{opt}</option>
-                    ))}
-                  </select>
-                  <svg
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                    width="12" height="12" viewBox="0 0 12 12" fill="none"
-                  >
-                    <path d="M3 4.5L6 7.5L9 4.5" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <FormFieldRow
-              label="Scrotal Circ"
-              type="number"
-              value={scrotalCirc}
-              onChange={setScrotalCirc}
-              placeholder="cm"
-            />
-            <FormFieldRow
-              label="Motility %"
-              type="number"
-              value={motility}
-              onChange={setMotility}
-              placeholder="%"
-            />
-            <FormFieldRow
-              label="Morphology %"
-              type="number"
-              value={morphology}
-              onChange={setMorphology}
-              placeholder="%"
-            />
-          </div>
-        </>
-      );
-    }
-
-    /* Default: Movement / Brucellosis / Processing / Working / Other */
-    return (
-      <>
-        <SectionHeader label={type} />
-        <div className="space-y-2.5">
-          <FormFieldRow label="Data 1" value={data1} onChange={setData1} placeholder="Custom field" />
-          <FormFieldRow label="Data 2" value={data2} onChange={setData2} placeholder="Custom field" />
-        </div>
-      </>
-    );
-  }
 }

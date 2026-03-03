@@ -13,7 +13,6 @@ export interface CalvingRecord {
   sire: string;
   assistance: string;
   notes: string;
-  memo: string;
 }
 
 export interface CalvingDetail {
@@ -26,7 +25,6 @@ export interface CalvingDetail {
   assistance: string;
   assistanceCode: string;
   notes: string;
-  memo: string;
   location: string;
   group: string;
   calfStatus: string;
@@ -44,7 +42,6 @@ export interface CalvingDetail {
     eid2: string;
     otherId: string;
     lifetimeId: string;
-    memo: string;
     notes: string;
     calvingHistory: {
       date: string;
@@ -71,18 +68,18 @@ export interface CalvingDetail {
    ══════════════════════════════════════════════ */
 
 const INITIAL_RECORDS: CalvingRecord[] = [
-  { damTag: "7801", calfTag: "8841", date: "Feb 26", sex: "Heifer", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Normal birth — strong heifer calf, up and nursing within 20 min", memo: "Consistent producer, easy calver" },
-  { damTag: "3091", calfTag: "8842", date: "Feb 25", sex: "Bull", sire: "Connealy Consensus", assistance: "1 — No Assistance", notes: "Normal delivery — bull calf, good vigor", memo: "Mild cough, nasal discharge noted. Monitor closely." },
-  { damTag: "4782", calfTag: "8843", date: "Feb 24", sex: "Heifer", sire: "SAV Resource", assistance: "2 — Easy Pull", notes: "Slight assistance needed — calf positioned slightly back", memo: "Good disposition, easy handler" },
-  { damTag: "5501", calfTag: "8844", date: "Feb 23", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Unassisted, calf up quickly", memo: "" },
-  { damTag: "2290", calfTag: "8845", date: "Feb 22", sex: "Heifer", sire: "Vermilion Dateline", assistance: "1 — No Assistance", notes: "Calved overnight, found pair bonded", memo: "First-calf heifer, did well" },
-  { damTag: "8812", calfTag: "8846", date: "Feb 21", sex: "Bull", sire: "Connealy Consensus", assistance: "3 — Hard Pull", notes: "Difficult delivery — large calf, needed mechanical assistance", memo: "Monitor — hard pull on latest calf, check recovery" },
-  { damTag: "2218", calfTag: "8847", date: "Feb 20", sex: "Heifer", sire: "SAV Resource", assistance: "1 — No Assistance", notes: "Clean calving, pair doing well", memo: "" },
-  { damTag: "6610", calfTag: "8848", date: "Feb 19", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Normal — vigorous bull calf", memo: "" },
-  { damTag: "4455", calfTag: "8849", date: "Feb 18", sex: "Heifer", sire: "Vermilion Dateline", assistance: "2 — Easy Pull", notes: "Slight pull, calf backwards. Recovered fine.", memo: "Second calver, needed help last year too" },
-  { damTag: "3320", calfTag: "8850", date: "Feb 17", sex: "Bull", sire: "Connealy Consensus", assistance: "1 — No Assistance", notes: "Unassisted, strong calf", memo: "" },
-  { damTag: "5520", calfTag: "8851", date: "Feb 16", sex: "Heifer", sire: "SAV Resource", assistance: "4 — Surgical", notes: "C-section required — calf breech. Both survived.", memo: "Chronic limp, poor BCS — cull candidate" },
-  { damTag: "7744", calfTag: "8852", date: "Feb 15", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Normal birth, good-sized calf", memo: "" },
+  { damTag: "7801", calfTag: "8841", date: "Feb 26", sex: "Heifer", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Normal birth — strong heifer calf, up and nursing within 20 min" },
+  { damTag: "3091", calfTag: "8842", date: "Feb 25", sex: "Bull", sire: "Connealy Consensus", assistance: "1 — No Assistance", notes: "Normal delivery — bull calf, good vigor" },
+  { damTag: "4782", calfTag: "8843", date: "Feb 24", sex: "Heifer", sire: "SAV Resource", assistance: "2 — Easy Pull", notes: "Slight assistance needed — calf positioned slightly back" },
+  { damTag: "5501", calfTag: "8844", date: "Feb 23", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Unassisted, calf up quickly" },
+  { damTag: "2290", calfTag: "8845", date: "Feb 22", sex: "Heifer", sire: "Vermilion Dateline", assistance: "1 — No Assistance", notes: "Calved overnight, found pair bonded" },
+  { damTag: "8812", calfTag: "8846", date: "Feb 21", sex: "Bull", sire: "Connealy Consensus", assistance: "3 — Hard Pull", notes: "Difficult delivery — large calf, needed mechanical assistance" },
+  { damTag: "2218", calfTag: "8847", date: "Feb 20", sex: "Heifer", sire: "SAV Resource", assistance: "1 — No Assistance", notes: "Clean calving, pair doing well" },
+  { damTag: "6610", calfTag: "8848", date: "Feb 19", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Normal — vigorous bull calf" },
+  { damTag: "4455", calfTag: "8849", date: "Feb 18", sex: "Heifer", sire: "Vermilion Dateline", assistance: "2 — Easy Pull", notes: "Slight pull, calf backwards. Recovered fine." },
+  { damTag: "3320", calfTag: "8850", date: "Feb 17", sex: "Bull", sire: "Connealy Consensus", assistance: "1 — No Assistance", notes: "Unassisted, strong calf" },
+  { damTag: "5520", calfTag: "8851", date: "Feb 16", sex: "Heifer", sire: "SAV Resource", assistance: "4 — Surgical", notes: "C-section required — calf breech. Both survived." },
+  { damTag: "7744", calfTag: "8852", date: "Feb 15", sex: "Bull", sire: "Basin Payweight", assistance: "1 — No Assistance", notes: "Normal birth, good-sized calf" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -95,14 +92,12 @@ const INITIAL_DETAILS: Record<string, CalvingDetail> = {
     birthDate: "Feb 26, 2026", birthWeight: "78",
     assistance: "No Assistance", assistanceCode: "1 — No Assistance",
     notes: "Normal birth — strong heifer calf, up and nursing within 20 min",
-    memo: "Consistent producer, easy calver",
     location: "Calving Pasture A", group: "2026 Season", calfStatus: "Active",
     quickNotes: [],
     dam: {
       tag: "7801", tagColor: "Green", sex: "Cow", animalType: "Cow", yearBorn: "2019",
       status: "Active", flag: "teal", weight: "1,265",
       eid: "982 000364507890", eid2: "", otherId: "SBR-7801", lifetimeId: "USA7801-2019",
-      memo: "Consistent producer, easy calver. Good mother.",
       notes: "Calved Feb 26 — heifer calf 8841, no issues",
       calvingHistory: [
         { date: "Feb 26, 2026", calfTag: "8841", calfSex: "Heifer", birthWeight: "78 lbs", assistance: "None", notes: "Normal birth — strong heifer calf" },
@@ -122,14 +117,12 @@ const INITIAL_DETAILS: Record<string, CalvingDetail> = {
     birthDate: "Feb 25, 2026", birthWeight: "84",
     assistance: "No Assistance", assistanceCode: "1 — No Assistance",
     notes: "Normal delivery — bull calf, good vigor",
-    memo: "Mild cough, nasal discharge noted. Monitor closely.",
     location: "Calving Pasture A", group: "2026 Season", calfStatus: "Active",
     quickNotes: [],
     dam: {
       tag: "3091", tagColor: "Yellow", sex: "Cow", animalType: "Cow", yearBorn: "2020",
       status: "Active", flag: "gold", weight: "983",
       eid: "982 000364508104", eid2: "", otherId: "SBR-3091", lifetimeId: "USA3091-2020",
-      memo: "Mild cough, nasal discharge noted. Monitor closely.",
       notes: "Calved Feb 25 — bull calf 8842, respiratory still present",
       calvingHistory: [
         { date: "Feb 25, 2026", calfTag: "8842", calfSex: "Bull", birthWeight: "84 lbs", assistance: "None", notes: "Normal delivery despite dam being monitored" },
@@ -145,14 +138,12 @@ const INITIAL_DETAILS: Record<string, CalvingDetail> = {
     birthDate: "Feb 24, 2026", birthWeight: "72",
     assistance: "Easy Pull", assistanceCode: "2 — Easy Pull",
     notes: "Slight assistance needed — calf positioned slightly back. Up quickly after.",
-    memo: "Good disposition, easy handler",
     location: "Calving Pasture B", group: "2026 Season", calfStatus: "Active",
     quickNotes: [],
     dam: {
       tag: "4782", tagColor: "Pink", sex: "Cow", animalType: "Cow", yearBorn: "2020",
       status: "Active", flag: "teal", weight: "1,247",
       eid: "982 000364507221", eid2: "", otherId: "SBR-4782", lifetimeId: "USA4782-2020",
-      memo: "Good disposition, easy handler",
       notes: "Calved Feb 24 — heifer calf 8843, easy pull",
       calvingHistory: [
         { date: "Feb 24, 2026", calfTag: "8843", calfSex: "Heifer", birthWeight: "72 lbs", assistance: "Easy pull", notes: "Slight assistance — calf positioned back" },
@@ -169,14 +160,12 @@ const INITIAL_DETAILS: Record<string, CalvingDetail> = {
     birthDate: "Feb 21, 2026", birthWeight: "92",
     assistance: "Hard Pull", assistanceCode: "3 — Hard Pull",
     notes: "Difficult delivery — large calf, needed mechanical assistance. Dam and calf both recovered.",
-    memo: "Monitor — hard pull on latest calf, check recovery",
     location: "Calving Pasture A", group: "2026 Season", calfStatus: "Active",
     quickNotes: [],
     dam: {
       tag: "8812", tagColor: "Orange", sex: "Cow", animalType: "Cow", yearBorn: "2019",
       status: "Active", flag: "gold", weight: "1,156",
       eid: "982 000364511698", eid2: "", otherId: "SBR-8812", lifetimeId: "USA8812-2019",
-      memo: "Monitor — hard pull on latest calf, check recovery",
       notes: "Calved Feb 21 — bull calf 8846, hard pull, recovering",
       calvingHistory: [
         { date: "Feb 21, 2026", calfTag: "8846", calfSex: "Bull", birthWeight: "92 lbs", assistance: "Hard pull", notes: "Difficult delivery — mechanical assistance needed" },
@@ -194,14 +183,12 @@ const INITIAL_DETAILS: Record<string, CalvingDetail> = {
     birthDate: "Feb 16, 2026", birthWeight: "68",
     assistance: "Surgical", assistanceCode: "4 — Surgical",
     notes: "C-section required — calf breech. Both dam and calf survived. Dam flagged critical.",
-    memo: "Chronic limp, poor BCS — cull candidate. C-section Feb 2026.",
     location: "Barn / Vet Area", group: "2026 Season", calfStatus: "Active",
     quickNotes: [],
     dam: {
       tag: "5520", tagColor: "Red", sex: "Cow", animalType: "Cow", yearBorn: "2018",
       status: "Active", flag: "red", weight: "1,102",
       eid: "982 000364509337", eid2: "", otherId: "SBR-5520", lifetimeId: "USA5520-2018",
-      memo: "Chronic limp, poor BCS — cull candidate. C-section Feb 2026.",
       notes: "C-section Feb 16 — heifer calf 8851 survived. Dam recovering.",
       calvingHistory: [
         { date: "Feb 16, 2026", calfTag: "8851", calfSex: "Heifer", birthWeight: "68 lbs", assistance: "Surgical", notes: "C-section — calf breech, both survived" },
@@ -247,13 +234,12 @@ export function CalvingDataProvider({ children }: { children: ReactNode }) {
       return { ...prev, [calfTag]: { ...existing, ...updates } };
     });
     // Also sync key fields back to the list record
-    if (updates.notes !== undefined || updates.memo !== undefined || updates.calfStatus !== undefined) {
+    if (updates.notes !== undefined || updates.calfStatus !== undefined) {
       setRecords((prev) =>
         prev.map((r) => {
           if (r.calfTag !== calfTag) return r;
           const patched = { ...r };
           if (updates.notes !== undefined) patched.notes = updates.notes;
-          if (updates.memo !== undefined) patched.memo = updates.memo;
           return patched;
         })
       );

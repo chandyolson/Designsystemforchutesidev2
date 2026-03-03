@@ -5,6 +5,19 @@ import { CollapsibleSection } from "./collapsible-section";
 import { FlagIcon } from "./flag-icon";
 import type { FlagColor } from "./flag-icon";
 import { PillButton } from "./pill-button";
+import {
+  CalvingQuickNotes,
+  getActiveFlagColor,
+  computeActiveFlag,
+  type NoteFlag,
+} from "./calving-quick-notes";
+
+/* Flag label map */
+const FLAG_LABEL_MAP: Record<string, string> = {
+  cull: "Cull",
+  production: "Production",
+  management: "Management",
+};
 
 /* ── Mock data keyed by tag ── */
 const animalWorkData: Record<
@@ -366,8 +379,12 @@ export function ProjectAnimalDetailScreen() {
   const updateWork = (key: keyof typeof workFields) => (val: string) =>
     setWorkFields((prev) => ({ ...prev, [key]: val }));
 
-  /* Flag state — default is null (no flag) */
-  const [flag, setFlag] = useState<FlagColor | null>(null);
+  /* Quick notes — color-coded with flag behavior (cow work mode) */
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(["qn4"]); // "Lame" pre-selected mock
+  const [activeFlag, setActiveFlag] = useState<NoteFlag>("production");
+  const existingAnimalFlag: NoteFlag = "none"; // mock: this animal had no prior flag
+
+  const noteFlagColor = getActiveFlagColor(selectedNoteIds);
 
   return (
     <div className="space-y-0">
@@ -418,14 +435,19 @@ export function ProjectAnimalDetailScreen() {
             </p>
           </div>
 
-          {/* Right — Flag (only shown when a flag is set) */}
-          {flag && (
+          {/* Right — Flag (driven by quick notes) */}
+          {noteFlagColor && (
             <div className="shrink-0 flex flex-col items-center gap-1 pt-1">
-              <FlagIcon color={flag} size="md" />
+              <FlagIcon color={noteFlagColor} size="md" />
               <span
-                style={{ fontSize: 10, fontWeight: 600, color: flagColors[flag], letterSpacing: "0.02em" }}
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: noteFlagColor === "red" ? "#9B2335" : noteFlagColor === "gold" ? "#B8860B" : "#55BAAA",
+                  letterSpacing: "0.02em",
+                }}
               >
-                {flagLabels[flag]}
+                {FLAG_LABEL_MAP[activeFlag]}
               </span>
             </div>
           )}
@@ -557,37 +579,25 @@ export function ProjectAnimalDetailScreen() {
               </div>
             </CollapsibleSection>
 
-            {/* Flag selection — tap to select, tap again to deselect (back to null) */}
-            <CollapsibleSection title="Flag Status" defaultOpen>
-              <div className="flex gap-2 pt-2">
-                {(["teal", "gold", "red"] as const).map((f) => {
-                  const active = flag === f;
-                  return (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setFlag(active ? null : f)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl cursor-pointer transition-all duration-150 font-['Inter']"
-                      style={{
-                        backgroundColor: active ? flagColors[f] + "18" : "white",
-                        border: `2px solid ${active ? flagColors[f] : "#D4D4D0"}`,
-                      }}
-                    >
-                      <FlagIcon color={f} size="sm" />
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: active ? 700 : 500,
-                          color: active ? flagColors[f] : "#1A1A1A80",
-                        }}
-                      >
-                        {flagLabels[f]}
-                      </span>
-                    </button>
-                  );
-                })}
+            {/* Quick Notes — color-coded pills (cow work mode, no Twin) */}
+            <div className="flex items-start gap-3">
+              <label
+                className="shrink-0 text-[#1A1A1A] font-['Inter']"
+                style={{ width: 105, fontSize: 14, fontWeight: 600, paddingTop: 7 }}
+              >
+                Quick Notes
+              </label>
+              <div className="flex-1 min-w-0">
+                <CalvingQuickNotes
+                  selectedIds={selectedNoteIds}
+                  onSelectedChange={setSelectedNoteIds}
+                  tag={data.tag}
+                  onFlagChange={setActiveFlag}
+                  mode="cowwork"
+                  existingFlag={existingAnimalFlag}
+                />
               </div>
-            </CollapsibleSection>
+            </div>
 
             {/* Save / Cancel */}
             <div className="flex gap-3 pt-2">

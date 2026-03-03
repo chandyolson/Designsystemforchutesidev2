@@ -1,0 +1,112 @@
+Create a New Project screen for setting up a cow work session. This is a complete rewrite of the current screen. Key changes: templates are small cards at the top, and a new "Configure Fields" collapsible section lets users pick and reorder which data entry fields appear when working cattle.
+Use the standard app header: back arrow, title "New Project", subtitle "Cow Work".
+Content area (20px padding, #F5F5F0 background):
+
+SECTION 1 — TEMPLATE CARDS (top, always visible):
+Section label "TEMPLATES" Inter 11px font-weight 700 letter-spacing 0.1em color #0E2646 at 35%.
+Horizontal scroll row, gap 10px, overflow-x auto, no scrollbar visible, padding-bottom 4px. Each card: 110px wide, flex-shrink 0, rounded-xl, border 1px #D4D4D0, padding 12px, background white, tappable. Active press: scale(0.97).
+Card layout: Work type icon (20px, centered in a circle 36px, background color at 10%) at top. Template name below: Inter 12px font-weight 600 color #1A1A1A, centered, 2 lines max. Type pill below name: rounded-full, padding 2px 8px, Inter 9px font-weight 700 uppercase letter-spacing 0.06em.
+Pill colors by type:
+
+PREG: background #55BAAA at 12%, color #55BAAA, icon: stethoscope
+BSE: background #0E2646 at 10%, color #0E2646, icon: clipboard-check
+PROCESS: background #F3D12A at 12%, color #B8860B, icon: syringe
+AI: background #9B2335 at 10%, color #9B2335, icon: heart
+WEAN: background #E65100 at 10%, color #E65100, icon: scissors
+INVENTORY: background #55BAAA at 12%, color #55BAAA, icon: clipboard-list
+SALE: background #E74C3C at 10%, color #E74C3C, icon: tag
+CUSTOM: background rgba(26,26,26,0.08), color #1A1A1A at 50%, icon: settings
+
+When selected: border 2px #0E2646, background white, subtle shadow 0 2px 8px rgba(14,38,70,0.1). Brief flash animation: background pulses to #55BAAA at 8% for 400ms then fades back to white.
+Selecting a template auto-fills: Work Type, Cattle Type, Group defaults, and pre-configures the field selection and order from the template's saved configuration.
+Show 4 template cards (scrollable, last card partially visible to hint at scroll):
+
+"Spring Preg Check" / PREG pill
+"Fall Processing" / PROCESS pill
+"Annual BSE" / BSE pill
+"Cull Sort" / SALE pill
+
+
+SECTION 2 — PROJECT DETAILS (below templates, 16px gap):
+Section label "PROJECT DETAILS" Inter 11px font-weight 700 letter-spacing 0.1em color #0E2646 at 35%.
+White card, rounded-xl, border 1px #D4D4D0, padding 16px. Horizontal label-left layout, 105px label:
+
+Date — date input, defaults to today, required
+Work Type — dropdown: Pregnancy Check, Breeding / Bull Turnout, Breeding Soundness Exam, Processing, Working, Movement, Weaning, Brucellosis Vaccination, Cull / Sale, Inventory, Other. Required. When changed, the Configure Fields section updates to show/lock the relevant work-type-specific fields.
+Group — dropdown of operation groups, required
+Cattle Type — dropdown: Cow, Bull, Heifer, Steer, Calf, Yearling, Mixed, All
+Location — dropdown of operation locations
+Memo — textarea, 3 rows, placeholder "Notes about this project…", inline mic button
+
+Project ID row below the card (8px gap): label "PROJECT ID" Inter 10px font-weight 700 letter-spacing 0.08em color #1A1A1A at 35%. Value: auto-generated from date + group + type, Inter 13px font-weight 500 color #0E2646, background rgba(14,38,70,0.04), rounded-lg, padding 8px 12px.
+
+SECTION 3 — CONFIGURE FIELDS (collapsible, 16px gap):
+CollapsibleSection component. Header: "Configure Fields" + count badge showing active fields "8 active" (rounded-full, min-width 28px, height 20px, background #55BAAA at 12%, Inter 11px font-weight 700 color #55BAAA).
+When collapsed: show a horizontal wrap of small pills below the header representing the currently active fields in order. Each pill: rounded-full, padding 2px 8px, Inter 10px font-weight 600, background rgba(14,38,70,0.06), color #0E2646.
+When expanded: White card, rounded-xl, border 1px #D4D4D0, overflow hidden.
+The field list is split into two groups:
+WORK-TYPE FIELDS (locked, top section):
+Sub-header inside card: "PREGNANCY CHECK FIELDS" Inter 10px font-weight 700 letter-spacing 0.08em color #55BAAA, padding 10px 16px, background #55BAAA at 5%, border-bottom 1px #D4D4D0 at 30%.
+These fields auto-populate based on the Work Type dropdown selection. They are always ON and cannot be toggled off or reordered out of this section. Toggle switch shows as ON (#55BAAA) with a small lock icon (10px, #55BAAA) next to it instead of being tappable.
+For "Pregnancy Check" work type, show 3 locked fields:
+
+"Preg Stage" / lock icon + toggle ON (locked)
+"Days of Gestation" / lock icon + toggle ON (locked)
+"Fetal Sex" / lock icon + toggle ON (locked)
+
+For "Breeding" work type, show 4 locked fields: Technician, Breeding Sire, Estrus Status, Breeding Type.
+For "Breeding Soundness Exam" work type, show 6 locked fields: Scrotal, Pass/Fail, Motility, Morphology, Semen Defects, Physical Defects.
+For "Inventory" work type: no locked fields (inventory is just tag scanning).
+OPTIONAL FIELDS (toggleable + draggable, below locked section):
+Sub-header: "OPTIONAL FIELDS" Inter 10px font-weight 700 letter-spacing 0.08em color #0E2646 at 35%, padding 10px 16px, border-bottom 1px #D4D4D0 at 30%.
+Each field row: padding 12px 16px, border-bottom 1px #D4D4D0 at 30%, flex between. Same style as the Template Edit screen's reorderable rows.
+Left side: drag handle (6-dot grip icon, 16px, color #D4D4D0, cursor grab) + field name Inter 13px font-weight 500 color #1A1A1A.
+Right side: toggle switch (44x26, on=#55BAAA, off=#D4D4D0, white thumb 22px).
+When toggled OFF: row opacity 50%, name gets strikethrough.
+When dragging: row lifts with shadow (0 4px 16px rgba(0,0,0,0.12)), 2px #F3D12A insertion line shows at drop position.
+Show 13 optional "All" fields in this order (first 5 ON, rest OFF):
+
+ON — Weight / drag handle + toggle
+ON — Quick Notes / drag handle + toggle
+ON — Notes / drag handle + toggle
+ON — DNA / drag handle + toggle
+ON — Tag Color / drag handle + toggle
+OFF — Lot / drag handle + toggle
+OFF — Sample / drag handle + toggle
+OFF — Pen / drag handle + toggle
+OFF — Data 1 / drag handle + toggle
+OFF — Data 2 / drag handle + toggle
+OFF — Traits / drag handle + toggle
+
+Show the mock with "Pregnancy Check" selected as work type, so the 3 preg fields are locked at top and the 11 "All" fields are below as optional.
+
+SECTION 4 — PRODUCTS GIVEN (collapsible, 16px gap):
+Same as current implementation. CollapsibleSection with count in header "Products Given (2)".
+When collapsed: horizontal wrap of small teal pills showing product name + route.
+When expanded: "+ Add Product" link, inline add form (product search, dosage, route dropdown), and dark navy product cards showing name, route pill, dosage, remove button.
+Show 2 products pre-loaded:
+
+"Bovi-Shield Gold 5" / IM / 2 mL
+"Ivermectin Pour-On" / Topical / 1 mL / 22 lbs
+
+
+SECTION 5 — ACTION BUTTONS (bottom, 24px gap):
+Two buttons side by side, flex, gap 12px:
+
+"Save" — flex 1, 48px, rounded-full, outline style: background white, border 1.5px #D4D4D0, Inter 15px font-weight 700 color #0E2646.
+"Save & Work Cows" — flex 1, 48px, rounded-full, #F3D12A, Inter 15px font-weight 700 color #1A1A1A.
+
+"Cancel" text link below, centered, Inter 13px font-weight 600 color #1A1A1A at 35%.
+
+TEMPLATE INTERACTION FLOW:
+When a template card is tapped at the top:
+
+Card gets selected border + flash animation
+Work Type auto-fills (e.g. "Pregnancy Check")
+Cattle Type auto-fills
+Configure Fields section updates: locked fields appear for the work type, optional fields toggle on/off and reorder to match the template's saved configuration
+Products section fills with the template's default products if any
+Toast notification: "Template applied: Spring Preg Check"
+
+The user can then modify anything — the template is a starting point, not a lock.
+Screen size: 375px wide. Show with "Spring Preg Check" template selected, "Pregnancy Check" work type, Configure Fields expanded showing 3 locked preg fields + 5 active optional fields.
