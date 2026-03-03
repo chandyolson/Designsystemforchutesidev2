@@ -445,46 +445,90 @@ export function ReferenceQuickNotesScreen() {
       </div>
 
       {/* ── Notes Card ── */}
-      <div
-        className="rounded-xl bg-white border border-[#D4D4D0]"
-        style={{ padding: 16 }}
-      >
-        <div className="flex flex-wrap gap-2">
-          {notes.map((note) => (
-            <NotePill
-              key={note.id}
-              note={note}
-              onDelete={() => handleDeleteNote(note)}
-            />
-          ))}
-        </div>
+      <div className="space-y-4">
+        {(() => {
+          const flagOrder: { flag: NoteFlag; label: string; flagColor?: FlagColor }[] = [
+            { flag: "cull", label: "Cull", flagColor: "red" },
+            { flag: "production", label: "Production", flagColor: "gold" },
+            { flag: "management", label: "Management", flagColor: "teal" },
+            { flag: "none", label: "No Flag" },
+          ];
 
-        {notes.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center"
-            style={{ padding: "24px 0" }}
-          >
-            <p
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: "rgba(26,26,26,0.30)",
-              }}
-            >
-              No quick notes
-            </p>
-            <p
-              className="mt-1"
-              style={{
-                fontSize: 12,
-                fontWeight: 400,
-                color: "rgba(26,26,26,0.20)",
-              }}
-            >
-              Tap + to create your first note
-            </p>
-          </div>
-        )}
+          const groups = notes.reduce<Record<NoteFlag, QuickNote[]>>(
+            (acc, n) => {
+              acc[n.flag].push(n);
+              return acc;
+            },
+            { cull: [], production: [], management: [], none: [] }
+          );
+
+          const nonEmptyGroups = flagOrder.filter((g) => groups[g.flag].length > 0);
+
+          if (nonEmptyGroups.length === 0) {
+            return (
+              <div
+                className="rounded-xl bg-white border border-[#D4D4D0] flex flex-col items-center justify-center"
+                style={{ padding: "32px 20px" }}
+              >
+                <p style={{ fontSize: 14, fontWeight: 600, color: "rgba(26,26,26,0.30)" }}>
+                  No quick notes
+                </p>
+                <p className="mt-1" style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.20)" }}>
+                  Tap + to create your first note
+                </p>
+              </div>
+            );
+          }
+
+          return nonEmptyGroups.map((g) => {
+            const s = FLAG_PILL_STYLES[g.flag];
+            return (
+              <div key={g.flag}>
+                {/* Group header */}
+                <div className="flex items-center gap-2.5 mb-2 px-1">
+                  <div className="flex items-center gap-1.5">
+                    {g.flagColor ? (
+                      <FlagIcon color={g.flagColor} size="sm" />
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <line x1="3" y1="7" x2="11" y2="7" stroke="#D4D4D0" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    )}
+                    <span
+                      className="font-['Inter']"
+                      style={{ fontSize: 11, fontWeight: 700, color: s.color }}
+                    >
+                      {g.label}
+                    </span>
+                  </div>
+                  <div className="flex-1 h-px" style={{ backgroundColor: s.border }} />
+                  <span
+                    className="font-['Inter']"
+                    style={{ fontSize: 10, fontWeight: 600, color: "rgba(26,26,26,0.25)" }}
+                  >
+                    {groups[g.flag].length}
+                  </span>
+                </div>
+
+                {/* Pills */}
+                <div
+                  className="rounded-xl bg-white border border-[#D4D4D0]/60"
+                  style={{ padding: 14 }}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {groups[g.flag].map((note) => (
+                      <NotePill
+                        key={note.id}
+                        note={note}
+                        onDelete={() => handleDeleteNote(note)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          });
+        })()}
       </div>
 
       {/* ── Legend ── */}

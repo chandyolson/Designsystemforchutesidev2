@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { GroupsScreen } from "./components/groups-screen";
 import { ReferenceGroupsScreen } from "./components/reference-groups-screen";
 import { GroupDetailScreen } from "./components/group-detail-screen";
@@ -128,6 +128,7 @@ export default function App() {
                     <Route path="dev/voice-input" element={<VoiceInputExplorer />} />
                     <Route path="dev/mass-select" element={<MassSelectExplorer />} />
                     <Route path="dev/skeletons" element={<SkeletonExplorer />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>
                 </Route>
               </Routes>

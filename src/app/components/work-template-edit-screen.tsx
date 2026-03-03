@@ -18,27 +18,29 @@ function Toggle({
     <button
       type="button"
       onClick={() => onChange(!on)}
-      className="relative shrink-0 rounded-full transition-colors duration-200 cursor-pointer"
+      className="shrink-0 flex items-center justify-center rounded-md transition-all duration-200 cursor-pointer"
       style={{
-        width: 44,
-        height: 26,
-        backgroundColor: on ? "#55BAAA" : "#D4D4D0",
+        width: 24,
+        height: 24,
         minHeight: 44,
-        display: "flex",
-        alignItems: "center",
+        minWidth: 44,
+        backgroundColor: on ? "#55BAAA" : "transparent",
+        border: on ? "2px solid #55BAAA" : "2px solid #D4D4D0",
       }}
       aria-checked={on}
       role="switch"
     >
-      <span
-        className="absolute rounded-full bg-white shadow-sm transition-all duration-200"
-        style={{
-          width: 22,
-          height: 22,
-          top: 2,
-          left: on ? 20 : 2,
-        }}
-      />
+      {on && (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path
+            d="M3 7.5L5.75 10.25L11 4"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
     </button>
   );
 }

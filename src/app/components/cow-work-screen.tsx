@@ -6,6 +6,7 @@ import { BulkActionBar } from "./bulk-action-bar";
 import { useSelectMode } from "./hooks/use-select-mode";
 import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
+import { useSidebarWidth } from "./sidebar-context";
 
 /* ── Actions Dropdown ── */
 function ActionsDropdown({
@@ -342,6 +343,7 @@ export function CowWorkScreen() {
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const { sidebarWidth } = useSidebarWidth();
 
   const hasActiveFilter = statusFilter !== "all" || sortBy !== "status";
 
@@ -528,7 +530,7 @@ export function CowWorkScreen() {
       )}
 
       {/* ── Project Cards ── */}
-      <div className={`space-y-3.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-3.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
         {filteredSorted.map((p) =>
           selectMode ? (
             <div
@@ -583,8 +585,11 @@ export function CowWorkScreen() {
 
       {/* ── Bulk Action Bar ── */}
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40">
-          <div className="max-w-[420px] mx-auto">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40"
+          style={{ left: sidebarWidth > 0 ? sidebarWidth : undefined }}
+        >
+          <div className="max-w-[420px] md:max-w-[768px] lg:max-w-none mx-auto lg:mx-0">
             <BulkActionBar
               selectedCount={selectedIds.size}
               itemLabel={selectedIds.size === 1 ? "project" : "projects"}

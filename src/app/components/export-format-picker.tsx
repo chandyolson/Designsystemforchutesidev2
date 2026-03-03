@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMediaQuery } from "./use-media-query";
 
 /* ═══════════════════════════════════════════════
    TYPES
@@ -160,6 +161,7 @@ export function ExportFormatPicker({
   const [columns, setColumns] = useState<ExportColumn[]>(() =>
     DEFAULT_COLUMNS.map((c) => ({ ...c }))
   );
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   /* Lock body scroll */
   useEffect(() => {
@@ -228,254 +230,274 @@ export function ExportFormatPicker({
             style={{ backgroundColor: "rgba(0,0,0,0.52)" }}
           />
 
-          {/* ── BOTTOM SHEET ── */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 350 }}
-            className="absolute bottom-0 left-0 right-0 bg-white font-['Inter'] flex flex-col"
-            style={{
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              maxHeight: "85vh",
-              boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
-            }}
+          {/* ── SHEET / MODAL ── */}
+          <div
+            className={
+              isDesktop
+                ? "absolute inset-0 flex items-center justify-center pointer-events-none"
+                : "absolute inset-0 pointer-events-none"
+            }
           >
-            {/* ══════════════════════════════════
-               HEADER
-               ══════════════════════════════════ */}
-            <div className="shrink-0 relative" style={{ padding: "24px 24px 0 24px" }}>
-              {/* Close X */}
-              <button
-                type="button"
-                onClick={onClose}
-                className="absolute top-5 right-5 flex items-center justify-center rounded-full cursor-pointer transition-colors hover:bg-[#0E2646]/6"
-                style={{ width: 32, height: 32 }}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M4 4L12 12M12 4L4 12"
-                    stroke="#1A1A1A"
-                    strokeOpacity="0.35"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-
-              <p style={{ fontSize: 17, fontWeight: 700, color: "#0E2646" }}>
-                Export Data
-              </p>
-              <p className="mt-0.5" style={{ fontSize: 13, color: "rgba(26,26,26,0.4)" }}>
-                {subtitle}
-              </p>
-            </div>
-
-            {/* ── SCROLLABLE BODY ── */}
-            <div
-              className="flex-1 overflow-y-auto"
-              style={{ padding: "20px 24px 0 24px" }}
+            <motion.div
+              initial={isDesktop ? { opacity: 0, scale: 0.95 } : { y: "100%" }}
+              animate={isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }}
+              exit={isDesktop ? { opacity: 0, scale: 0.95 } : { y: "100%" }}
+              transition={
+                isDesktop
+                  ? { duration: 0.2, ease: "easeOut" }
+                  : { type: "spring", damping: 30, stiffness: 350 }
+              }
+              className={
+                isDesktop
+                  ? "w-full max-w-[480px] bg-white font-['Inter'] flex flex-col pointer-events-auto rounded-2xl"
+                  : "absolute bottom-0 left-0 right-0 bg-white font-['Inter'] flex flex-col pointer-events-auto"
+              }
+              style={{
+                ...(isDesktop
+                  ? { maxHeight: "80vh", boxShadow: "0 24px 60px rgba(0,0,0,0.25)" }
+                  : {
+                      borderTopLeftRadius: 20,
+                      borderTopRightRadius: 20,
+                      maxHeight: "85vh",
+                      boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+                    }),
+              }}
             >
               {/* ══════════════════════════════════
-                 FORMAT OPTIONS
+                 HEADER
                  ══════════════════════════════════ */}
-              <div className="space-y-2.5">
-                {FORMAT_OPTIONS.map((opt) => {
-                  const isSelected = opt.id === format;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setFormat(opt.id)}
-                      className="w-full flex items-center gap-4 text-left rounded-xl cursor-pointer transition-all"
-                      style={{
-                        padding: 16,
-                        border: isSelected
-                          ? "1.5px solid #55BAAA"
-                          : "1.5px solid #D4D4D0",
-                        backgroundColor: isSelected
-                          ? "rgba(85,186,170,0.04)"
-                          : "#FFFFFF",
-                      }}
-                    >
-                      {/* Icon */}
-                      <div className="shrink-0">
-                        {opt.icon(isSelected ? "#0E2646" : "#0E2646")}
-                      </div>
+              <div className="shrink-0 relative" style={{ padding: "24px 24px 0 24px" }}>
+                {/* Close X */}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="absolute top-5 right-5 flex items-center justify-center rounded-full cursor-pointer transition-colors hover:bg-[#0E2646]/6"
+                  style={{ width: 32, height: 32 }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M4 4L12 12M12 4L4 12"
+                      stroke="#1A1A1A"
+                      strokeOpacity="0.35"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
 
-                      {/* Text */}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-[#0E2646]"
-                          style={{ fontSize: 14, fontWeight: 600 }}
-                        >
-                          {opt.label}
-                        </p>
-                        <p
-                          className="mt-0.5"
-                          style={{
-                            fontSize: 12,
-                            color: "rgba(26,26,26,0.35)",
-                          }}
-                        >
-                          {opt.description}
-                        </p>
-                      </div>
+                <p style={{ fontSize: 17, fontWeight: 700, color: "#0E2646" }}>
+                  Export Data
+                </p>
+                <p className="mt-0.5" style={{ fontSize: 13, color: "rgba(26,26,26,0.4)" }}>
+                  {subtitle}
+                </p>
+              </div>
 
-                      {/* Radio indicator */}
-                      <div
-                        className="shrink-0 flex items-center justify-center rounded-full transition-all"
+              {/* ── SCROLLABLE BODY ── */}
+              <div
+                className="flex-1 overflow-y-auto"
+                style={{ padding: "20px 24px 0 24px" }}
+              >
+                {/* ══════════════════════════════════
+                   FORMAT OPTIONS
+                   ══════════════════════════════════ */}
+                <div className="space-y-2.5">
+                  {FORMAT_OPTIONS.map((opt) => {
+                    const isSelected = opt.id === format;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setFormat(opt.id)}
+                        className="w-full flex items-center gap-4 text-left rounded-xl cursor-pointer transition-all"
                         style={{
-                          width: 22,
-                          height: 22,
+                          padding: 16,
                           border: isSelected
-                            ? "2px solid #55BAAA"
+                            ? "1.5px solid #55BAAA"
                             : "1.5px solid #D4D4D0",
+                          backgroundColor: isSelected
+                            ? "rgba(85,186,170,0.04)"
+                            : "#FFFFFF",
                         }}
                       >
-                        {isSelected && (
-                          <div
-                            className="rounded-full"
+                        {/* Icon */}
+                        <div className="shrink-0">
+                          {opt.icon(isSelected ? "#0E2646" : "#0E2646")}
+                        </div>
+
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="text-[#0E2646]"
+                            style={{ fontSize: 14, fontWeight: 600 }}
+                          >
+                            {opt.label}
+                          </p>
+                          <p
+                            className="mt-0.5"
                             style={{
-                              width: 10,
-                              height: 10,
-                              backgroundColor: "#55BAAA",
+                              fontSize: 12,
+                              color: "rgba(26,26,26,0.35)",
                             }}
-                          />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+                          >
+                            {opt.description}
+                          </p>
+                        </div>
+
+                        {/* Radio indicator */}
+                        <div
+                          className="shrink-0 flex items-center justify-center rounded-full transition-all"
+                          style={{
+                            width: 22,
+                            height: 22,
+                            border: isSelected
+                              ? "2px solid #55BAAA"
+                              : "1.5px solid #D4D4D0",
+                          }}
+                        >
+                          {isSelected && (
+                            <div
+                              className="rounded-full"
+                              style={{
+                                width: 10,
+                                height: 10,
+                                backgroundColor: "#55BAAA",
+                              }}
+                            />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* ══════════════════════════════════
+                   COLUMNS SECTION
+                   ══════════════════════════════════ */}
+                <div style={{ marginTop: 24 }}>
+                  {/* Section header with select/deselect */}
+                  <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "rgba(14,38,70,0.5)",
+                      }}
+                    >
+                      Include Columns
+                      <span
+                        className="ml-1.5"
+                        style={{ fontSize: 11, fontWeight: 500, color: "rgba(26,26,26,0.25)" }}
+                      >
+                        ({checkedCount}/{columns.length})
+                      </span>
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleSelectAll}
+                        disabled={allChecked}
+                        className="cursor-pointer transition-opacity disabled:opacity-30"
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#55BAAA",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                        }}
+                      >
+                        Select All
+                      </button>
+                      <span style={{ color: "rgba(26,26,26,0.12)", fontSize: 11 }}>|</span>
+                      <button
+                        type="button"
+                        onClick={handleDeselectAll}
+                        disabled={noneChecked}
+                        className="cursor-pointer transition-opacity disabled:opacity-30"
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#55BAAA",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                        }}
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Column checkboxes */}
+                  <div
+                    className="rounded-xl overflow-hidden divide-y divide-[#D4D4D0]/30"
+                    style={{ border: "1px solid rgba(212,212,208,0.5)" }}
+                  >
+                    {columns.map((col) => (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => toggleColumn(col.id)}
+                        className="w-full flex items-center gap-3 text-left cursor-pointer hover:bg-[#0E2646]/[0.015] transition-colors"
+                        style={{ padding: "11px 16px" }}
+                      >
+                        <TealCheckbox
+                          checked={col.checked}
+                          onChange={() => toggleColumn(col.id)}
+                        />
+                        <span
+                          className="text-[#1A1A1A]"
+                          style={{
+                            fontSize: 14,
+                            fontWeight: col.checked ? 500 : 400,
+                            opacity: col.checked ? 1 : 0.55,
+                          }}
+                        >
+                          {col.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* ══════════════════════════════════
-                 COLUMNS SECTION
+                 EXPORT BUTTON
                  ══════════════════════════════════ */}
-              <div style={{ marginTop: 24 }}>
-                {/* Section header with select/deselect */}
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "rgba(14,38,70,0.5)",
-                    }}
-                  >
-                    Include Columns
-                    <span
-                      className="ml-1.5"
-                      style={{ fontSize: 11, fontWeight: 500, color: "rgba(26,26,26,0.25)" }}
-                    >
-                      ({checkedCount}/{columns.length})
-                    </span>
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleSelectAll}
-                      disabled={allChecked}
-                      className="cursor-pointer transition-opacity disabled:opacity-30"
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#55BAAA",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                      }}
-                    >
-                      Select All
-                    </button>
-                    <span style={{ color: "rgba(26,26,26,0.12)", fontSize: 11 }}>|</span>
-                    <button
-                      type="button"
-                      onClick={handleDeselectAll}
-                      disabled={noneChecked}
-                      className="cursor-pointer transition-opacity disabled:opacity-30"
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#55BAAA",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                      }}
-                    >
-                      Deselect All
-                    </button>
-                  </div>
-                </div>
-
-                {/* Column checkboxes */}
-                <div
-                  className="rounded-xl overflow-hidden divide-y divide-[#D4D4D0]/30"
-                  style={{ border: "1px solid rgba(212,212,208,0.5)" }}
+              <div className="shrink-0" style={{ padding: "20px 24px 28px 24px" }}>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={noneChecked}
+                  className="w-full rounded-xl font-['Inter'] cursor-pointer transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    height: 48,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: "#0E2646",
+                    backgroundColor: "#F3D12A",
+                    border: "none",
+                  }}
                 >
-                  {columns.map((col) => (
-                    <button
-                      key={col.id}
-                      type="button"
-                      onClick={() => toggleColumn(col.id)}
-                      className="w-full flex items-center gap-3 text-left cursor-pointer hover:bg-[#0E2646]/[0.015] transition-colors"
-                      style={{ padding: "11px 16px" }}
+                  Export{" "}
+                  {format === "csv"
+                    ? "CSV"
+                    : format === "pdf"
+                    ? "PDF"
+                    : "Excel"}
+                  {checkedCount > 0 && (
+                    <span
+                      className="ml-1"
+                      style={{ fontWeight: 500, opacity: 0.5, fontSize: 13 }}
                     >
-                      <TealCheckbox
-                        checked={col.checked}
-                        onChange={() => toggleColumn(col.id)}
-                      />
-                      <span
-                        className="text-[#1A1A1A]"
-                        style={{
-                          fontSize: 14,
-                          fontWeight: col.checked ? 500 : 400,
-                          opacity: col.checked ? 1 : 0.55,
-                        }}
-                      >
-                        {col.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                      · {checkedCount} columns
+                    </span>
+                  )}
+                </button>
               </div>
-            </div>
-
-            {/* ══════════════════════════════════
-               EXPORT BUTTON
-               ══════════════════════════════════ */}
-            <div className="shrink-0" style={{ padding: "20px 24px 28px 24px" }}>
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={noneChecked}
-                className="w-full rounded-xl font-['Inter'] cursor-pointer transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  height: 48,
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: "#0E2646",
-                  backgroundColor: "#F3D12A",
-                  border: "none",
-                }}
-              >
-                Export{" "}
-                {format === "csv"
-                  ? "CSV"
-                  : format === "pdf"
-                  ? "PDF"
-                  : "Excel"}
-                {checkedCount > 0 && (
-                  <span
-                    className="ml-1"
-                    style={{ fontWeight: 500, opacity: 0.5, fontSize: 13 }}
-                  >
-                    · {checkedCount} columns
-                  </span>
-                )}
-              </button>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>

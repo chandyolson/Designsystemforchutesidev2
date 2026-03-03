@@ -104,16 +104,27 @@ export function ReferenceScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
-      <SettingsGroup
-        title="Operation"
-        items={[
-          { name: "Operation Profile", description: "Name, address, contact info", onClick: () => navigate("/reference/operation") },
-          { name: "Team Members", description: "Manage users, roles, and invitations", onClick: () => navigate("/reference/team") },
-          { name: "Vet Practices", description: "Linked veterinary practices", onClick: () => navigate("/reference/vet-practices") },
-          { name: "Preferences", description: "Tag system, breeds, preg stages", onClick: () => navigate("/reference/preferences") },
-        ]}
-      />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        <SettingsGroup
+          title="Operation"
+          items={[
+            { name: "Operation Profile", description: "Name, address, contact info", onClick: () => navigate("/reference/operation") },
+            { name: "Team Members", description: "Manage users, roles, and invitations", onClick: () => navigate("/reference/team") },
+            { name: "Vet Practices", description: "Linked veterinary practices", onClick: () => navigate("/reference/vet-practices") },
+            { name: "Preferences", description: "Tag system, breeds, preg stages", onClick: () => navigate("/reference/preferences") },
+          ]}
+        />
+
+        <SettingsGroup
+          title="Account"
+          items={[
+            { name: "User Profile", description: "Display name, phone, avatar", onClick: () => navigate("/user-profile") },
+            { name: "Switch Operation", description: "Change active operation", onClick: () => window.dispatchEvent(new Event("open-operation-picker")) },
+            { name: "Sign Out", description: "Log out of ChuteSide", onClick: () => window.dispatchEvent(new Event("app-sign-out")) },
+          ]}
+        />
+      </div>
 
       <SettingsGroup
         title="Lists & Lookups"
@@ -125,15 +136,6 @@ export function ReferenceScreen() {
           { name: "Diseases", description: "Disease lookup table", onClick: () => navigate("/reference/diseases") },
           { name: "Quick Notes", description: "Calving, cow, and project notes", onClick: () => navigate("/reference/quick-notes") },
           { name: "Project Templates", description: "Default work session configurations", onClick: () => navigate("/cow-work/templates") },
-        ]}
-      />
-
-      <SettingsGroup
-        title="Account"
-        items={[
-          { name: "User Profile", description: "Display name, phone, avatar", onClick: () => navigate("/user-profile") },
-          { name: "Switch Operation", description: "Change active operation", onClick: () => window.dispatchEvent(new Event("open-operation-picker")) },
-          { name: "Sign Out", description: "Log out of ChuteSide", onClick: () => window.dispatchEvent(new Event("app-sign-out")) },
         ]}
       />
     </div>

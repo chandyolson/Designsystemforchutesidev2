@@ -210,16 +210,6 @@ export function AnimalDetailScreen() {
           {animalRecord.flag && (
             <div className="shrink-0 flex flex-col items-center gap-1 pt-1">
               <FlagIcon color={animalRecord.flag} size="md" />
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: flagColors[animalRecord.flag],
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {flagLabels[animalRecord.flag]}
-              </span>
             </div>
           )}
         </div>
@@ -265,9 +255,25 @@ export function AnimalDetailScreen() {
           <div className="space-y-5">
             {/* ── Form Fields ── */}
             <div className="space-y-2.5">
-              <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Sold", "Dead", "Culled", "Missing"]} />
-              <FormFieldRow label="Flag" value={fields.flag} onChange={update("flag")} placeholder="Management / Monitor / Critical" />
-              <FormFieldRow label="Flag Reason" value={fields.flagReason} onChange={update("flagReason")} placeholder="Reason for flag" />
+              <CollapsibleSection
+                title="Status & Flag"
+                collapsedContent={
+                  <p
+                    className="font-['Inter'] mt-1.5 truncate"
+                    style={{ fontSize: 12, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}
+                  >
+                    {fields.status}
+                    {fields.flag ? ` · ${fields.flag}` : ""}
+                    {fields.flagReason ? ` · ${fields.flagReason}` : ""}
+                  </p>
+                }
+              >
+                <div className="space-y-2.5 pt-2">
+                  <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Sold", "Dead", "Culled", "Missing"]} />
+                  <FormFieldRow label="Flag" value={fields.flag} onChange={update("flag")} placeholder="Management / Monitor / Critical" />
+                  <FormFieldRow label="Flag Reason" value={fields.flagReason} onChange={update("flagReason")} placeholder="Reason for flag" />
+                </div>
+              </CollapsibleSection>
               <CollapsibleSection
                 title="Details"
                 collapsedContent={

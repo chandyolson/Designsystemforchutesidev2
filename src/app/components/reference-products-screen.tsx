@@ -1,11 +1,5 @@
-import { useState, useMemo, useRef, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { useToast } from "./toast-context";
-import { useDeleteConfirm } from "./delete-confirmation";
-import { useSelectMode } from "./hooks/use-select-mode";
-import { SelectableCardWrapper } from "./selectable-card-wrapper";
-import { SelectAllBar } from "./select-all-bar";
 import { BulkActionBar } from "./bulk-action-bar";
+import { useSidebarWidth } from "./sidebar-context";
 
 /* ══════════════════════════════════════════
    Types & Data
@@ -303,6 +297,7 @@ export function ReferenceProductsScreen() {
   const { showDeleteConfirm } = useDeleteConfirm();
   const navigate = useNavigate();
   const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
+  const { sidebarWidth } = useSidebarWidth();
 
   /* ── Add Form state ── */
   const [formName, setFormName] = useState("");
@@ -547,7 +542,7 @@ export function ReferenceProductsScreen() {
       {displayed.length > 0 ? (
         <div className={`mb-6 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
           {selectMode ? (
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               {displayed.map((product) => (
                 <div
                   key={product.id}
@@ -587,36 +582,79 @@ export function ReferenceProductsScreen() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl bg-white border border-[#D4D4D0]/60 overflow-hidden divide-y divide-[#D4D4D0]/40">
-              {displayed.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center gap-3 transition-colors hover:bg-[#F5F5F0] cursor-pointer"
-                  style={{ padding: "14px 16px" }}
-                  onClick={() => navigate(`/reference/products/${product.id}`)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="truncate"
-                      style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", lineHeight: 1.3 }}
-                    >
-                      {product.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <CategoryPill category={product.category} />
-                      <span style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)" }}>
-                        {product.route} · {formatDosage(product)}
-                      </span>
+            <div className="space-y-4">
+              {(() => {
+                // Group products by category
+                const groups = displayed.reduce<Record<string, Product[]>>((acc, p) => {
+                  if (!acc[p.category]) acc[p.category] = [];
+                  acc[p.category].push(p);
+                  return acc;
+                }, {});
+                const categoryOrder: ProductCategory[] = ["Vaccine", "Antibiotic", "Supplement", "Parasiticide", "Other"];
+                const sortedCategories = categoryOrder.filter((c) => groups[c]);
+
+                return sortedCategories.map((cat) => {
+                  const catStyle = CATEGORY_PILL_STYLES[cat];
+                  return (
+                    <div key={cat}>
+                      {/* Category group header */}
+                      <div className="flex items-center gap-2.5 mb-2 px-1">
+                        <span
+                          className="inline-flex items-center rounded-full font-['Inter']"
+                          style={{
+                            padding: "2px 10px",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            backgroundColor: catStyle.bg,
+                            color: catStyle.color,
+                          }}
+                        >
+                          {cat}
+                        </span>
+                        <div className="flex-1 h-px" style={{ backgroundColor: `${catStyle.color}20` }} />
+                        <span
+                          className="font-['Inter']"
+                          style={{ fontSize: 10, fontWeight: 600, color: "rgba(26,26,26,0.25)" }}
+                        >
+                          {groups[cat].length}
+                        </span>
+                      </div>
+
+                      {/* Products in this category */}
+                      <div className="rounded-xl bg-white border border-[#D4D4D0]/60 overflow-hidden divide-y divide-[#D4D4D0]/40">
+                        {groups[cat].map((product) => (
+                          <div
+                            key={product.id}
+                            className="flex items-center gap-3 transition-colors hover:bg-[#F5F5F0] cursor-pointer"
+                            style={{ padding: "14px 16px" }}
+                            onClick={() => navigate(`/reference/products/${product.id}`)}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="truncate"
+                                style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", lineHeight: 1.3 }}
+                              >
+                                {product.name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span style={{ fontSize: 12, fontWeight: 400, color: "rgba(26,26,26,0.40)" }}>
+                                  {product.route} · {formatDosage(product)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2.5 shrink-0">
+                              {product.meatWithdrawal && (
+                                <WithdrawalPill days={product.meatWithdrawal} />
+                              )}
+                              <ChevronRight />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    {product.meatWithdrawal && (
-                      <WithdrawalPill days={product.meatWithdrawal} />
-                    )}
-                    <ChevronRight />
-                  </div>
-                </div>
-              ))}
+                  );
+                });
+              })()}
             </div>
           )}
         </div>
@@ -640,8 +678,11 @@ export function ReferenceProductsScreen() {
 
       {/* ── Bulk Action Bar ── */}
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40">
-          <div className="max-w-[420px] mx-auto">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40"
+          style={{ left: sidebarWidth > 0 ? sidebarWidth : undefined }}
+        >
+          <div className="max-w-[420px] md:max-w-[768px] lg:max-w-none mx-auto lg:mx-0">
             <BulkActionBar
               selectedCount={selectedIds.size}
               itemLabel={selectedIds.size === 1 ? "product" : "products"}

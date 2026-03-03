@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ═══════════════════════════════════════════════
    TYPES
@@ -123,6 +123,10 @@ export function EmailReportDialog({
   const [message, setMessage] = useState(initialMessage);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const stableRecipients = useMemo(() => initialRecipients, [initialRecipients.join(",")]);
+  const stableSubject = initialSubject;
+  const stableMessage = initialMessage;
+
   /* Lock body scroll */
   useEffect(() => {
     if (open) {
@@ -147,12 +151,12 @@ export function EmailReportDialog({
   /* Reset on open */
   useEffect(() => {
     if (open) {
-      setRecipients(initialRecipients);
+      setRecipients(stableRecipients);
       setEmailInput("");
-      setSubject(initialSubject);
-      setMessage(initialMessage);
+      setSubject(stableSubject);
+      setMessage(stableMessage);
     }
-  }, [open, initialRecipients, initialSubject, initialMessage]);
+  }, [open, stableRecipients, stableSubject, stableMessage]);
 
   /* Parse and add emails from input */
   const addEmails = useCallback(

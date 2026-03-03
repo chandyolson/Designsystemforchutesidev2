@@ -311,12 +311,13 @@ function TabBar({ active, onChange }: { active: TabId; onChange: (t: TabId) => v
               fontSize: 13,
               fontWeight: isActive ? 700 : 500,
               color: isActive ? "#0E2646" : "rgba(26,26,26,0.35)",
-              borderBottom: isActive ? "2px solid #F3D12A" : "2px solid transparent",
-              background: "none",
-              border: "none",
+              borderTopWidth: 0,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
               borderBottomWidth: 2,
               borderBottomStyle: "solid",
               borderBottomColor: isActive ? "#F3D12A" : "transparent",
+              background: "none",
             }}
           >
             {tab.label}

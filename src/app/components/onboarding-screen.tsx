@@ -116,7 +116,7 @@ export function OnboardingScreen() {
       className="min-h-screen font-['Inter'] flex flex-col"
       style={{ backgroundColor: "#F5F5F0" }}
     >
-      <div className="w-full max-w-[375px] mx-auto flex-1 flex flex-col">
+      <div className="w-full max-w-[375px] md:max-w-[480px] mx-auto flex-1 flex flex-col">
 
         {/* ── Top bar: brand left + progress center ── */}
         <div

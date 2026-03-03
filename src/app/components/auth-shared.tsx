@@ -133,7 +133,7 @@ export function AuthLayout({ children, footer }: AuthLayoutProps) {
         background: "linear-gradient(180deg, #153566 0%, #0A1628 50%, #0E2646 100%)",
       }}
     >
-      <div className="w-full max-w-[375px] mx-auto flex-1 flex flex-col justify-center px-6 py-10">
+      <div className="w-full max-w-[375px] md:max-w-[480px] mx-auto flex-1 flex flex-col justify-center px-6 py-10">
         {/* Branding */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">

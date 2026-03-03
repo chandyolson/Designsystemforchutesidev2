@@ -1,6 +1,3 @@
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
 
 /* ══════════════════════════════════════════
@@ -461,6 +458,7 @@ function MemberDetailSheet({
   if (!member) return null;
 
   const isOwner = member.role === "Owner";
+  const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 
   return (
     <AnimatePresence>
@@ -477,187 +475,207 @@ function MemberDetailSheet({
             style={{ backgroundColor: "rgba(0,0,0,0.52)" }}
           />
 
-          {/* Bottom sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 350 }}
-            className="absolute bottom-0 left-0 right-0 bg-white font-['Inter']"
-            style={{
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              maxHeight: "80vh",
-              boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
-              padding: 24,
-            }}
+          {/* Sheet / Modal */}
+          <div
+            className={
+              isDesktop
+                ? "absolute inset-0 flex items-center justify-center pointer-events-none"
+                : "absolute inset-0 pointer-events-none"
+            }
           >
-            {/* Close X */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-5 right-5 flex items-center justify-center rounded-full cursor-pointer transition-colors hover:bg-[#0E2646]/6"
-              style={{ width: 32, height: 32 }}
+            <motion.div
+              initial={isDesktop ? { opacity: 0, scale: 0.95 } : { y: "100%" }}
+              animate={isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }}
+              exit={isDesktop ? { opacity: 0, scale: 0.95 } : { y: "100%" }}
+              transition={
+                isDesktop
+                  ? { duration: 0.2, ease: "easeOut" }
+                  : { type: "spring", damping: 30, stiffness: 350 }
+              }
+              className={
+                isDesktop
+                  ? "w-full max-w-[420px] bg-white font-['Inter'] pointer-events-auto rounded-2xl"
+                  : "absolute bottom-0 left-0 right-0 bg-white font-['Inter'] pointer-events-auto"
+              }
+              style={{
+                ...(isDesktop
+                  ? { maxHeight: "75vh", boxShadow: "0 24px 60px rgba(0,0,0,0.25)", padding: 24 }
+                  : {
+                      borderTopLeftRadius: 20,
+                      borderTopRightRadius: 20,
+                      maxHeight: "80vh",
+                      boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+                      padding: 24,
+                    }),
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M4 4L12 12M12 4L4 12" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            {/* Avatar + Name header */}
-            <div className="flex items-center gap-4 mb-5">
-              <div
-                className="shrink-0 flex items-center justify-center rounded-full"
-                style={{ width: 56, height: 56, backgroundColor: "#0E2646" }}
+              {/* Close X */}
+              <button
+                type="button"
+                onClick={onClose}
+                className="absolute top-5 right-5 flex items-center justify-center rounded-full cursor-pointer transition-colors hover:bg-[#0E2646]/6"
+                style={{ width: 32, height: 32 }}
               >
-                <span className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>
-                  {member.initials}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: 18, fontWeight: 700, color: "#0E2646" }}>
-                  {member.name}
-                </p>
-                <div className="mt-1.5">
-                  <RolePill role={member.role} />
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4L12 12M12 4L4 12" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+
+              {/* Avatar + Name header */}
+              <div className="flex items-center gap-4 mb-5">
+                <div
+                  className="shrink-0 flex items-center justify-center rounded-full"
+                  style={{ width: 56, height: 56, backgroundColor: "#0E2646" }}
+                >
+                  <span className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>
+                    {member.initials}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate" style={{ fontSize: 18, fontWeight: 700, color: "#0E2646" }}>
+                    {member.name}
+                  </p>
+                  <div className="mt-1.5">
+                    <RolePill role={member.role} />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Info rows */}
-            <div className="divide-y divide-[#D4D4D0]/30">
-              {member.email && (
-                <DetailRow
-                  icon={
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="#0E2646" strokeWidth="1.3" />
-                      <path d="M1.5 5L8 9.5L14.5 5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                  }
-                  label="Email"
-                  value={member.email}
-                />
-              )}
-              {member.phone && (
-                <DetailRow
-                  icon={
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M14.05 11.35L11.22 10.13C10.93 10.01 10.6 10.08 10.39 10.32L9.37 11.53C7.41 10.56 5.84 8.99 4.87 7.03L6.08 6.01C6.32 5.8 6.39 5.47 6.27 5.18L5.05 2.35C4.91 2.02 4.57 1.82 4.22 1.89L2.04 2.35C1.72 2.42 1.5 2.7 1.5 3.03C1.5 9.93 7.07 14.5 13.97 14.5C14.3 14.5 14.58 14.28 14.65 13.96L15.11 11.78C15.18 11.43 14.98 11.09 14.65 10.95L14.05 11.35Z" stroke="#0E2646" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  }
-                  label="Phone"
-                  value={member.phone}
-                />
-              )}
-              {member.addedDate && (
-                <DetailRow
-                  icon={
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <rect x="2" y="2.5" width="12" height="11.5" rx="2" stroke="#0E2646" strokeWidth="1.3" />
-                      <path d="M2 6H14" stroke="#0E2646" strokeWidth="1.3" />
-                      <path d="M5.5 1.5V3.5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" />
-                      <path d="M10.5 1.5V3.5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                  }
-                  label="Added"
-                  value={member.addedDate}
-                />
-              )}
-              {member.lastActive && (
-                <DetailRow
-                  icon={
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="6" stroke="#0E2646" strokeWidth="1.3" />
-                      <path d="M8 5V8L10 10" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  }
-                  label="Last Active"
-                  value={member.lastActive}
-                />
-              )}
-            </div>
+              {/* Info rows */}
+              <div className="divide-y divide-[#D4D4D0]/30">
+                {member.email && (
+                  <DetailRow
+                    icon={
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="#0E2646" strokeWidth="1.3" />
+                        <path d="M1.5 5L8 9.5L14.5 5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" />
+                      </svg>
+                    }
+                    label="Email"
+                    value={member.email}
+                  />
+                )}
+                {member.phone && (
+                  <DetailRow
+                    icon={
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M14.05 11.35L11.22 10.13C10.93 10.01 10.6 10.08 10.39 10.32L9.37 11.53C7.41 10.56 5.84 8.99 4.87 7.03L6.08 6.01C6.32 5.8 6.39 5.47 6.27 5.18L5.05 2.35C4.91 2.02 4.57 1.82 4.22 1.89L2.04 2.35C1.72 2.42 1.5 2.7 1.5 3.03C1.5 9.93 7.07 14.5 13.97 14.5C14.3 14.5 14.58 14.28 14.65 13.96L15.11 11.78C15.18 11.43 14.98 11.09 14.65 10.95L14.05 11.35Z" stroke="#0E2646" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    }
+                    label="Phone"
+                    value={member.phone}
+                  />
+                )}
+                {member.addedDate && (
+                  <DetailRow
+                    icon={
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="2.5" width="12" height="11.5" rx="2" stroke="#0E2646" strokeWidth="1.3" />
+                        <path d="M2 6H14" stroke="#0E2646" strokeWidth="1.3" />
+                        <path d="M5.5 1.5V3.5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" />
+                        <path d="M10.5 1.5V3.5" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" />
+                      </svg>
+                    }
+                    label="Added"
+                    value={member.addedDate}
+                  />
+                )}
+                {member.lastActive && (
+                  <DetailRow
+                    icon={
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="6" stroke="#0E2646" strokeWidth="1.3" />
+                        <path d="M8 5V8L10 10" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    }
+                    label="Last Active"
+                    value={member.lastActive}
+                  />
+                )}
+              </div>
 
-            {/* Actions */}
-            {!isOwner && (
-              <div className="mt-5 space-y-2.5">
-                {/* Change Role */}
-                <div ref={roleRef} className="relative">
+              {/* Actions */}
+              {!isOwner && (
+                <div className="mt-5 space-y-2.5">
+                  {/* Change Role */}
+                  <div ref={roleRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setRoleOpen(!roleOpen)}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl cursor-pointer transition-all hover:bg-[#F5F5F0] active:scale-[0.98]"
+                      style={{
+                        height: 44,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "#0E2646",
+                        border: "1.5px solid #D4D4D0",
+                        background: "white",
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M11 1.5L14.5 5L5.5 14H2V10.5L11 1.5Z" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Change Role
+                    </button>
+                    {roleOpen && (
+                      <div
+                        className="absolute left-0 right-0 bottom-[48px] z-10 rounded-xl bg-white border border-[#D4D4D0] overflow-hidden"
+                        style={{ boxShadow: "0 -4px 20px rgba(0,0,0,0.10)" }}
+                      >
+                        {ASSIGNABLE_ROLES.map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => {
+                              onRoleChange(member.id, r);
+                              setRoleOpen(false);
+                            }}
+                            className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
+                            style={{ background: r === member.role ? "#F5F5F0" : "none", border: "none" }}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: ROLE_STYLES[r].color }}
+                            />
+                            <span style={{ fontSize: 13, fontWeight: r === member.role ? 600 : 400, color: "#1A1A1A" }}>
+                              {r}
+                            </span>
+                            {r === member.role && (
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">
+                                <path d="M3.5 7L6 9.5L10.5 4.5" stroke="#55BAAA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Remove */}
                   <button
                     type="button"
-                    onClick={() => setRoleOpen(!roleOpen)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl cursor-pointer transition-all hover:bg-[#F5F5F0] active:scale-[0.98]"
+                    onClick={() => onRemove(member.id)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl cursor-pointer transition-all hover:bg-[#E74C3C]/5 active:scale-[0.98]"
                     style={{
                       height: 44,
                       fontSize: 14,
                       fontWeight: 600,
-                      color: "#0E2646",
-                      border: "1.5px solid #D4D4D0",
-                      background: "white",
+                      color: "#E74C3C",
+                      border: "none",
+                      background: "none",
                     }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M11 1.5L14.5 5L5.5 14H2V10.5L11 1.5Z" stroke="#0E2646" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2.5 4.5H13.5" stroke="#E74C3C" strokeWidth="1.3" strokeLinecap="round" />
+                      <path d="M5.5 4.5V3C5.5 2.45 5.95 2 6.5 2H9.5C10.05 2 10.5 2.45 10.5 3V4.5" stroke="#E74C3C" strokeWidth="1.3" strokeLinecap="round" />
+                      <path d="M3.5 4.5L4.25 13C4.25 13.55 4.7 14 5.25 14H10.75C11.3 14 11.75 13.55 11.75 13L12.5 4.5" stroke="#E74C3C" strokeWidth="1.3" strokeLinecap="round" />
                     </svg>
-                    Change Role
+                    Remove from Team
                   </button>
-                  {roleOpen && (
-                    <div
-                      className="absolute left-0 right-0 bottom-[48px] z-10 rounded-xl bg-white border border-[#D4D4D0] overflow-hidden"
-                      style={{ boxShadow: "0 -4px 20px rgba(0,0,0,0.10)" }}
-                    >
-                      {ASSIGNABLE_ROLES.map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => {
-                            onRoleChange(member.id, r);
-                            setRoleOpen(false);
-                          }}
-                          className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 cursor-pointer transition-colors hover:bg-[#F5F5F0]"
-                          style={{ background: r === member.role ? "#F5F5F0" : "none", border: "none" }}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: ROLE_STYLES[r].color }}
-                          />
-                          <span style={{ fontSize: 13, fontWeight: r === member.role ? 600 : 400, color: "#1A1A1A" }}>
-                            {r}
-                          </span>
-                          {r === member.role && (
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">
-                              <path d="M3.5 7L6 9.5L10.5 4.5" stroke="#55BAAA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-
-                {/* Remove */}
-                <button
-                  type="button"
-                  onClick={() => onRemove(member.id)}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl cursor-pointer transition-all hover:bg-[#E74C3C]/5 active:scale-[0.98]"
-                  style={{
-                    height: 44,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#E74C3C",
-                    border: "none",
-                    background: "none",
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2.5 4.5H13.5" stroke="#E74C3C" strokeWidth="1.3" strokeLinecap="round" />
-                    <path d="M5.5 4.5V3C5.5 2.45 5.95 2 6.5 2H9.5C10.05 2 10.5 2.45 10.5 3V4.5" stroke="#E74C3C" strokeWidth="1.3" strokeLinecap="round" />
-                    <path d="M3.5 4.5L4.25 13C4.25 13.55 4.7 14 5.25 14H10.75C11.3 14 11.75 13.55 11.75 13L12.5 4.5" stroke="#E74C3C" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                  Remove from Team
-                </button>
-              </div>
-            )}
-          </motion.div>
+              )}
+            </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>

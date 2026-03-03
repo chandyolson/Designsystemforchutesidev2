@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { SelectableCardWrapper } from "./selectable-card-wrapper";
-import { SelectAllBar } from "./select-all-bar";
-import { BulkActionBar } from "./bulk-action-bar";
-import { useSelectMode } from "./hooks/use-select-mode";
-import { useToast } from "./toast-context";
 import { useDeleteConfirm } from "./delete-confirmation";
 import { FlagIcon } from "./flag-icon";
 import type { FlagColor } from "./flag-icon";
+import { useSidebarWidth } from "./sidebar-context";
+import { useSelectMode } from "./hooks/use-select-mode";
+import { useToast } from "./toast-context";
+import { SelectAllBar } from "./select-all-bar";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { BulkActionBar } from "./bulk-action-bar";
 
 /* ═══════════════════════════════════════════
    Types & Data
@@ -267,12 +268,27 @@ function ActionsDropdown({
 function NoteCard({ entry, onClick }: { entry: RedBookEntry; onClick: () => void }) {
   const flagColor = entry.flag ? FLAG_BORDER_COLOR[entry.flag] : undefined;
 
+  /* Fun gradient per flag / category */
+  const gradient = entry.flag === "red"
+    ? "linear-gradient(135deg, #8B6914 0%, #D4A017 50%, #F3D12A 100%)"
+    : entry.flag === "gold"
+    ? "linear-gradient(135deg, #8B6914 0%, #D4A017 50%, #F3D12A 100%)"
+    : entry.flag === "teal"
+    ? "linear-gradient(135deg, #1A5C52 0%, #3A8E82 50%, #55BAAA 100%)"
+    : "linear-gradient(135deg, #0E2646 0%, #153566 55%, #1E4D8C 100%)";
+
+  /* Text colors tuned per gradient */
+  const titleColor = entry.flag === "red" || entry.flag === "gold" ? "#1A1A1A" : "#FFFFFF";
+  const bodyColor = entry.flag === "red" || entry.flag === "gold" ? "rgba(26,26,26,0.50)" : "rgba(255,255,255,0.45)";
+  const metaColor = entry.flag === "red" || entry.flag === "gold" ? "rgba(26,26,26,0.30)" : "rgba(255,255,255,0.20)";
+  const metaLabelColor = entry.flag === "red" || entry.flag === "gold" ? "rgba(26,26,26,0.40)" : "rgba(255,255,255,0.25)";
+
   return (
     <div
       onClick={onClick}
       className="rounded-xl cursor-pointer transition-all hover:brightness-110 active:scale-[0.99] font-['Inter']"
       style={{
-        background: "linear-gradient(135deg, #0E2646 0%, #153566 100%)",
+        background: gradient,
         padding: "14px 16px",
       }}
     >
@@ -283,7 +299,7 @@ function NoteCard({ entry, onClick }: { entry: RedBookEntry; onClick: () => void
           style={{
             fontSize: 14,
             fontWeight: 600,
-            color: "#FFFFFF",
+            color: titleColor,
             lineHeight: 1.3,
           }}
         >
@@ -302,7 +318,7 @@ function NoteCard({ entry, onClick }: { entry: RedBookEntry; onClick: () => void
         style={{
           fontSize: 12,
           fontWeight: 400,
-          color: "rgba(255,255,255,0.45)",
+          color: bodyColor,
           lineHeight: 1.5,
           display: "-webkit-box",
           WebkitLineClamp: 2,
@@ -315,8 +331,8 @@ function NoteCard({ entry, onClick }: { entry: RedBookEntry; onClick: () => void
 
       {/* Row 3: Category + Date | Status + Assignee */}
       <div className="flex items-center justify-between mt-2">
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.20)" }}>
-          <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.25)" }}>
+        <span style={{ fontSize: 11, color: metaColor }}>
+          <span style={{ fontWeight: 600, color: metaLabelColor }}>
             {entry.category}
           </span>
           {" · "}
@@ -362,6 +378,7 @@ export function RedBookScreen() {
   const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
+  const { sidebarWidth } = useSidebarWidth();
 
   /* ── Action counts ── */
   const openActions = entries.filter((e) => e.actionRequired && e.status === "Open");
@@ -547,7 +564,7 @@ export function RedBookScreen() {
       {filtered.length > 0 ? (
         <div className={selectMode && selectedIds.size > 0 ? "pb-28" : ""}>
           {selectMode ? (
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               {filtered.map((entry) => (
                 <div
                   key={entry.id}
@@ -564,7 +581,7 @@ export function RedBookScreen() {
               ))}
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               {filtered.map((entry) => (
                 <NoteCard
                   key={entry.id}
@@ -595,8 +612,11 @@ export function RedBookScreen() {
 
       {/* ── Bulk Action Bar ── */}
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40">
-          <div className="max-w-[420px] mx-auto">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40"
+          style={{ left: sidebarWidth > 0 ? sidebarWidth : undefined }}
+        >
+          <div className="max-w-[420px] md:max-w-[768px] lg:max-w-none mx-auto lg:mx-0">
             <BulkActionBar
               selectedCount={selectedIds.size}
               itemLabel={selectedIds.size === 1 ? "entry" : "entries"}

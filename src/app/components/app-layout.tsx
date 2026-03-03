@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { NavDrawer } from "./nav-drawer";
+import { DesktopSidebar } from "./desktop-sidebar";
 import { OperationPicker } from "./operation-picker";
 import { ToastContainer } from "./toast-notification";
 import { useAuth } from "./auth-context";
+import { useMediaQuery } from "./use-media-query";
+import { SidebarContext } from "./sidebar-context";
 
 /* ── Hamburger Button ── */
 function HamburgerButton({ onClick }: { onClick: () => void }) {
@@ -50,19 +53,19 @@ interface HeaderConfig {
 
 function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname === "/") return { title: "Saddle Butte Ranch", subtitle: "Ranch · 847 Head · Active" };
-  if (pathname === "/animals" ) return { title: "Animals", subtitle: "847 Total · 798 Active" };
+  if (pathname === "/animals" ) return { title: "Animals", subtitle: "847 Total · 798 Active", showBack: true };
   if (pathname === "/animals/new") return { title: "Add Animal", subtitle: "New animal record", showBack: true };
   if (pathname.startsWith("/animals/")) {
     const id = pathname.split("/").pop();
     return { title: "Animal Record", subtitle: `${id} · Pink · Cow · 2020`, showBack: true };
   }
-  if (pathname === "/calving") return { title: "Calving", subtitle: "2026 Season · 23 Calves" };
+  if (pathname === "/calving") return { title: "Calving", subtitle: "2026 Season · 23 Calves", showBack: true };
   if (pathname === "/calving/new") return { title: "Add Calf", subtitle: "New calving record", showBack: true, showSave: true };
   if (pathname.startsWith("/calving/")) {
     const tag = pathname.split("/").pop();
     return { title: "Calving Record", subtitle: `Calf ${tag}`, showBack: true };
   }
-  if (pathname === "/cow-work") return { title: "Cow Work", subtitle: "5 Active Projects" };
+  if (pathname === "/cow-work") return { title: "Cow Work", subtitle: "5 Active Projects", showBack: true };
   if (pathname === "/cow-work/new") return { title: "New Project", subtitle: "Cow Work", showBack: true };
   if (pathname === "/cow-work/templates") return { title: "Work Templates", subtitle: "Saved project configurations", showBack: true };
   if (pathname === "/cow-work/templates/new") return { title: "New Template", subtitle: "Configure project defaults", showBack: true };
@@ -83,10 +86,10 @@ function getHeaderConfig(pathname: string): HeaderConfig {
     return { title: "Animal Record", subtitle: `Tag ${animalId} · Project Work`, showBack: true };
   }
   if (pathname.startsWith("/cow-work/")) return { title: "Project", subtitle: "", showBack: true };
-  if (pathname === "/red-book") return { title: "Red Book", subtitle: "Ranch Notes & Records" };
+  if (pathname === "/red-book") return { title: "Red Book", subtitle: "Ranch Notes & Records", showBack: true };
   if (pathname === "/red-book/new") return { title: "New Entry", subtitle: "Red Book", showBack: true, showSave: true };
   if (pathname.startsWith("/red-book/")) return { title: "Entry", subtitle: "Red Book", showBack: true, showSave: true };
-  if (pathname === "/reference") return { title: "Reference", subtitle: "Settings & Lookups" };
+  if (pathname === "/reference") return { title: "Reference", subtitle: "Settings & Lookups", showBack: true };
   if (pathname === "/reference/groups") return { title: "Groups", subtitle: "Reference · 6 Groups", showBack: true };
   if (pathname.startsWith("/reference/groups/")) return { title: "2026 Spring Calving", subtitle: "Season Group · 87 Head", showBack: true };
   if (pathname === "/reference/locations") return { title: "Locations", subtitle: "Reference · 8 Locations", showBack: true };
@@ -163,9 +166,23 @@ const menuItemToRoute: Record<string, string> = {
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("chuteside-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+
+  /* Persist sidebar collapsed state */
+  useEffect(() => {
+    try {
+      localStorage.setItem("chuteside-sidebar-collapsed", String(sidebarCollapsed));
+    } catch { /* noop */ }
+  }, [sidebarCollapsed]);
 
   /* Listen for global "open operation picker" event */
   useEffect(() => {
@@ -191,9 +208,35 @@ export function AppLayout() {
   const basePath = segments.length > 0 ? "/" + segments[0] : "/";
   const activeItem = routeToMenuItem[basePath] ?? routeToMenuItem["/"];
 
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
+  /* Desktop sidebar width — matches DesktopSidebar component */
+  const SIDEBAR_W = sidebarCollapsed ? 68 : 240;
+
+  const sidebarContextValue = {
+    sidebarWidth: isDesktop ? SIDEBAR_W : 0,
+    collapsed: sidebarCollapsed,
+  };
+
   return (
+    <SidebarContext.Provider value={sidebarContextValue}>
     <div className="min-h-screen font-['Inter'] relative" style={{ backgroundColor: "#F5F5F0" }}>
-      {/* ── Navigation Drawer ── */}
+      {/* ── Desktop Sidebar (lg+) ── */}
+      <DesktopSidebar
+        activeItem={activeItem}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+        onNavigate={(route) => navigate(route)}
+        onSignOut={() => {
+          logout();
+          navigate("/sign-in");
+        }}
+        onSwitchOperation={() => {
+          setTimeout(() => setOperationPickerOpen(true), 200);
+        }}
+      />
+
+      {/* ── Mobile Navigation Drawer (< lg) ── */}
       <NavDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -219,78 +262,102 @@ export function AppLayout() {
         onClose={() => setOperationPickerOpen(false)}
       />
 
-      {/* ── Mobile Frame ── */}
-      <div className="max-w-[420px] mx-auto relative">
-        {/* ══ TOP BAR ══ */}
-        <div className="sticky top-0 z-30" style={{ background: "linear-gradient(180deg, #153566 0%, #081020 100%)" }}>
-          <div className="px-4 pt-3 pb-4">
-            {/* Row 1: hamburger/back + brand */}
-            <div className="flex items-center justify-between">
-              {config.showBack ? (
-                <BackArrowButton onClick={() => navigate(-1)} />
-              ) : (
-                <HamburgerButton onClick={() => setDrawerOpen(true)} />
-              )}
-              <div className="flex items-center gap-3">
-                {config.showSave && (
-                  <button
-                    type="button"
-                    className="rounded-full cursor-pointer font-['Inter']"
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      padding: "5px 16px",
-                      backgroundColor: "#F3D12A",
-                      color: "#1A1A1A",
-                    }}
-                  >
-                    Save
-                  </button>
+      {/* ── Main content area — shifts right on desktop ── */}
+      <div
+        className="transition-[margin] duration-300"
+        style={{ marginLeft: isDesktop ? SIDEBAR_W : 0 }}
+      >
+        {/* Constrain width: mobile=420, tablet=768, desktop=fill remaining */}
+        <div className="max-w-[420px] md:max-w-[768px] lg:max-w-none mx-auto lg:mx-0 relative">
+          {/* ══ TOP BAR ══ */}
+          <div className="sticky top-0 z-30" style={{ background: "linear-gradient(180deg, #153566 0%, #081020 100%)" }}>
+            <div className="px-4 md:px-8 lg:px-10 pt-3 pb-4">
+              {/* Row 1: hamburger/back + brand */}
+              <div className="flex items-center justify-between">
+                {/* On desktop: show back arrow only when needed, otherwise just a spacer */}
+                {isDesktop ? (
+                  config.showBack ? (
+                    <BackArrowButton onClick={() => navigate(-1)} />
+                  ) : (
+                    <div style={{ width: 36, height: 36 }} />
+                  )
+                ) : config.showBack ? (
+                  <BackArrowButton onClick={() => navigate(-1)} />
+                ) : (
+                  <HamburgerButton onClick={() => setDrawerOpen(true)} />
                 )}
-                <span
-                  className="text-[#F3D12A] font-['Inter']"
-                  style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em" }}
-                >
-                  CHUTESIDE
-                </span>
+                <div className="flex items-center gap-3">
+                  {config.showSave && (
+                    <button
+                      type="button"
+                      className="rounded-full cursor-pointer font-['Inter']"
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        padding: "5px 16px",
+                        backgroundColor: "#F3D12A",
+                        color: "#1A1A1A",
+                      }}
+                    >
+                      Save
+                    </button>
+                  )}
+                  {/* Hide CHUTESIDE brand text on desktop — sidebar has it */}
+                  <span
+                    className="text-[#F3D12A] font-['Inter'] cursor-pointer active:opacity-80 transition-opacity lg:hidden"
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.14em",
+                      textShadow: "0 0 8px rgba(243,209,42,0.50), 0 0 20px rgba(243,209,42,0.30), 0 0 40px rgba(243,209,42,0.15)",
+                    }}
+                    onClick={() => navigate("/")}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/"); } }}
+                  >
+                    CHUTESIDE
+                  </span>
+                </div>
               </div>
+
+              {/* Row 2: title */}
+              <p
+                className="text-white mt-3 uppercase font-['Inter']"
+                style={{ fontSize: 17, fontWeight: 800, letterSpacing: "0.10em", lineHeight: 1.2 }}
+              >
+                {config.title}
+              </p>
+
+              {/* Row 3: subtitle */}
+              {config.subtitle && (
+                <p
+                  className="mt-1 font-['Inter']"
+                  style={{ fontSize: 12, fontWeight: 500, color: "rgba(240,240,240,0.40)", letterSpacing: "0.02em" }}
+                >
+                  {config.subtitle}
+                </p>
+              )}
             </div>
 
-            {/* Row 2: title */}
-            <p
-              className="text-white mt-3 uppercase font-['Inter']"
-              style={{ fontSize: 17, fontWeight: 800, letterSpacing: "0.10em", lineHeight: 1.2 }}
-            >
-              {config.title}
-            </p>
-
-            {/* Row 3: subtitle */}
-            {config.subtitle && (
-              <p
-                className="mt-1 font-['Inter']"
-                style={{ fontSize: 12, fontWeight: 500, color: "rgba(240,240,240,0.40)", letterSpacing: "0.02em" }}
-              >
-                {config.subtitle}
-              </p>
-            )}
+            {/* ── Toast overlay anchored below header ── */}
+            <ToastContainer />
           </div>
 
-          {/* ── Toast overlay anchored below header ── */}
-          <ToastContainer />
-        </div>
+          {/* ══ PAGE CONTENT ══ */}
+          <div className="px-5 md:px-8 lg:px-10 py-5 space-y-8">
+            <Outlet />
 
-        {/* ══ PAGE CONTENT ══ */}
-        <div className="px-5 py-5 space-y-8">
-          <Outlet />
-
-          {/* Footer */}
-          <footer className="text-center pt-4 pb-6">
-            <p className="text-[#1A1A1A]/15 font-['Inter']" style={{ fontSize: 10, fontWeight: 600 }}>
-              ChuteSide v1.0
-            </p>
-          </footer>
+            {/* Footer */}
+            <footer className="text-center pt-4 pb-6">
+              <p className="text-[#1A1A1A]/15 font-['Inter']" style={{ fontSize: 10, fontWeight: 600 }}>
+                ChuteSide v1.0
+              </p>
+            </footer>
+          </div>
         </div>
       </div>
     </div>
+    </SidebarContext.Provider>
   );
 }

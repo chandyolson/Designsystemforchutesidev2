@@ -7,6 +7,7 @@ import { FlagIcon } from "./flag-icon";
 import {
   CalvingQuickNotes,
   getActiveFlagColor,
+  CALVING_QUICK_NOTES,
   type NoteFlag,
 } from "./calving-quick-notes";
 
@@ -182,14 +183,39 @@ export function AddCalfScreen() {
             </div>
 
             {/* ── Quick Notes (color-coded pills) ── */}
-            <div className="flex items-start gap-3">
-              <label
-                className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                style={{ width: 105, fontSize: 14, fontWeight: 600, paddingTop: 7 }}
-              >
-                Quick Notes
-              </label>
-              <div className="flex-1 min-w-0">
+            <CollapsibleSection
+              title="Quick Notes"
+              collapsedContent={
+                selectedNoteIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {selectedNoteIds.map((id) => {
+                      const note = CALVING_QUICK_NOTES.find((n) => n.id === id);
+                      if (!note) return null;
+                      const bg =
+                        note.flag === "cull" ? "rgba(155,35,53,0.12)" :
+                        note.flag === "production" ? "rgba(212,160,23,0.12)" :
+                        note.flag === "management" ? "rgba(85,186,170,0.12)" :
+                        "rgba(14,38,70,0.08)";
+                      const color =
+                        note.flag === "cull" ? "#9B2335" :
+                        note.flag === "production" ? "#B8860B" :
+                        note.flag === "management" ? "#55BAAA" :
+                        "#0E2646";
+                      return (
+                        <span
+                          key={id}
+                          className="px-2.5 py-1 rounded-full font-['Inter']"
+                          style={{ fontSize: 11, fontWeight: 600, backgroundColor: bg, color }}
+                        >
+                          {note.text}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : undefined
+              }
+            >
+              <div className="pt-2">
                 <CalvingQuickNotes
                   selectedIds={selectedNoteIds}
                   onSelectedChange={setSelectedNoteIds}
@@ -197,7 +223,7 @@ export function AddCalfScreen() {
                   onFlagChange={setActiveFlag}
                 />
               </div>
-            </div>
+            </CollapsibleSection>
 
             {/* ── Notes ── */}
             <div className="space-y-2">

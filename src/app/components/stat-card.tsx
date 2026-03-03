@@ -4,6 +4,8 @@ interface StatCardProps {
   subtitle: string;
   /** Gradient angle in degrees — shifts the navy→teal blend for visual variety */
   gradientAngle?: number;
+  /** Optional click handler — makes the card interactive */
+  onClick?: () => void;
 }
 
 export function StatCard({
@@ -11,14 +13,19 @@ export function StatCard({
   value,
   subtitle,
   gradientAngle = 145,
+  onClick,
 }: StatCardProps) {
   return (
     <div
-      className="rounded-2xl p-4 flex flex-col justify-between font-['Inter']"
+      className={`rounded-xl px-3 py-2.5 flex flex-col justify-between font-['Inter']${onClick ? " cursor-pointer active:scale-[0.97] transition-transform duration-100" : ""}`}
       style={{
         background: `linear-gradient(${gradientAngle}deg, #0E2646 0%, #163A5E 55%, #55BAAA 100%)`,
-        minHeight: 132,
+        minHeight: 72,
       }}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
     >
       {/* Dim label */}
       <p
@@ -38,7 +45,7 @@ export function StatCard({
       <p
         className="text-white"
         style={{
-          fontSize: 38,
+          fontSize: 24,
           fontWeight: 800,
           lineHeight: 1,
           letterSpacing: "-0.02em",

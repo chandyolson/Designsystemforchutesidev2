@@ -41,18 +41,21 @@ const stats = [
     value: "847",
     subtitle: "↑ 34 this quarter",
     angle: 140,
+    route: "/animals",
   },
   {
     label: "Active Calving",
     value: "23",
     subtitle: "6 expected this week",
     angle: 155,
+    route: "/calving",
   },
   {
     label: "Open Projects",
     value: "5",
     subtitle: "2 due before Friday",
     angle: 165,
+    route: "/cow-work",
   },
 ];
 
@@ -191,7 +194,7 @@ export function DashboardScreen() {
       </div>
 
       {/* ── Stat Cards — 2-column grid ── */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s) => (
           <StatCard
             key={s.label}
@@ -199,6 +202,7 @@ export function DashboardScreen() {
             value={s.value}
             subtitle={s.subtitle}
             gradientAngle={s.angle}
+            onClick={() => navigate(s.route)}
           />
         ))}
 
@@ -206,8 +210,8 @@ export function DashboardScreen() {
         <button
           type="button"
           onClick={() => navigate("/animals/new")}
-          className="rounded-2xl border-2 border-dashed border-[#0E2646]/12 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors duration-150 hover:border-[#F3D12A]/40 hover:bg-[#F3D12A]/5 active:scale-[0.98]"
-          style={{ minHeight: 132 }}
+          className="rounded-2xl border-2 border-dashed border-[#0E2646]/12 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors duration-150 hover:border-[#F3D12A]/40 hover:bg-[#F3D12A]/5 active:scale-[0.98]"
+          style={{ minHeight: 72 }}
         >
           <span
             className="text-[#0E2646]/20 font-['Inter']"
@@ -223,138 +227,6 @@ export function DashboardScreen() {
           </span>
         </button>
       </div>
-
-      {/* ── Action Items Card ── */}
-      {(() => {
-        const openItems = actionItems.filter((a) => !a.completed);
-        if (openItems.length === 0) return null;
-        const sorted = [...openItems].sort(
-          (a, b) => FLAG_SORT_ORDER[a.flag] - FLAG_SORT_ORDER[b.flag]
-        );
-        const top3 = sorted.slice(0, 3);
-        return (
-          <div
-            className="rounded-xl bg-white font-['Inter']"
-            style={{ border: "1px solid #D4D4D0", padding: 16 }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                  <path
-                    d="M3 1.5V14.5M3 1.5H12L9.5 5.25L12 9H3"
-                    stroke="#E74C3C"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#0E2646" }}>
-                  Action Items
-                </span>
-              </div>
-              <span
-                className="rounded-full inline-flex items-center justify-center"
-                style={{
-                  padding: "2px 10px",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#C62828",
-                  backgroundColor: "#FFEBEE",
-                }}
-              >
-                {openItems.length} open
-              </span>
-            </div>
-
-            {/* Items */}
-            <div style={{ marginTop: 12 }}>
-              {top3.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3"
-                  style={{
-                    padding: "10px 0",
-                    borderBottom:
-                      idx < top3.length - 1
-                        ? "1px solid rgba(212,212,208,0.30)"
-                        : "none",
-                  }}
-                >
-                  {/* Left: flag icon + text */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="shrink-0">
-                        <FlagIcon color={item.flag} size="sm" />
-                      </div>
-                      <p
-                        className="truncate"
-                        style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
-                      >
-                        {item.title}
-                      </p>
-                    </div>
-                    <p
-                      className="truncate"
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 400,
-                        color: "rgba(26,26,26,0.35)",
-                        marginLeft: 22,
-                        marginTop: 2,
-                      }}
-                    >
-                      {item.assignTo}
-                      {item.linkedTo ? ` · ${item.linkedTo}` : ""}
-                    </p>
-                  </div>
-
-                  {/* Right: checkbox circle */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActionItems((prev) =>
-                        prev.map((a) =>
-                          a.id === item.id ? { ...a, completed: true } : a
-                        )
-                      );
-                      showToast("success", `"${item.title}" marked complete`);
-                    }}
-                    className="shrink-0 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.90] hover:border-[#55BAAA]!"
-                    style={{
-                      width: 22,
-                      height: 22,
-                      border: "2px solid #D4D4D0",
-                      backgroundColor: "transparent",
-                      padding: 0,
-                    }}
-                    aria-label={`Mark "${item.title}" complete`}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* View all link */}
-            <button
-              type="button"
-              onClick={() => navigate("/red-book?filter=Actions")}
-              className="cursor-pointer transition-opacity hover:opacity-80"
-              style={{
-                marginTop: 8,
-                background: "none",
-                border: "none",
-                padding: 0,
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#55BAAA",
-              }}
-            >
-              View all {openItems.length} open actions →
-            </button>
-          </div>
-        );
-      })()}
 
       {/* ── Herd Summary Row ── */}
       <button
@@ -433,7 +305,7 @@ export function DashboardScreen() {
               </div>
 
               {/* Animal cards */}
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                 {group.animals.map((animal) => (
                   <button
                     key={animal.tag}
@@ -497,93 +369,235 @@ export function DashboardScreen() {
         </div>
       )}
 
-      {/* ── Activity Feed ── */}
-      <section className="space-y-3">
-        <SectionHeading text="Today's Activity" />
-        <CollapsibleSection title="Activity Log" defaultOpen>
-          <div className="pt-1 space-y-3">
-            {[
-              { time: "2:14 PM", text: "Tag 4782 weighed at 1,247 lbs", flag: "teal" as const },
-              { time: "1:45 PM", text: "Tag 5520 treatment administered — Penicillin 10cc IM", flag: "red" as const },
-              { time: "11:20 AM", text: "Tag 3091 moved to Pen 4B for observation", flag: "gold" as const },
-              { time: "9:05 AM", text: "Tag 2218 BCS scored at 6", flag: "teal" as const },
-              { time: "8:30 AM", text: "Work session started — Pen 2A processing", flag: "teal" as const },
-            ].map((entry) => (
-              <div key={entry.time + entry.text} className="flex items-start gap-3">
+      {/* ── Action Items + Upcoming Work — side by side on lg ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── Action Items Card ── */}
+        {(() => {
+          const openItems = actionItems.filter((a) => !a.completed);
+          if (openItems.length === 0) return null;
+          const sorted = [...openItems].sort(
+            (a, b) => FLAG_SORT_ORDER[a.flag] - FLAG_SORT_ORDER[b.flag]
+          );
+          const top3 = sorted.slice(0, 3);
+          return (
+            <div
+              className="rounded-xl bg-white font-['Inter'] cursor-pointer transition-all active:scale-[0.98]"
+              style={{ border: "1px solid #D4D4D0", padding: 16 }}
+              onClick={() => navigate("/red-book")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/red-book"); } }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                    <path
+                      d="M3 1.5V14.5M3 1.5H12L9.5 5.25L12 9H3"
+                      stroke="#E74C3C"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#0E2646" }}>
+                    Action Items
+                  </span>
+                </div>
                 <span
-                  className="shrink-0 text-[#1A1A1A]/25 font-['Inter'] pt-px"
-                  style={{ fontSize: 11, fontWeight: 500, width: 58 }}
+                  className="rounded-full inline-flex items-center justify-center"
+                  style={{
+                    padding: "2px 10px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#C62828",
+                    backgroundColor: "#FFEBEE",
+                  }}
                 >
-                  {entry.time}
+                  {openItems.length} open
                 </span>
-                <FlagIcon color={entry.flag} size="sm" />
-                <p
-                  className="text-[#1A1A1A]/60 font-['Inter'] flex-1 min-w-0"
-                  style={{ fontSize: 12, lineHeight: 1.5 }}
+              </div>
+
+              {/* Items */}
+              <div style={{ marginTop: 12 }}>
+                {top3.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3"
+                    style={{
+                      padding: "10px 0",
+                      borderBottom:
+                        idx < top3.length - 1
+                          ? "1px solid rgba(212,212,208,0.30)"
+                          : "none",
+                    }}
+                  >
+                    {/* Left: flag icon + text */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="shrink-0">
+                          <FlagIcon color={item.flag} size="sm" />
+                        </div>
+                        <p
+                          className="truncate"
+                          style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A" }}
+                        >
+                          {item.title}
+                        </p>
+                      </div>
+                      <p
+                        className="truncate"
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 400,
+                          color: "rgba(26,26,26,0.35)",
+                          marginLeft: 22,
+                          marginTop: 2,
+                        }}
+                      >
+                        {item.assignTo}
+                        {item.linkedTo ? ` · ${item.linkedTo}` : ""}
+                      </p>
+                    </div>
+
+                    {/* Right: checkbox circle */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionItems((prev) =>
+                          prev.map((a) =>
+                            a.id === item.id ? { ...a, completed: true } : a
+                          )
+                        );
+                        showToast("success", `"${item.title}" marked complete`);
+                      }}
+                      className="shrink-0 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.90] hover:border-[#55BAAA]!"
+                      style={{
+                        width: 22,
+                        height: 22,
+                        border: "2px solid #D4D4D0",
+                        backgroundColor: "transparent",
+                        padding: 0,
+                      }}
+                      aria-label={`Mark "${item.title}" complete`}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* View all link */}
+              <button
+                type="button"
+                onClick={() => navigate("/red-book?filter=Actions")}
+                className="cursor-pointer transition-opacity hover:opacity-80"
+                style={{
+                  marginTop: 8,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#55BAAA",
+                }}
+              >
+                View all {openItems.length} open actions →
+              </button>
+            </div>
+          );
+        })()}
+
+        {/* ── Upcoming Work ── */}
+        <section className="space-y-3">
+          <SectionHeading text="Upcoming Work" />
+          <div className="bg-white rounded-xl border border-[#D4D4D0]/60 divide-y divide-[#D4D4D0]/40 overflow-hidden">
+            {upcomingWork.map((w) => (
+              <div key={w.task} className="px-4 py-3 flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="text-[#1A1A1A] truncate font-['Inter']"
+                    style={{ fontSize: 13, fontWeight: 600 }}
+                  >
+                    {w.task}
+                  </p>
+                  <p
+                    className="text-[#1A1A1A]/40 font-['Inter']"
+                    style={{ fontSize: 11 }}
+                  >
+                    {w.count}
+                  </p>
+                </div>
+                <span
+                  className="shrink-0 text-[#55BAAA] font-['Inter']"
+                  style={{ fontSize: 11, fontWeight: 600 }}
                 >
-                  {entry.text}
-                </p>
+                  {w.due}
+                </span>
               </div>
             ))}
           </div>
-        </CollapsibleSection>
-      </section>
+        </section>
+      </div>
 
-      {/* ── Recent Animals ── */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <SectionHeading text="Recent Animals" />
-          <span
-            className="text-[#55BAAA] font-['Inter'] cursor-pointer"
-            style={{ fontSize: 12, fontWeight: 600 }}
-            onClick={() => navigate("/animals")}
-          >
-            View All
-          </span>
-        </div>
-        <div className="space-y-2.5">
-          {recentAnimals.map((a) => (
-            <DataCard
-              key={a.title}
-              title={a.title}
-              values={a.values}
-              subtitle={a.subtitle}
-              trailing={<FlagIcon color={a.flag} size="sm" />}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Upcoming Work ── */}
-      <section className="space-y-3">
-        <SectionHeading text="Upcoming Work" />
-        <div className="bg-white rounded-xl border border-[#D4D4D0]/60 divide-y divide-[#D4D4D0]/40 overflow-hidden">
-          {upcomingWork.map((w) => (
-            <div key={w.task} className="px-4 py-3 flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p
-                  className="text-[#1A1A1A] truncate font-['Inter']"
-                  style={{ fontSize: 13, fontWeight: 600 }}
-                >
-                  {w.task}
-                </p>
-                <p
-                  className="text-[#1A1A1A]/40 font-['Inter']"
-                  style={{ fontSize: 11 }}
-                >
-                  {w.count}
-                </p>
-              </div>
-              <span
-                className="shrink-0 text-[#55BAAA] font-['Inter']"
-                style={{ fontSize: 11, fontWeight: 600 }}
-              >
-                {w.due}
-              </span>
+      {/* ── Activity Feed + Recent Animals — side by side on lg ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── Activity Feed ── */}
+        <section className="space-y-3">
+          <SectionHeading text="Today's Activity" />
+          <CollapsibleSection title="Activity Log" defaultOpen>
+            <div className="pt-1 space-y-3">
+              {[
+                { time: "2:14 PM", text: "Tag 4782 weighed at 1,247 lbs", flag: "teal" as const },
+                { time: "1:45 PM", text: "Tag 5520 treatment administered — Penicillin 10cc IM", flag: "red" as const },
+                { time: "11:20 AM", text: "Tag 3091 moved to Pen 4B for observation", flag: "gold" as const },
+                { time: "9:05 AM", text: "Tag 2218 BCS scored at 6", flag: "teal" as const },
+                { time: "8:30 AM", text: "Work session started — Pen 2A processing", flag: "teal" as const },
+              ].map((entry) => (
+                <div key={entry.time + entry.text} className="flex items-start gap-3">
+                  <span
+                    className="shrink-0 text-[#1A1A1A]/25 font-['Inter'] pt-px"
+                    style={{ fontSize: 11, fontWeight: 500, width: 58 }}
+                  >
+                    {entry.time}
+                  </span>
+                  <FlagIcon color={entry.flag} size="sm" />
+                  <p
+                    className="text-[#1A1A1A]/60 font-['Inter'] flex-1 min-w-0"
+                    style={{ fontSize: 12, lineHeight: 1.5 }}
+                  >
+                    {entry.text}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </CollapsibleSection>
+        </section>
+
+        {/* ── Recent Animals ── */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <SectionHeading text="Recent Animals" />
+            <span
+              className="text-[#55BAAA] font-['Inter'] cursor-pointer"
+              style={{ fontSize: 12, fontWeight: 600 }}
+              onClick={() => navigate("/animals")}
+            >
+              View All
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-2.5">
+            {recentAnimals.map((a) => (
+              <DataCard
+                key={a.title}
+                title={a.title}
+                values={a.values}
+                subtitle={a.subtitle}
+                trailing={<FlagIcon color={a.flag} size="sm" />}
+              />
+            ))}
+          </div>
+        </section>
+      </div>
 
       {/* ── Quick Actions ── */}
       <div className="flex gap-3 pt-1">
@@ -711,7 +725,7 @@ export function DashboardScreen() {
       {/* ── Design Exploration Link ── */}
       <button
         type="button"
-        onClick={() => navigate("/dashboard-explore")}
+        onClick={() => navigate("/dev/dashboard-explore")}
         className="w-full rounded-xl py-3 cursor-pointer font-['Inter'] transition-all active:scale-[0.98]"
         style={{
           fontSize: 12,

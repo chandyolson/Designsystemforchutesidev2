@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useGradient } from "./gradient-context";
-import { useAuth } from "./auth-context";
 
 const menuItems = [
   "Operation Dashboard",
@@ -57,7 +56,7 @@ export function NavDrawer({
       {/* ── Overlay ── */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-40 transition-all duration-300"
+        className="fixed inset-0 z-40 transition-all duration-300 lg:hidden"
         style={{
           backgroundColor: open ? "rgba(0,0,0,0.52)" : "rgba(0,0,0,0)",
           pointerEvents: open ? "auto" : "none",
@@ -67,11 +66,11 @@ export function NavDrawer({
       {/* ── Drawer Panel ── */}
       <div
         ref={drawerRef}
-        className="fixed top-0 left-0 bottom-0 z-50 flex flex-col font-['Inter']"
+        className="fixed top-0 left-0 bottom-0 z-50 flex flex-col font-['Inter'] lg:hidden"
         style={{
-          width: 260,
+          width: 280,
           background: drawerGradient.css,
-          transform: open ? "translateX(0)" : "translateX(-260px)",
+          transform: open ? "translateX(0)" : "translateX(-280px)",
           transition: "transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
           boxShadow: open ? "6px 0 32px rgba(0,0,0,0.35)" : "none",
         }}
@@ -85,6 +84,7 @@ export function NavDrawer({
               fontWeight: 800,
               letterSpacing: "0.18em",
               lineHeight: 1.2,
+              textShadow: "0 0 8px rgba(243,209,42,0.50), 0 0 20px rgba(243,209,42,0.30), 0 0 40px rgba(243,209,42,0.15)",
             }}
           >
             CHUTESIDE

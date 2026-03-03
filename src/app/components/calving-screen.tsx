@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { CalvingRecordCard } from "./calving-record-card";
-import { useCalvingData } from "./calving-data-context";
-import { SelectableCardWrapper } from "./selectable-card-wrapper";
-import { SelectAllBar } from "./select-all-bar";
-import { BulkActionBar } from "./bulk-action-bar";
+import { useDeleteConfirm } from "./delete-confirmation";
+import { useSidebarWidth } from "./sidebar-context";
 import { useSelectMode } from "./hooks/use-select-mode";
 import { useToast } from "./toast-context";
-import { useDeleteConfirm } from "./delete-confirmation";
+import { SelectAllBar } from "./select-all-bar";
+import { SelectableCardWrapper } from "./selectable-card-wrapper";
+import { BulkActionBar } from "./bulk-action-bar";
+import { useCalvingData } from "./calving-data-context";
+import { CalvingRecordCard } from "./calving-record-card";
 
 /* ── Group Dropdown ────────────────────────── */
 const groups = ["2026 Season", "2025 Season", "2024 Season", "Fall 2025 Embryo"];
@@ -227,6 +228,7 @@ export function CalvingScreen() {
   const { selectMode, selectedIds, toggleSelectMode, toggleItem, toggleAll, clearSelection } = useSelectMode();
   const { showToast } = useToast();
   const { showDeleteConfirm } = useDeleteConfirm();
+  const { sidebarWidth } = useSidebarWidth();
 
   const filteredRecords = records.filter((r) => {
     if (!search.trim()) return true;
@@ -345,7 +347,7 @@ export function CalvingScreen() {
       )}
 
       {/* ── Calving Record Card List ── */}
-      <div className={`space-y-2.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2.5 ${selectMode && selectedIds.size > 0 ? "pb-28" : ""}`}>
         {filteredRecords.map((r) =>
           selectMode ? (
             <div
@@ -392,8 +394,11 @@ export function CalvingScreen() {
 
       {/* ── Bulk Action Bar ── */}
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40">
-          <div className="max-w-[420px] mx-auto">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40"
+          style={{ left: sidebarWidth > 0 ? sidebarWidth : undefined }}
+        >
+          <div className="max-w-[420px] md:max-w-[768px] lg:max-w-none mx-auto lg:mx-0">
             <BulkActionBar
               selectedCount={selectedIds.size}
               itemLabel={selectedIds.size === 1 ? "record" : "records"}
