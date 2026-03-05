@@ -1,18 +1,15 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { FormFieldRow, FormSelectRow } from "./form-field-row";
+import { CalvingQuickNotes, getActiveFlagColor, type NoteFlag } from "./calving-quick-notes";
+import { useCalvingData, type FlagColor } from "./calving-data-context";
+import { useToast } from "./toast-context";
+import { useDeleteConfirm } from "./delete-confirmation";
 import { CollapsibleSection } from "./collapsible-section";
+import { FormFieldRow, FormSelectRow } from "./form-field-row";
 import { FlagIcon } from "./flag-icon";
-import type { FlagColor } from "./flag-icon";
 import { PillButton } from "./pill-button";
-import { useCalvingData } from "./calving-data-context";
-import {
-  CalvingQuickNotes,
-  getActiveFlagColor,
-  type NoteFlag,
-} from "./calving-quick-notes";
 
-/* Fallback to first record if tag not found */
+// Fallback to first record if tag not found
 const fallbackTag = "8841";
 
 const flagColors: Record<FlagColor, string> = {
@@ -49,6 +46,8 @@ export function CalvingDetailScreen() {
   const navigate = useNavigate();
   const { calfTag } = useParams();
   const { getDetail, updateDetail } = useCalvingData();
+  const { showToast } = useToast();
+  const { showDeleteConfirm } = useDeleteConfirm();
 
   const data = getDetail(calfTag || fallbackTag) ?? getDetail(fallbackTag);
 
@@ -242,44 +241,8 @@ export function CalvingDetailScreen() {
               <FormFieldRow label="Sire" value={data.sire} placeholder="" />
               <FormFieldRow label="Sex" value={data.sex} placeholder="" />
               <FormFieldRow label="Birth Date" value={data.birthDate} placeholder="" />
-              {/* Size + Birth Weight on same line */}
-              <div className="flex items-center gap-3">
-                <label
-                  className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                  style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
-                >
-                  Size / Wt
-                </label>
-                <div className="flex flex-1 min-w-0 gap-2">
-                  <div className="relative flex-1 min-w-0">
-                    <select
-                      value={calfFields.size}
-                      onChange={(e) => updateCalf("size")(e.target.value)}
-                      className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all appearance-none cursor-pointer"
-                      style={{ fontSize: 16, fontWeight: 400, color: calfFields.size ? "#1A1A1A" : "rgba(26,26,26,0.30)" }}
-                    >
-                      <option value="" disabled>Size</option>
-                      {["Small", "Average", "Large"].map((opt) => (
-                        <option key={opt} value={opt} style={{ color: "#1A1A1A" }}>{opt}</option>
-                      ))}
-                    </select>
-                    <svg
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                      width="12" height="12" viewBox="0 0 12 12" fill="none"
-                    >
-                      <path d="M3 4.5L6 7.5L9 4.5" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <input
-                    type="number"
-                    placeholder="lbs"
-                    value={calfFields.birthWeight}
-                    onChange={(e) => updateCalf("birthWeight")(e.target.value)}
-                    className="w-[80px] h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-                    style={{ fontSize: 16, fontWeight: 400 }}
-                  />
-                </div>
-              </div>
+              <FormSelectRow label="Size" value={calfFields.size} onChange={updateCalf("size")} placeholder="Select size" options={["Small", "Average", "Large"]} />
+              <FormFieldRow label="Birth Wt" value={calfFields.birthWeight} onChange={updateCalf("birthWeight")} placeholder="lbs" type="number" />
               <FormFieldRow label="Location" value={calfFields.location} onChange={updateCalf("location")} placeholder="Location" />
               <FormFieldRow label="Group" value={calfFields.group} onChange={updateCalf("group")} placeholder="Group" />
               <FormSelectRow

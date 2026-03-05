@@ -133,7 +133,7 @@ export function AddCalfScreen() {
         {activeTab === "entry" && (
           <div className="space-y-5">
             {/* ── Primary Fields ── */}
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 gap-y-2.5">
               <FormFieldRow label="Dam Tag" value={fields.damTag} onChange={update("damTag")} placeholder="Scan or enter dam tag" />
               <FormFieldRow label="Calf Tag" value={fields.calfTag} onChange={update("calfTag")} placeholder="Calf tag number" />
               <FormSelectRow label="Tag Color" value={fields.tagColor} onChange={update("tagColor")} placeholder="Select color" options={["Pink", "Yellow", "Orange", "Green", "Blue", "White", "Red", "Purple", "No Tag"]} />
@@ -142,47 +142,13 @@ export function AddCalfScreen() {
               <FormFieldRow label="Sire" value={fields.sire} onChange={update("sire")} placeholder="Sire tag or name" />
               <FormSelectRow label="Location" value={fields.location} onChange={update("location")} placeholder="Select location" options={["Working Facility", "North Pasture", "South Pasture", "Calving Barn", "Heifer Lot", "Maternity Pen", "Corral"]} />
               <FormSelectRow label="Group" value={fields.group} onChange={update("group")} placeholder="Select group" options={["Spring Calvers", "Fall Calvers", "Heifers — 1st Calf", "Replacement Heifers", "Bred Heifers"]} />
-              {/* Size + Birth Weight on one line */}
-              <div className="flex items-center gap-3">
-                <label
-                  className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                  style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
-                >
-                  Size / Wt
-                </label>
-                <div className="flex flex-1 min-w-0 gap-2">
-                  <div className="relative flex-1 min-w-0">
-                    <select
-                      value={fields.size}
-                      onChange={(e) => update("size")(e.target.value)}
-                      className="w-full h-[40px] px-3 pr-8 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all appearance-none cursor-pointer"
-                      style={{ fontSize: 16, fontWeight: 400, color: fields.size ? "#1A1A1A" : "rgba(26,26,26,0.30)" }}
-                    >
-                      <option value="" disabled>Size</option>
-                      {["Small", "Average", "Large"].map((opt) => (
-                        <option key={opt} value={opt} style={{ color: "#1A1A1A" }}>{opt}</option>
-                      ))}
-                    </select>
-                    <svg
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                      width="12" height="12" viewBox="0 0 12 12" fill="none"
-                    >
-                      <path d="M3 4.5L6 7.5L9 4.5" stroke="#1A1A1A" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <input
-                    type="number"
-                    placeholder="lbs"
-                    value={fields.birthWeight}
-                    onChange={(e) => update("birthWeight")(e.target.value)}
-                    className="w-[80px] h-[40px] px-3 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
-                    style={{ fontSize: 16, fontWeight: 400 }}
-                  />
-                </div>
-              </div>
+              {/* Size + Birth Weight — two standard rows to match alignment */}
+              <FormSelectRow label="Size" value={fields.size} onChange={update("size")} placeholder="Select size" options={["Small", "Average", "Large"]} />
+              <FormFieldRow label="Birth Wt" value={fields.birthWeight} onChange={update("birthWeight")} placeholder="lbs" type="number" />
             </div>
 
             {/* ── Quick Notes (color-coded pills) ── */}
+            <div className="lg:max-w-2xl">
             <CollapsibleSection
               title="Quick Notes"
               collapsedContent={
@@ -224,8 +190,10 @@ export function AddCalfScreen() {
                 />
               </div>
             </CollapsibleSection>
+            </div>
 
             {/* ── Notes ── */}
+            <div className="lg:max-w-2xl">
             <div className="space-y-2">
               <p className="text-[#1A1A1A] font-['Inter']" style={{ fontSize: 14, fontWeight: 600 }}>
                 Notes
@@ -237,6 +205,7 @@ export function AddCalfScreen() {
                 className="w-full h-[100px] px-3 py-2.5 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 transition-all resize-none"
                 style={{ fontSize: 16, fontWeight: 400 }}
               />
+            </div>
             </div>
 
             {/* ── Cow Traits (collapsed) ── */}
@@ -261,7 +230,7 @@ export function AddCalfScreen() {
             </CollapsibleSection>
 
             {/* ── Actions ── */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 lg:max-w-md">
               <PillButton variant="outline" size="md" onClick={() => navigate(-1)} style={{ flex: 1 }}>
                 Cancel
               </PillButton>

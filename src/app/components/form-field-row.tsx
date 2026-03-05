@@ -24,10 +24,10 @@ export function FormFieldRow({
   const hasError = !!error;
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3 lg:gap-4">
       <label
-        className="shrink-0 text-[#1A1A1A] font-['Inter']"
-        style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+        className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+        style={{ fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
       >
         {label}
         {required && (
@@ -39,13 +39,13 @@ export function FormFieldRow({
           </span>
         )}
       </label>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 lg:max-w-[480px]">
         <input
           type={type}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className={`w-full h-[40px] px-3 rounded-lg bg-white border text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all ${
+          className={`w-full h-[40px] lg:h-[42px] px-3 rounded-lg bg-white border text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all ${
             hasError
               ? "border-[#E74C3C] focus:border-[#E74C3C] focus:ring-2 focus:ring-[#E74C3C]/25"
               : "border-[#D4D4D0] focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25"
@@ -89,10 +89,10 @@ export function FormSelectRow({
   const hasError = !!error;
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3 lg:gap-4">
       <label
-        className="shrink-0 text-[#1A1A1A] font-['Inter']"
-        style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+        className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+        style={{ fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
       >
         {label}
         {required && (
@@ -104,12 +104,12 @@ export function FormSelectRow({
           </span>
         )}
       </label>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 lg:max-w-[480px]">
         <div className="relative">
           <select
             value={value}
             onChange={(e) => onChange?.(e.target.value)}
-            className={`w-full h-[40px] px-3 pr-8 rounded-lg bg-white border text-[#1A1A1A] font-['Inter'] outline-none transition-all appearance-none cursor-pointer ${
+            className={`w-full h-[40px] lg:h-[42px] px-3 pr-8 rounded-lg bg-white border text-[#1A1A1A] font-['Inter'] outline-none transition-all appearance-none cursor-pointer ${
               hasError
                 ? "border-[#E74C3C] focus:border-[#E74C3C] focus:ring-2 focus:ring-[#E74C3C]/25"
                 : "border-[#D4D4D0] focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25"

@@ -512,7 +512,11 @@ export function DashboardScreen() {
           <SectionHeading text="Upcoming Work" />
           <div className="bg-white rounded-xl border border-[#D4D4D0]/60 divide-y divide-[#D4D4D0]/40 overflow-hidden">
             {upcomingWork.map((w) => (
-              <div key={w.task} className="px-4 py-3 flex items-center justify-between">
+              <div
+                key={w.task}
+                onClick={() => navigate("/cow-work")}
+                className="px-4 py-3 flex items-center justify-between cursor-pointer transition-colors hover:bg-[#F5F5F0] active:bg-[#EDEDEA]"
+              >
                 <div className="min-w-0 flex-1">
                   <p
                     className="text-[#1A1A1A] truncate font-['Inter']"

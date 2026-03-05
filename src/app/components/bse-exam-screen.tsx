@@ -137,22 +137,22 @@ export function BseExamScreen() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:max-w-3xl">
       {/* ═══════════════════════════════════════════
           SECTION 1 — EXAM INFO
           ═══════════════════════════════════════════ */}
       <div>
         <SectionLabel>Exam Info</SectionLabel>
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 gap-y-2.5">
           {/* Date */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 lg:gap-4">
             <label
-              className="shrink-0 text-[#1A1A1A] font-['Inter']"
-              style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+              className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+              style={{ fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
             >
               Date
             </label>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 lg:max-w-[480px]">
               <input
                 type="date"
                 value={date}
@@ -206,16 +206,16 @@ export function BseExamScreen() {
           ═══════════════════════════════════════════ */}
       <div>
         <SectionLabel>Scrotal &amp; Semen</SectionLabel>
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 gap-y-2.5">
           {/* Scrotal Circ. with cm suffix */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 lg:gap-4">
             <label
-              className="shrink-0 text-[#1A1A1A] font-['Inter']"
-              style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+              className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+              style={{ fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
             >
               Scrotal Circ.
             </label>
-            <div className="flex-1 min-w-0 relative">
+            <div className="flex-1 min-w-0 lg:max-w-[480px] relative">
               <input
                 type="text"
                 inputMode="decimal"
@@ -241,14 +241,14 @@ export function BseExamScreen() {
           />
 
           {/* Morphology with % suffix */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 lg:gap-4">
             <label
-              className="shrink-0 text-[#1A1A1A] font-['Inter']"
-              style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
+              className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+              style={{ fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
             >
               Morphology
             </label>
-            <div className="flex-1 min-w-0 relative">
+            <div className="flex-1 min-w-0 lg:max-w-[480px] relative">
               <input
                 type="text"
                 inputMode="decimal"
@@ -402,7 +402,7 @@ export function BseExamScreen() {
       {/* ═══════════════════════════════════════════
           BOTTOM BUTTONS
           ═══════════════════════════════════════════ */}
-      <div className="flex gap-3 pt-2 pb-2">
+      <div className="flex gap-3 pt-2 pb-2 lg:max-w-md">
         <button
           type="button"
           onClick={() => navigate(-1)}

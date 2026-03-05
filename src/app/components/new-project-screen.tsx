@@ -567,79 +567,84 @@ export function NewProjectScreen() {
           style={{ border: "1px solid #D4D4D0", padding: 16 }}
         >
           <div className="space-y-2.5">
-            <FormFieldRow
-              label="Date"
-              type="date"
-              value={date}
-              onChange={setDate}
-              placeholder=""
-              required
-              error={errors.date}
-            />
-            <FormSelectRow
-              label="Work Type"
-              value={workType}
-              onChange={(v) => {
-                setWorkType(v);
-                setErrors((prev) => ({ ...prev, workType: "" }));
-                setSelectedTemplate(null);
-              }}
-              placeholder="Select type…"
-              options={WORK_TYPES}
-              required
-              error={errors.workType}
-            />
-            <FormSelectRow
-              label="Group"
-              value={group}
-              onChange={(v) => {
-                setGroup(v);
-                setErrors((prev) => ({ ...prev, group: "" }));
-              }}
-              placeholder="Select group…"
-              options={GROUPS}
-              required
-              error={errors.group}
-            />
-            <FormSelectRow
-              label="Cattle Type"
-              value={cattleType}
-              onChange={setCattleType}
-              placeholder="Select…"
-              options={CATTLE_TYPES}
-            />
-            <FormSelectRow
-              label="Location"
-              value={location}
-              onChange={setLocation}
-              placeholder="Select location…"
-              options={LOCATIONS}
-            />
-            {/* Memo textarea */}
-            <div className="flex items-start gap-3">
-              <label
-                className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
-              >
-                Memo
-              </label>
-              <div className="flex-1 min-w-0 relative">
-                <textarea
-                  value={memo}
-                  onChange={(e) => setMemo(e.target.value)}
-                  placeholder="Notes about this project…"
-                  rows={3}
-                  className="w-full px-3 py-2.5 pr-10 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 resize-none"
-                  style={{ fontSize: 16, fontWeight: 400, minHeight: 80 }}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-3 cursor-pointer"
-                  style={{ background: "none", border: "none", padding: 0 }}
-                  aria-label="Voice input"
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 gap-y-2.5">
+              <FormFieldRow
+                label="Date"
+                type="date"
+                value={date}
+                onChange={setDate}
+                placeholder=""
+                required
+                error={errors.date}
+              />
+              <FormSelectRow
+                label="Work Type"
+                value={workType}
+                onChange={(v) => {
+                  setWorkType(v);
+                  setErrors((prev) => ({ ...prev, workType: "" }));
+                  setSelectedTemplate(null);
+                }}
+                placeholder="Select type…"
+                options={WORK_TYPES}
+                required
+                error={errors.workType}
+              />
+              <FormSelectRow
+                label="Group"
+                value={group}
+                onChange={(v) => {
+                  setGroup(v);
+                  setErrors((prev) => ({ ...prev, group: "" }));
+                }}
+                placeholder="Select group…"
+                options={GROUPS}
+                required
+                error={errors.group}
+              />
+              <FormSelectRow
+                label="Cattle Type"
+                value={cattleType}
+                onChange={setCattleType}
+                placeholder="Select…"
+                options={CATTLE_TYPES}
+              />
+              <FormSelectRow
+                label="Location"
+                value={location}
+                onChange={setLocation}
+                placeholder="Select location…"
+                options={LOCATIONS}
+              />
+            </div>
+            {/* Memo textarea — full width */}
+            <div className="mt-2.5">
+              {/* Memo textarea */}
+              <div className="flex items-start gap-3 lg:gap-4">
+                <label
+                  className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+                  style={{ fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
                 >
-                  <MicIcon />
-                </button>
+                  Memo
+                </label>
+                <div className="flex-1 min-w-0 lg:max-w-[480px] relative">
+                  <textarea
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    placeholder="Notes about this project…"
+                    rows={3}
+                    className="w-full px-3 py-2.5 pr-10 rounded-lg bg-white border border-[#D4D4D0] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none transition-all focus:border-[#F3D12A] focus:ring-2 focus:ring-[#F3D12A]/25 resize-none"
+                    style={{ fontSize: 16, fontWeight: 400, minHeight: 80 }}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 cursor-pointer"
+                    style={{ background: "none", border: "none", padding: 0 }}
+                    aria-label="Voice input"
+                  >
+                    <MicIcon />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

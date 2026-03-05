@@ -626,19 +626,23 @@ export function ProjectDetailScreen() {
             INPUT TAB — Dynamic field rendering
            ────────────────────────────────────── */}
         {activeTab === "input" && (
-          <div className="space-y-4">
-            {/* ── COW HISTORY PANEL (above tag input) ── */}
+          <div className="space-y-4 lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:space-y-0">
+            {/* ── LEFT COLUMN: Input form ── */}
+            <div className="space-y-4">
+            {/* ── COW HISTORY PANEL (above tag input) — mobile only, desktop shows right ── */}
+            <div className="lg:hidden">
             {matchedAnimal && !isDuplicate && (
               <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
             )}
+            </div>
 
             {/* ── ANIMAL LOOKUP ── */}
             <div className="space-y-2.5">
               {/* Tag / EID scan field */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 lg:gap-4">
                 <label
-                  className="shrink-0 text-[#1A1A1A] font-['Inter']"
-                  style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "46px" }}
+                  className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
+                  style={{ fontSize: 14, fontWeight: 600, lineHeight: "46px" }}
                 >
                   Tag / EID
                 </label>
@@ -648,7 +652,7 @@ export function ProjectDetailScreen() {
                   value={tag}
                   onChange={(e) => setTag(e.target.value)}
                   placeholder="Scan or enter tag…"
-                  className="flex-1 min-w-0 h-[46px] px-3 rounded-lg bg-white border-2 border-[#F3D12A] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
+                  className="flex-1 min-w-0 h-[46px] lg:h-[48px] px-3 rounded-lg bg-white border-2 border-[#F3D12A] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:ring-2 focus:ring-[#F3D12A]/25 transition-all lg:max-w-[480px]"
                   style={{ fontSize: 16, fontWeight: 600 }}
                 />
               </div>
@@ -700,7 +704,7 @@ export function ProjectDetailScreen() {
                   >
                     {lockedConfig!.label}
                   </p>
-                  <div className="space-y-2.5">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6 gap-y-2.5">
                     {lockedConfig!.fields.map((f) => renderLockedField(f))}
                   </div>
                 </div>
@@ -716,14 +720,14 @@ export function ProjectDetailScreen() {
                 >
                   Project Fields
                 </p>
-                <div className="space-y-2.5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6 gap-y-2.5">
                   {PROJECT_CONFIG.optionalFields.map((key) => renderOptionalField(key))}
                 </div>
               </div>
             )}
 
             {/* ── ACTION BUTTONS ── */}
-            <div className="space-y-3 pt-2">
+            <div className="pt-2 lg:max-w-md">
               <div className="flex gap-3">
                 <PillButton variant="outline" size="md" onClick={clearForm} style={{ flex: 1 }}>
                   Skip
@@ -732,18 +736,26 @@ export function ProjectDetailScreen() {
                   Save &amp; Next
                 </PillButton>
               </div>
-              <button
-                type="button"
-                onClick={handleSaveDone}
-                className="w-full cursor-pointer font-['Inter'] text-center"
-                style={{ fontSize: 13, fontWeight: 600, color: "#55BAAA", background: "none", border: "none", padding: "4px 0" }}
-              >
-                Save &amp; Done →
-              </button>
             </div>
 
             {/* ── FLOATING MIC ── */}
             <FloatingMicButton state="idle" />
+            </div>
+
+            {/* ── RIGHT COLUMN: Cow History (desktop only) ── */}
+            <div className="hidden lg:block">
+              {matchedAnimal && !isDuplicate ? (
+                <div className="sticky top-[140px]">
+                  <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-[#D4D4D0] p-6 text-center">
+                  <p className="font-['Inter'] text-[#1A1A1A]/25" style={{ fontSize: 13, fontWeight: 500 }}>
+                    Enter a tag to view animal history
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -803,7 +815,7 @@ export function ProjectDetailScreen() {
            ────────────────────────────────────── */}
         {activeTab === "details" && (
           <div className="space-y-5">
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 gap-y-2.5">
               <FormFieldRow label="Project" value="Spring Preg Check" placeholder="" />
               <FormFieldRow label="Work Type" value="PREG" placeholder="" />
               <FormFieldRow label="Cattle Type" value="Cows" placeholder="" />
@@ -846,7 +858,7 @@ export function ProjectDetailScreen() {
               </div>
             </CollapsibleSection>
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 lg:max-w-md">
               <PillButton variant="outline" size="md" onClick={() => navigate("/cow-work")} style={{ flex: 1 }}>
                 Back to List
               </PillButton>
