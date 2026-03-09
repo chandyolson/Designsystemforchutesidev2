@@ -123,7 +123,7 @@ export function OnboardingScreen() {
           className="relative flex items-center justify-center"
           style={{ padding: 20 }}
         >
-          {/* CHUTESIDE brand — top left */}
+          {/* HERDWORK brand — top left */}
           <span
             className="absolute left-5"
             style={{
@@ -133,7 +133,7 @@ export function OnboardingScreen() {
               color: "#F3D12A",
             }}
           >
-            CHUTESIDE
+            HERDWORK
           </span>
 
           {/* Progress dots — centered */}

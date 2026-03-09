@@ -73,7 +73,7 @@ function ContextPreview({
             <span className="block rounded-full" style={{ width: 16, height: 1.5, backgroundColor: "#F0F0F0" }} />
           </div>
           <span className="font-['Open_Sans']" style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.14em", color: yellow.hex }}>
-            CHUTESIDE
+            HERDWORK
           </span>
         </div>
         <p className="text-white mt-2 uppercase font-['Open_Sans']" style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.10em", lineHeight: 1.2 }}>

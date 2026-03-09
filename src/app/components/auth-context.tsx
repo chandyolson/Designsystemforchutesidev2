@@ -16,7 +16,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-const STORAGE_KEY = "chuteside_auth";
+const STORAGE_KEY = "herdwork_auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {

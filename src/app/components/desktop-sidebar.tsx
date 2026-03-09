@@ -63,7 +63,7 @@ export function DesktopSidebar({
                   "0 0 8px rgba(243,209,42,0.50), 0 0 20px rgba(243,209,42,0.30), 0 0 40px rgba(243,209,42,0.15)",
               }}
             >
-              CS
+              HW
             </span>
           </div>
         ) : (
@@ -79,7 +79,7 @@ export function DesktopSidebar({
                   "0 0 8px rgba(243,209,42,0.50), 0 0 20px rgba(243,209,42,0.30), 0 0 40px rgba(243,209,42,0.15)",
               }}
             >
-              CHUTESIDE
+              HERDWORK
             </p>
             <p
               className="mt-1.5"

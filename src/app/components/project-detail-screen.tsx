@@ -20,7 +20,7 @@ import {
 
 /** Locked fields per work type — always ON, rendered first under teal sub-header */
 interface LockedFieldConfig {
-  label: string; // sub-header text
+  label: string;
   fields: LockedField[];
 }
 
@@ -31,7 +31,6 @@ interface LockedField {
   options?: string[];
   placeholder?: string;
   defaultValue?: string;
-  /** For BSE Pass/Fail color coding */
   colorFn?: (val: string) => string | undefined;
 }
 
@@ -48,7 +47,7 @@ const LOCKED_CONFIGS: Record<string, LockedFieldConfig> = {
       },
       {
         key: "daysGest",
-        label: "Days of Gestation",
+        label: "Days Gest.",
         type: "number",
         placeholder: "days",
         defaultValue: "142",
@@ -66,9 +65,9 @@ const LOCKED_CONFIGS: Record<string, LockedFieldConfig> = {
     label: "BREEDING FIELDS",
     fields: [
       { key: "technician", label: "Technician", type: "text", placeholder: "Name" },
-      { key: "breedingSire", label: "Breeding Sire", type: "text", placeholder: "Bull tag or name" },
-      { key: "estrusStatus", label: "Estrus Status", type: "select", options: ["Standing", "Not Standing", "Unknown"] },
-      { key: "breedingType", label: "Breeding Type", type: "select", options: ["Natural", "AI", "ET"] },
+      { key: "breedingSire", label: "Breed. Sire", type: "text", placeholder: "Bull tag or name" },
+      { key: "estrusStatus", label: "Estrus", type: "select", options: ["Standing", "Not Standing", "Unknown"] },
+      { key: "breedingType", label: "Breed. Type", type: "select", options: ["Natural", "AI", "ET"] },
     ],
   },
   "Breeding Soundness Exam": {
@@ -85,8 +84,8 @@ const LOCKED_CONFIGS: Record<string, LockedFieldConfig> = {
       },
       { key: "motility", label: "Motility", type: "number", placeholder: "%" },
       { key: "morphology", label: "Morphology", type: "number", placeholder: "%" },
-      { key: "semenDefects", label: "Semen Defects", type: "text", placeholder: "Describe defects if any" },
-      { key: "physicalDefects", label: "Physical Defects", type: "text", placeholder: "Describe defects if any" },
+      { key: "semenDefects", label: "Semen Def.", type: "text", placeholder: "Describe defects if any" },
+      { key: "physicalDefects", label: "Phys. Defects", type: "text", placeholder: "Describe defects if any" },
     ],
   },
 };
@@ -96,10 +95,9 @@ type OptionalFieldKey = "weight" | "quickNotes" | "notes" | "dna" | "tagColor" |
 
 interface ProjectConfig {
   workType: string;
-  optionalFields: OptionalFieldKey[]; // ordered list of enabled optional fields
+  optionalFields: OptionalFieldKey[];
 }
 
-/* Mock project configs */
 const PREG_CONFIG: ProjectConfig = {
   workType: "Pregnancy Check",
   optionalFields: ["weight", "quickNotes", "notes", "dna", "tagColor"],
@@ -110,13 +108,10 @@ const BSE_CONFIG: ProjectConfig = {
   optionalFields: ["weight", "quickNotes", "notes"],
 };
 
-/* Use preg config for the primary mock */
 const PROJECT_CONFIG = PREG_CONFIG;
 
-/* ── Tag Color options ── */
-const TAG_COLORS = ["Pink", "Yellow", "Green", "Orange", "Blue", "White", "Red", "Purple"];
+const TAG_COLORS = ["Pink", "Yellow", "Orange", "Green", "Blue", "White", "Red", "Purple"];
 
-/* ── Flag label map ── */
 const FLAG_LABEL_MAP: Record<string, string> = {
   cull: "Cull",
   production: "Production",
@@ -164,7 +159,7 @@ function MicIcon() {
 
 /* ═══════════════════════════════════════════════
    Quick Notes pills for inline rendering
-   ═══════════════════════════════════════════════ */
+   ══════════════════════════════════════════════ */
 const PILL_COLORS: Record<string, { bg: string; bgSel: string; border: string; borderSel: string; color: string }> = {
   cull:       { bg: "rgba(155,35,53,0.12)", bgSel: "rgba(155,35,53,0.20)", border: "rgba(155,35,53,0.25)", borderSel: "#9B2335", color: "#9B2335" },
   production: { bg: "rgba(243,209,42,0.12)", bgSel: "rgba(243,209,42,0.22)", border: "rgba(243,209,42,0.30)", borderSel: "#B8860B", color: "#B8860B" },
@@ -172,7 +167,6 @@ const PILL_COLORS: Record<string, { bg: string; bgSel: string; border: string; b
   none:       { bg: "#F5F5F0", bgSel: "rgba(26,26,26,0.08)", border: "#D4D4D0", borderSel: "rgba(26,26,26,0.40)", color: "rgba(26,26,26,0.55)" },
 };
 
-/* Cow-work quick notes: all except "Twin" (calving-only) */
 const COWWORK_QUICK_NOTES = CALVING_QUICK_NOTES.filter((n) => n.text !== "Twin");
 
 function CheckIcon({ color }: { color: string }) {
@@ -193,17 +187,20 @@ export function ProjectDetailScreen() {
   const [activeTab, setActiveTab] = useState<"input" | "animals" | "stats" | "details">("input");
   const tagInputRef = useRef<HTMLInputElement>(null);
 
+  /* ── Collapsible header state ── */
+  const [headerExpanded, setHeaderExpanded] = useState(false);
+
+  /* ── Animal card collapsed state ── */
+  const [animalCardExpanded, setAnimalCardExpanded] = useState(false);
+
   /* ── Input tab state ── */
   const [tag, setTag] = useState("4782");
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(["qn4"]); // "Lame" pre-selected
   const [activeFlag, setActiveFlag] = useState<NoteFlag>("production");
-
-  /* Quick Notes collapsible state */
   const [quickNotesOpen, setQuickNotesOpen] = useState(false);
 
-  /* Dynamic field values stored in a map */
+  /* Dynamic field values */
   const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
-    // Pre-fill defaults from locked config + optional defaults
     const defaults: Record<string, string> = {};
     const lockedConfig = LOCKED_CONFIGS[PROJECT_CONFIG.workType];
     if (lockedConfig) {
@@ -211,8 +208,7 @@ export function ProjectDetailScreen() {
         if (f.defaultValue) defaults[f.key] = f.defaultValue;
       }
     }
-    // Pre-fill optional field defaults for mock
-    defaults.weight = "1,247";
+    defaults.weight = "";
     defaults.tagColor = "";
     defaults.dna = "";
     defaults.notes = "";
@@ -229,26 +225,17 @@ export function ProjectDetailScreen() {
     setFieldValues((prev) => ({ ...prev, [key]: val }));
   };
 
-  /* ── Summary card collapsible state ── */
-  const [summaryCardOpen, setSummaryCardOpen] = useState(false);
-
   /* ── Derive matched animal ── */
   const trimmedTag = tag.trim();
   const matchedAnimal = trimmedTag ? mockAnimals[trimmedTag] ?? null : null;
   const isDuplicate = trimmedTag ? alreadyProcessedTags.includes(trimmedTag) : false;
-
-  /* Focus tag input on tab switch */
-  useEffect(() => {
-    if (activeTab === "input") {
-      // Don't auto-focus on initial load with pre-filled data
-    }
-  }, [activeTab]);
 
   /* ── Clear form ── */
   const clearForm = () => {
     setTag("");
     setSelectedNoteIds([]);
     setActiveFlag("production");
+    setAnimalCardExpanded(false);
     setFieldValues((prev) => {
       const next: Record<string, string> = {};
       for (const k of Object.keys(prev)) next[k] = "";
@@ -278,14 +265,11 @@ export function ProjectDetailScreen() {
   const handleNoteToggle = (noteId: string) => {
     setSelectedNoteIds((prev) => {
       const next = prev.includes(noteId) ? prev.filter((id) => id !== noteId) : [...prev, noteId];
-      // Compute active flag from selection
       const note = CALVING_QUICK_NOTES.find((n) => n.id === noteId);
       if (note && note.flag !== "none" && !prev.includes(noteId)) {
-        // Just selected a flagged note
         const flagLabel = FLAG_LABEL_MAP[note.flag] || note.flag;
         showToast("success", `${flagLabel} flag applied to Tag ${trimmedTag || "—"}`);
       }
-      // Update active flag
       let highest: NoteFlag = "none";
       const prio: Record<NoteFlag, number> = { cull: 3, production: 2, management: 1, none: 0 };
       for (const nid of next) {
@@ -308,10 +292,10 @@ export function ProjectDetailScreen() {
       return (
         <div key={field.key} className="flex items-start gap-3">
           <label
-            className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1"
+            className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1 truncate"
             style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
           >
-            {field.label}
+            <span className="truncate">{field.label}</span>
             <LockIconSmall />
           </label>
           <div className="flex-1 min-w-0">
@@ -339,14 +323,13 @@ export function ProjectDetailScreen() {
         </div>
       );
     }
-    // number or text
     return (
       <div key={field.key} className="flex items-start gap-3">
         <label
-          className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1"
+          className="shrink-0 text-[#1A1A1A] font-['Inter'] flex items-center gap-1 truncate"
           style={{ width: 105, fontSize: 14, fontWeight: 600, lineHeight: "40px" }}
         >
-          {field.label}
+          <span className="truncate">{field.label}</span>
           <LockIconSmall />
         </label>
         <div className="flex-1 min-w-0">
@@ -515,35 +498,17 @@ export function ProjectDetailScreen() {
         );
 
       case "lot":
-        return (
-          <FormFieldRow key="lot" label="Lot" value={fieldValues.lot || ""} onChange={(v) => setFieldValue("lot", v)} placeholder="Lot number" />
-        );
-
+        return <FormFieldRow key="lot" label="Lot" value={fieldValues.lot || ""} onChange={(v) => setFieldValue("lot", v)} placeholder="Lot number" />;
       case "sample":
-        return (
-          <FormFieldRow key="sample" label="Sample" value={fieldValues.sample || ""} onChange={(v) => setFieldValue("sample", v)} placeholder="Sample ID" />
-        );
-
+        return <FormFieldRow key="sample" label="Sample" value={fieldValues.sample || ""} onChange={(v) => setFieldValue("sample", v)} placeholder="Sample ID" />;
       case "pen":
-        return (
-          <FormFieldRow key="pen" label="Pen" value={fieldValues.pen || ""} onChange={(v) => setFieldValue("pen", v)} placeholder="Pen ID" />
-        );
-
+        return <FormFieldRow key="pen" label="Pen" value={fieldValues.pen || ""} onChange={(v) => setFieldValue("pen", v)} placeholder="Pen ID" />;
       case "data1":
-        return (
-          <FormFieldRow key="data1" label="Data 1" value={fieldValues.data1 || ""} onChange={(v) => setFieldValue("data1", v)} placeholder="Custom field" />
-        );
-
+        return <FormFieldRow key="data1" label="Data 1" value={fieldValues.data1 || ""} onChange={(v) => setFieldValue("data1", v)} placeholder="Custom field" />;
       case "data2":
-        return (
-          <FormFieldRow key="data2" label="Data 2" value={fieldValues.data2 || ""} onChange={(v) => setFieldValue("data2", v)} placeholder="Custom field" />
-        );
-
+        return <FormFieldRow key="data2" label="Data 2" value={fieldValues.data2 || ""} onChange={(v) => setFieldValue("data2", v)} placeholder="Custom field" />;
       case "traits":
-        return (
-          <FormFieldRow key="traits" label="Traits" value={fieldValues.traits || ""} onChange={(v) => setFieldValue("traits", v)} placeholder="Trait codes" />
-        );
-
+        return <FormFieldRow key="traits" label="Traits" value={fieldValues.traits || ""} onChange={(v) => setFieldValue("traits", v)} placeholder="Trait codes" />;
       default:
         return null;
     }
@@ -551,94 +516,166 @@ export function ProjectDetailScreen() {
 
   return (
     <div className="space-y-0">
-      {/* ══ GRADIENT TOTAL CARD — collapsible ══ */}
+      {/* ══════════════════════════════════════════
+          COLLAPSIBLE HEADER BAR
+         ══════════════════════════════════════════ */}
       <div
-        className="rounded-xl overflow-hidden font-['Inter'] mb-5 cursor-pointer"
-        style={{ background: "linear-gradient(145deg, #0E2646 0%, #163A5E 55%, #55BAAA 100%)" }}
-        onClick={() => setSummaryCardOpen(!summaryCardOpen)}
+        className="rounded-xl overflow-hidden font-['Inter']"
+        style={{ background: "linear-gradient(135deg, #0E2646 0%, #153566 100%)" }}
       >
-        <div className="flex items-center justify-between px-3.5 py-2.5">
-          <div className="flex items-center gap-2.5">
+        {/* ── Collapsed row (always visible) ── */}
+        <button
+          type="button"
+          onClick={() => setHeaderExpanded(!headerExpanded)}
+          className="w-full flex items-center justify-between cursor-pointer"
+          style={{ padding: "10px 14px", background: "none", border: "none" }}
+        >
+          <div className="flex items-center gap-0">
             <span className="text-white" style={{ fontSize: 22, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
               {workedAnimals.length}
             </span>
-            <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>
+            <span className="ml-1.5" style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>
               worked
             </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 11, fontWeight: 600, color: "#A8E6DA" }}>
+            {/* Thin vertical divider */}
+            <div className="mx-2.5 shrink-0" style={{ width: 1, height: 16, backgroundColor: "rgba(255,255,255,0.15)" }} />
+            <span className="truncate" style={{ fontSize: 11, fontWeight: 600, color: "#A8E6DA" }}>
               Spring Preg Check
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Active tab pill */}
+            <span
+              className="rounded-full"
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "3px 8px",
+                backgroundColor: "rgba(243,209,42,0.15)",
+                color: "#F3D12A",
+              }}
+            >
+              {tabLabels[activeTab]}
             </span>
             <svg
               width="14" height="14" viewBox="0 0 14 14" fill="none"
               className="shrink-0 transition-transform duration-200"
-              style={{ transform: summaryCardOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+              style={{ transform: headerExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
             >
-              <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="#F0F0F0" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-        </div>
-        {summaryCardOpen && (
-          <div className="px-3.5 pb-3 -mt-0.5" onClick={(e) => e.stopPropagation()}>
-            <p style={{ fontSize: 10, fontWeight: 500, color: "rgba(168,230,218,0.5)" }}>
-              In Progress
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate(`/cow-work/${id || "spring-preg"}/close-out`)}
-              className="mt-2.5 rounded-lg py-1.5 px-4 cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
-              style={{ fontSize: 11, fontWeight: 700, backgroundColor: "#F3D12A", color: "#1A1A1A", border: "none" }}
+        </button>
+
+        {/* ── Expanded content ── */}
+        {headerExpanded && (
+          <>
+            {/* Project details */}
+            <div style={{ padding: "0 14px 12px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+              <p style={{ fontSize: 10, fontWeight: 500, color: "rgba(168,230,218,0.5)" }}>
+                In Progress
+              </p>
+              {/* Stats row */}
+              <div className="flex items-center gap-3 mt-2">
+                {[
+                  { value: "45", label: "HEAD" },
+                  { value: "5", label: "WORKED" },
+                  { value: "40", label: "REMAINING" },
+                ].map((s) => (
+                  <div key={s.label} className="text-center">
+                    <p
+                      className="uppercase"
+                      style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "rgba(255,255,255,0.35)" }}
+                    >
+                      {s.label}
+                    </p>
+                    <p className="text-white" style={{ fontSize: 16, fontWeight: 800 }}>
+                      {s.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {/* Complete Project button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/cow-work/${id || "spring-preg"}/close-out`);
+                }}
+                className="mt-2.5 rounded-lg cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+                style={{ padding: "7px 14px", fontSize: 11, fontWeight: 700, backgroundColor: "#F3D12A", color: "#1A1A1A", border: "none" }}
+              >
+                Complete Project
+              </button>
+            </div>
+
+            {/* Tab bar */}
+            <div
+              className="flex"
+              style={{
+                padding: "0 14px 12px",
+                backgroundColor: "rgba(0,0,0,0.15)",
+                borderRadius: "0 0 12px 12px",
+              }}
             >
-              Complete Project
-            </button>
-          </div>
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab(tab);
+                      setHeaderExpanded(false);
+                    }}
+                    className="flex-1 pt-3 pb-2.5 cursor-pointer font-['Inter'] relative"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "white" : "rgba(255,255,255,0.4)",
+                      background: "none",
+                      border: "none",
+                    }}
+                  >
+                    {tabLabels[tab]}
+                    {isActive && (
+                      <span
+                        className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
+                        style={{ width: 36, height: 2, backgroundColor: "#F3D12A" }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
-      {/* ══ TABS ══ */}
-      <div className="flex border-b border-[#D4D4D0]/50">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className="flex-1 pb-3 cursor-pointer transition-colors duration-150 font-['Inter'] relative"
-              style={{ fontSize: 13, fontWeight: isActive ? 700 : 500, color: isActive ? "#0E2646" : "rgba(26,26,26,0.35)" }}
-            >
-              {tabLabels[tab]}
-              {isActive && (
-                <span
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
-                  style={{ width: 40, height: 3, backgroundColor: "#F3D12A" }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ══ TAB CONTENT ══ */}
-      <div className="py-5">
+      {/* ══════════════════════════════════════════
+          TAB CONTENT
+         ══════════════════════════════════════════ */}
+      <div className="pt-2.5">
         {/* ──────────────────────────────────────
-            INPUT TAB — Dynamic field rendering
+            INPUT TAB
            ────────────────────────────────────── */}
         {activeTab === "input" && (
-          <div className="space-y-4 lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:space-y-0">
-            {/* ── LEFT COLUMN: Input form ── */}
-            <div className="space-y-4">
-            {/* ── COW HISTORY PANEL (above tag input) — mobile only, desktop shows right ── */}
-            <div className="lg:hidden">
+          <div className="space-y-2.5 lg:max-w-2xl">
+            {/* ── ANIMAL CARD (collapsed by default) ── */}
             {matchedAnimal && !isDuplicate && (
-              <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
+              <CowHistoryPanel animal={matchedAnimal} defaultExpanded={false} />
             )}
-            </div>
+            {!matchedAnimal && !isDuplicate && trimmedTag === "" && (
+              <div className="hidden lg:block rounded-xl border border-dashed border-[#D4D4D0] p-6 text-center">
+                <p className="font-['Inter'] text-[#1A1A1A]/25" style={{ fontSize: 13, fontWeight: 500 }}>
+                  Enter a tag to view animal history
+                </p>
+              </div>
+            )}
 
-            {/* ── ANIMAL LOOKUP ── */}
-            <div className="space-y-2.5">
-              {/* Tag / EID scan field */}
+            {/* ── TAG / EID INPUT ── */}
+            <div className="space-y-1.5">
               <div className="flex items-center gap-3 lg:gap-4">
                 <label
                   className="shrink-0 text-[#1A1A1A] font-['Inter'] w-[105px] lg:w-[140px]"
@@ -650,14 +687,14 @@ export function ProjectDetailScreen() {
                   ref={tagInputRef}
                   type="text"
                   value={tag}
-                  onChange={(e) => setTag(e.target.value)}
+                  onChange={(e) => { setTag(e.target.value); setAnimalCardExpanded(false); }}
                   placeholder="Scan or enter tag…"
-                  className="flex-1 min-w-0 h-[46px] lg:h-[48px] px-3 rounded-lg bg-white border-2 border-[#F3D12A] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:ring-2 focus:ring-[#F3D12A]/25 transition-all lg:max-w-[480px]"
+                  className="flex-1 min-w-0 h-[46px] lg:h-[48px] px-3 rounded-lg bg-white border-2 border-[#F3D12A] text-[#1A1A1A] font-['Inter'] placeholder:text-[#1A1A1A]/30 outline-none focus:ring-2 focus:ring-[#F3D12A]/25 transition-all"
                   style={{ fontSize: 16, fontWeight: 600 }}
                 />
               </div>
 
-              {/* Match status */}
+              {/* Match status pill */}
               {trimmedTag && !isDuplicate && matchedAnimal && (
                 <div
                   className="rounded-full font-['Inter'] inline-flex items-center"
@@ -696,66 +733,72 @@ export function ProjectDetailScreen() {
 
             {/* ── LOCKED WORK-TYPE FIELDS ── */}
             {hasLockedFields && (
-              <>
-                <div style={{ borderTop: "1px solid rgba(212,212,208,0.40)", paddingTop: 12 }}>
-                  <p
-                    className="font-['Inter'] uppercase mb-3"
-                    style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#55BAAA" }}
-                  >
-                    {lockedConfig!.label}
-                  </p>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6 gap-y-2.5">
-                    {lockedConfig!.fields.map((f) => renderLockedField(f))}
-                  </div>
+              <div style={{ borderTop: "1px solid rgba(212,212,208,0.40)", paddingTop: 12 }}>
+                <p
+                  className="font-['Inter'] uppercase mb-2.5"
+                  style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#55BAAA" }}
+                >
+                  {lockedConfig!.label}
+                </p>
+                <div className="grid grid-cols-1 gap-y-2">
+                  {lockedConfig!.fields.map((f) => renderLockedField(f))}
                 </div>
-              </>
+              </div>
             )}
 
             {/* ── OPTIONAL PROJECT FIELDS ── */}
             {PROJECT_CONFIG.optionalFields.length > 0 && (
               <div style={{ borderTop: "1px solid rgba(212,212,208,0.40)", paddingTop: 12 }}>
                 <p
-                  className="font-['Inter'] uppercase mb-3"
+                  className="font-['Inter'] uppercase mb-2.5"
                   style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(14,38,70,0.35)" }}
                 >
                   Project Fields
                 </p>
-                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6 gap-y-2.5">
+                <div className="grid grid-cols-1 gap-y-2">
                   {PROJECT_CONFIG.optionalFields.map((key) => renderOptionalField(key))}
                 </div>
               </div>
             )}
 
             {/* ── ACTION BUTTONS ── */}
-            <div className="pt-2 lg:max-w-md">
+            <div className="pt-4 lg:max-w-md">
               <div className="flex gap-3">
-                <PillButton variant="outline" size="md" onClick={clearForm} style={{ flex: 1 }}>
-                  Skip
-                </PillButton>
-                <PillButton size="md" onClick={handleSaveNext} style={{ flex: 1 }}>
-                  Save &amp; Next
-                </PillButton>
+                <button
+                  type="button"
+                  onClick={clearForm}
+                  className="flex-1 rounded-full cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+                  style={{
+                    height: 44,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#0E2646",
+                    backgroundColor: "white",
+                    border: "1.5px solid #D4D4D0",
+                  }}
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveNext}
+                  className="flex-1 rounded-full cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+                  style={{
+                    height: 44,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#1A1A1A",
+                    backgroundColor: "#F3D12A",
+                    border: "none",
+                  }}
+                >
+                  Save & Next
+                </button>
               </div>
             </div>
 
             {/* ── FLOATING MIC ── */}
             <FloatingMicButton state="idle" />
-            </div>
-
-            {/* ── RIGHT COLUMN: Cow History (desktop only) ── */}
-            <div className="hidden lg:block">
-              {matchedAnimal && !isDuplicate ? (
-                <div className="sticky top-[140px]">
-                  <CowHistoryPanel animal={matchedAnimal} defaultExpanded />
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-[#D4D4D0] p-6 text-center">
-                  <p className="font-['Inter'] text-[#1A1A1A]/25" style={{ fontSize: 13, fontWeight: 500 }}>
-                    Enter a tag to view animal history
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -812,7 +855,7 @@ export function ProjectDetailScreen() {
 
         {/* ──────────────────────────────────────
             DETAILS TAB
-           ────────────────────────────────────── */}
+           ─────────────────��──────────────────── */}
         {activeTab === "details" && (
           <div className="space-y-5">
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 gap-y-2.5">

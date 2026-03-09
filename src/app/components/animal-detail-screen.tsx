@@ -6,6 +6,7 @@ import { FlagIcon } from "./flag-icon";
 import type { FlagColor } from "./flag-icon";
 import { PillButton } from "./pill-button";
 import { AnimalPickerRow } from "./animal-picker-row";
+import { useToast } from "./toast-context";
 
 /* ── Mock animal record data ── */
 const animalRecord = {
@@ -24,6 +25,7 @@ const animalRecord = {
   memo: "Good disposition, easy handler. Spring calving group.",
   notes: "Weight recorded — 1,187 lbs",
   weight: "1,187",
+  quickNotes: ["Hard keeper", "Good mother"],
   calvingHistory: [
     {
       date: "Mar 22, 2025",
@@ -97,12 +99,18 @@ const animalRecord = {
       ],
     },
   ],
-};
-
-const flagColors: Record<FlagColor, string> = {
-  teal: "#55BAAA",
-  gold: "#D4A017",
-  red: "#9B2335",
+  weightHistory: [
+    { weight: "1,187 lbs", date: "Feb 24, 2026", project: "Spring Preg Check", note: "Good condition" },
+    { weight: "1,165 lbs", date: "Jan 14, 2026", project: "Winter Vaccination", note: "" },
+    { weight: "1,152 lbs", date: "Oct 15, 2025", project: "Fall Processing", note: "" },
+    { weight: "1,120 lbs", date: "May 22, 2025", project: "Spring Preg Check 2025", note: "" },
+    { weight: "1,098 lbs", date: "Nov 3, 2024", project: "Fall Processing 2024", note: "" },
+  ],
+  idHistory: [
+    { field: "Tag changed", oldNew: "3108 → 3309", date: "Feb 24, 2026", changedBy: "J. Olson" },
+    { field: "Tag Color changed", oldNew: "Yellow → Pink", date: "Oct 12, 2023", changedBy: "J. Olson" },
+    { field: "EID changed", oldNew: "Set to 982 000364507221", date: "Mar 15, 2022", changedBy: "Admin" },
+  ],
 };
 
 const flagLabels: Record<FlagColor, string> = {
@@ -111,11 +119,27 @@ const flagLabels: Record<FlagColor, string> = {
   red: "Critical",
 };
 
+const TAG_COLOR_DOT: Record<string, string> = {
+  Pink: "#E8A0BF",
+  Yellow: "#F3D12A",
+  Orange: "#E8A046",
+  Green: "#55BAAA",
+  Blue: "#5B9BD5",
+  White: "#E0E0E0",
+  Red: "#D4606E",
+  Purple: "#9B72CF",
+  "No Tag": "#999999",
+};
+
 /* ── Component ─────────────────────────────── */
 export function AnimalDetailScreen() {
   const [activeTab, setActiveTab] = useState<"details" | "history">("details");
   const navigate = useNavigate();
   const { tag } = useParams<{ tag: string }>();
+  const { showToast } = useToast();
+
+  /* Memo state */
+  const [memo, setMemo] = useState(animalRecord.memo);
 
   /* Form state with pre-filled values */
   const [fields, setFields] = useState({
@@ -128,10 +152,9 @@ export function AnimalDetailScreen() {
     status: animalRecord.status,
     flag: "Management",
     flagReason: animalRecord.flagReason,
-    quickNotes: "",
   });
 
-  const [selectedQuickNotes, setSelectedQuickNotes] = useState<string[]>([]);
+  const [selectedQuickNotes, setSelectedQuickNotes] = useState<string[]>(animalRecord.quickNotes);
 
   /* Pedigree state */
   const [sire, setSire] = useState("");
@@ -152,6 +175,10 @@ export function AnimalDetailScreen() {
 
   const update = (key: keyof typeof fields) => (val: string) =>
     setFields((prev) => ({ ...prev, [key]: val }));
+
+  /* Quick notes pills for header card (max 3 visible) */
+  const visibleNotes = selectedQuickNotes.slice(0, 3);
+  const extraNotesCount = selectedQuickNotes.length - 3;
 
   return (
     <div className="space-y-0">
@@ -178,11 +205,11 @@ export function AnimalDetailScreen() {
             </p>
             <div className="flex items-center gap-1.5 mt-2">
               <span
-                className="rounded-full"
+                className="rounded-full shrink-0"
                 style={{
                   width: 8,
                   height: 8,
-                  backgroundColor: "#E8A0BF",
+                  backgroundColor: TAG_COLOR_DOT[animalRecord.tagColor] || "#E8A0BF",
                   display: "inline-block",
                 }}
               />
@@ -195,28 +222,115 @@ export function AnimalDetailScreen() {
                   lineHeight: 1.4,
                 }}
               >
-                {animalRecord.tagColor} · {animalRecord.sex} · {animalRecord.animalType} · {animalRecord.yearBorn}
+                {animalRecord.tagColor} · {animalRecord.sex} · {animalRecord.yearBorn}
               </p>
             </div>
             <p
-              className="mt-1"
+              className="mt-0.5"
               style={{ fontSize: 11, fontWeight: 500, color: "#A8E6DA" }}
             >
               {animalRecord.status} · {animalRecord.weight} lbs
             </p>
+
+            {/* Quick notes pills */}
+            {selectedQuickNotes.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1 mt-2.5">
+                {visibleNotes.map((note) => (
+                  <span
+                    key={note}
+                    className="rounded-full font-['Inter']"
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      backgroundColor: "rgba(255,255,255,0.1)",
+                      color: "rgba(240,240,240,0.8)",
+                    }}
+                  >
+                    {note}
+                  </span>
+                ))}
+                {extraNotesCount > 0 && (
+                  <span
+                    className="rounded-full font-['Inter']"
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      backgroundColor: "rgba(255,255,255,0.1)",
+                      color: "rgba(240,240,240,0.8)",
+                    }}
+                  >
+                    +{extraNotesCount} more
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Right — Flag + label (only if flag is set) */}
+          {/* Right — Flag + label */}
           {animalRecord.flag && (
             <div className="shrink-0 flex flex-col items-center gap-1 pt-1">
               <FlagIcon color={animalRecord.flag} size="md" />
+              <span
+                className="font-['Inter'] text-center"
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: animalRecord.flag === "teal" ? "#55BAAA" : animalRecord.flag === "gold" ? "#F0C05A" : "#9B2335",
+                }}
+              >
+                {flagLabels[animalRecord.flag]}
+              </span>
             </div>
           )}
         </div>
       </div>
 
+      {/* ══ MEMO FIELD ══ */}
+      <div
+        className="mt-3 rounded-xl bg-white font-['Inter']"
+        style={{ border: "1px solid rgba(212,212,208,0.6)", padding: "14px 16px" }}
+      >
+        <p
+          className="uppercase"
+          style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: "rgba(26,26,26,0.4)",
+          }}
+        >
+          Memo
+        </p>
+        <textarea
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          className="w-full mt-1.5 outline-none resize-none font-['Inter'] transition-all"
+          style={{
+            fontSize: 16,
+            fontWeight: 400,
+            color: "#1A1A1A",
+            lineHeight: 1.5,
+            minHeight: 64,
+            backgroundColor: "#F5F5F0",
+            border: "1px solid #D4D4D0",
+            borderRadius: 8,
+            padding: "10px 12px",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#F3D12A";
+            e.currentTarget.style.boxShadow = "0 0 0 2px rgba(243,209,42,0.25)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#D4D4D0";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        />
+      </div>
+
       {/* ══ TABS ══ */}
-      <div className="mt-5 flex border-b border-[#D4D4D0]/50">
+      <div className="mt-4 flex border-b border-[#D4D4D0]/50">
         {(["details", "history"] as const).map((tab) => {
           const isActive = activeTab === tab;
           return (
@@ -250,99 +364,138 @@ export function AnimalDetailScreen() {
       </div>
 
       {/* ══ TAB CONTENT ══ */}
-      <div className="py-5">
+      <div className="py-4">
+        {/* ── DETAILS TAB ── */}
         {activeTab === "details" && (
-          <div className="space-y-5">
-            {/* ── Form Fields ── */}
-            <div className="space-y-2.5">
-              <CollapsibleSection
-                title="Status & Flag"
-                collapsedContent={
-                  <p
-                    className="font-['Inter'] mt-1.5 truncate"
-                    style={{ fontSize: 12, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}
-                  >
-                    {fields.status}
-                    {fields.flag ? ` · ${fields.flag}` : ""}
-                    {fields.flagReason ? ` · ${fields.flagReason}` : ""}
-                  </p>
-                }
-              >
-                <div className="space-y-2.5 pt-2">
-                  <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Sold", "Dead", "Culled", "Missing"]} />
-                  <FormFieldRow label="Flag" value={fields.flag} onChange={update("flag")} placeholder="Management / Monitor / Critical" />
-                  <FormFieldRow label="Flag Reason" value={fields.flagReason} onChange={update("flagReason")} placeholder="Reason for flag" />
-                </div>
-              </CollapsibleSection>
-              <CollapsibleSection
-                title="Details"
-                collapsedContent={
-                  <p
-                    className="font-['Inter'] mt-1.5 truncate"
-                    style={{ fontSize: 12, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}
-                  >
-                    {fields.tag} · {fields.tagColor} · {fields.eid} · {fields.sex} · {fields.animalType} · {fields.yearBorn}
-                  </p>
-                }
-              >
-                <div className="space-y-2.5 pt-2">
+          <div className="space-y-3">
+            {/* ── Edit Details (collapsed by default) ── */}
+            <CollapsibleSection
+              title="Edit Details"
+              defaultOpen={false}
+              collapsedContent={
+                <p
+                  className="font-['Inter'] mt-1.5 truncate"
+                  style={{ fontSize: 12, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}
+                >
+                  {fields.tag} · {fields.tagColor} · {fields.status} · {fields.flag}
+                </p>
+              }
+            >
+              <div className="pt-2 space-y-0">
+                {/* Sub-group 1 — Identity */}
+                <p
+                  className="font-['Inter'] uppercase"
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "rgba(26,26,26,0.35)",
+                    marginBottom: 8,
+                  }}
+                >
+                  Identity
+                </p>
+                <div className="space-y-2.5">
                   <FormFieldRow label="Tag" value={fields.tag} onChange={update("tag")} placeholder="Tag number" />
                   <FormSelectRow label="Tag Color" value={fields.tagColor} onChange={update("tagColor")} placeholder="Select color" options={["Pink", "Yellow", "Orange", "Green", "Blue", "White", "Red", "Purple", "No Tag"]} />
                   <FormFieldRow label="EID" value={fields.eid} onChange={update("eid")} placeholder="Electronic ID" />
                   <FormSelectRow label="Sex" value={fields.sex} onChange={update("sex")} placeholder="Select sex" options={["Bull", "Cow", "Steer", "Spayed Heifer", "Heifer"]} />
-                  <FormSelectRow label="Animal Type" value={fields.animalType} onChange={update("animalType")} placeholder="Select type" options={["Calf", "Yearling", "Feeder", "Cow", "Bull", "Replacement Heifer"]} />
+                  <FormSelectRow label="Type" value={fields.animalType} onChange={update("animalType")} placeholder="Select type" options={["Calf", "Yearling", "Feeder", "Cow", "Bull", "Replacement Heifer"]} />
                   <FormSelectRow label="Year Born" value={fields.yearBorn} onChange={update("yearBorn")} placeholder="Select year" options={["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"]} />
                 </div>
-              </CollapsibleSection>
-              <CollapsibleSection
-                title="Quick Notes"
-                collapsedContent={
-                  selectedQuickNotes.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 pt-2">
-                      {selectedQuickNotes.map((note) => (
-                        <span
-                          key={note}
-                          className="px-2.5 py-1 rounded-full font-['Inter']"
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor: "#0E2646",
-                            color: "white",
-                          }}
-                        >
-                          {note}
-                        </span>
-                      ))}
-                    </div>
-                  ) : undefined
-                }
-              >
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {quickNoteOptions.map((note) => {
-                    const isSelected = selectedQuickNotes.includes(note);
-                    return (
-                      <button
+
+                {/* Divider */}
+                <div style={{ borderTop: "1px solid rgba(26,26,26,0.06)", margin: "12px 0" }} />
+
+                {/* Sub-group 2 — Status & Flag */}
+                <p
+                  className="font-['Inter'] uppercase"
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "rgba(26,26,26,0.35)",
+                    marginBottom: 8,
+                  }}
+                >
+                  Status & Flag
+                </p>
+                <div className="space-y-2.5">
+                  <FormSelectRow label="Status" value={fields.status} onChange={update("status")} placeholder="Select status" options={["Active", "Sold", "Dead", "Culled", "Missing"]} />
+                  <FormSelectRow label="Flag" value={fields.flag} onChange={update("flag")} placeholder="Select flag" options={["None", "Management", "Production", "Cull"]} />
+                  <FormFieldRow label="Flag Reason" value={fields.flagReason} onChange={update("flagReason")} placeholder="Reason for flag" />
+                </div>
+
+                {/* Save button */}
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    onClick={() => showToast("success", "Changes saved")}
+                    className="w-full rounded-full cursor-pointer font-['Inter'] transition-all active:scale-[0.97]"
+                    style={{
+                      height: 44,
+                      backgroundColor: "#0E2646",
+                      color: "white",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      border: "none",
+                    }}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </CollapsibleSection>
+
+            {/* ── Quick Notes (keep existing) ── */}
+            <CollapsibleSection
+              title="Quick Notes"
+              collapsedContent={
+                selectedQuickNotes.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {selectedQuickNotes.map((note) => (
+                      <span
                         key={note}
-                        type="button"
-                        onClick={() => toggleQuickNote(note)}
-                        className="px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150 font-['Inter']"
+                        className="px-2.5 py-1 rounded-full font-['Inter']"
                         style={{
-                          fontSize: 13,
-                          fontWeight: isSelected ? 700 : 500,
-                          backgroundColor: isSelected ? "#0E2646" : "white",
-                          borderColor: isSelected ? "#0E2646" : "#D4D4D0",
-                          color: isSelected ? "white" : "#1A1A1A",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          backgroundColor: "#0E2646",
+                          color: "white",
                         }}
                       >
                         {note}
-                      </button>
-                    );
-                  })}
-                </div>
-              </CollapsibleSection>
-            </div>
+                      </span>
+                    ))}
+                  </div>
+                ) : undefined
+              }
+            >
+              <div className="flex flex-wrap gap-2 pt-2">
+                {quickNoteOptions.map((note) => {
+                  const isSelected = selectedQuickNotes.includes(note);
+                  return (
+                    <button
+                      key={note}
+                      type="button"
+                      onClick={() => toggleQuickNote(note)}
+                      className="px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150 font-['Inter']"
+                      style={{
+                        fontSize: 13,
+                        fontWeight: isSelected ? 700 : 500,
+                        backgroundColor: isSelected ? "#0E2646" : "white",
+                        borderColor: isSelected ? "#0E2646" : "#D4D4D0",
+                        color: isSelected ? "white" : "#1A1A1A",
+                      }}
+                    >
+                      {note}
+                    </button>
+                  );
+                })}
+              </div>
+            </CollapsibleSection>
 
-            {/* ── Pedigree (collapsed) ── */}
+            {/* ── Pedigree ── */}
             <CollapsibleSection title="Pedigree">
               <div className="space-y-2.5 pt-2">
                 <AnimalPickerRow label="Sire" value={sire} onChange={setSire} placeholder="Search sire by tag…" filterSex={["Bull"]} />
@@ -351,49 +504,13 @@ export function AnimalDetailScreen() {
                 <FormFieldRow label="Reg. No." placeholder="Registration number" />
               </div>
             </CollapsibleSection>
-
-            {/* ── Save / Cancel ── */}
-            <div className="flex gap-3 pt-2">
-              <PillButton variant="outline" size="md" onClick={() => navigate(-1)} style={{ flex: 1 }}>
-                Cancel
-              </PillButton>
-              <PillButton size="md" style={{ flex: 1 }}>
-                Save Changes
-              </PillButton>
-            </div>
           </div>
         )}
 
         {/* ── HISTORY TAB ── */}
         {activeTab === "history" && (
-          <div className="space-y-5">
-            {/* ── Notes & Memo (always visible at top) ── */}
-            <div className="space-y-3">
-              <div>
-                <p
-                  className="font-['Inter'] uppercase mb-1.5"
-                  style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#1A1A1A40" }}
-                >
-                  Latest Notes
-                </p>
-                <p className="text-[#1A1A1A]/70 font-['Inter']" style={{ fontSize: 13, lineHeight: 1.5 }}>
-                  {animalRecord.notes || "No notes"}
-                </p>
-              </div>
-              <div style={{ borderTop: "1px solid rgba(26,26,26,0.06)", paddingTop: 12 }}>
-                <p
-                  className="font-['Inter'] uppercase mb-1.5"
-                  style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#1A1A1A40" }}
-                >
-                  Animal Memo
-                </p>
-                <p className="text-[#1A1A1A]/50 font-['Inter']" style={{ fontSize: 13, lineHeight: 1.5 }}>
-                  {animalRecord.memo || "No memo"}
-                </p>
-              </div>
-            </div>
-
-            {/* ── Calving Records (collapsible) ── */}
+          <div className="space-y-3">
+            {/* ── Calving Records ── */}
             <CollapsibleSection
               title={`Calving Records (${animalRecord.calvingHistory.length})`}
               collapsedContent={
@@ -499,7 +616,7 @@ export function AnimalDetailScreen() {
               </div>
             </CollapsibleSection>
 
-            {/* ── Work Records (collapsible) ── */}
+            {/* ── Work Records ── */}
             <CollapsibleSection
               title={`Work Records (${animalRecord.workHistory.length})`}
               collapsedContent={
@@ -620,24 +737,131 @@ export function AnimalDetailScreen() {
               </div>
             </CollapsibleSection>
 
-            {/* ── Animal ID Information (collapsible) ── */}
-            <CollapsibleSection title="Animal ID">
-              <div className="space-y-2.5 pt-2">
-                <FormFieldRow label="Tag" value={animalRecord.tag} placeholder="" />
-                <FormFieldRow label="EID" value={animalRecord.eid} placeholder="" />
-                {animalRecord.eid2 && <FormFieldRow label="EID 2" value={animalRecord.eid2} placeholder="" />}
-                <FormFieldRow label="Other ID" value={animalRecord.otherId} placeholder="" />
-                <FormFieldRow label="Lifetime ID" value={animalRecord.lifetimeId} placeholder="" />
-                <FormFieldRow label="Sex" value={animalRecord.sex} placeholder="" />
-                <FormFieldRow label="Type" value={animalRecord.animalType} placeholder="" />
-                <FormFieldRow label="Year Born" value={animalRecord.yearBorn} placeholder="" />
-                <FormFieldRow label="Tag Color" value={animalRecord.tagColor} placeholder="" />
+            {/* ── Weight History ── */}
+            <CollapsibleSection
+              title="Weight History"
+              defaultOpen={false}
+              collapsedContent={
+                animalRecord.weightHistory.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    <span
+                      className="rounded-full font-['Inter']"
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        backgroundColor: "rgba(14,38,70,0.08)",
+                        color: "#0E2646",
+                      }}
+                    >
+                      {animalRecord.weightHistory[0].weight} · {animalRecord.weightHistory[0].date}
+                    </span>
+                  </div>
+                ) : undefined
+              }
+            >
+              <div className="pt-1">
+                {animalRecord.weightHistory.map((w, i) => (
+                  <div
+                    key={i}
+                    className="font-['Inter']"
+                    style={{
+                      padding: "10px 0",
+                      borderBottom: i < animalRecord.weightHistory.length - 1 ? "1px solid rgba(26,26,26,0.06)" : "none",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A" }}>
+                        {w.weight}
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}>
+                        {w.date}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 12, color: "rgba(26,26,26,0.5)", marginTop: 1 }}>
+                      {w.project}
+                    </p>
+                    {w.note && (
+                      <p style={{ fontSize: 12, color: "rgba(26,26,26,0.4)", fontStyle: "italic", marginTop: 1 }}>
+                        {w.note}
+                      </p>
+                    )}
+                  </div>
+                ))}
+                {/* Trend line */}
+                <p
+                  className="font-['Inter']"
+                  style={{ fontSize: 11, fontWeight: 600, color: "#55BAAA", marginTop: 8 }}
+                >
+                  +89 lbs over last 12 months
+                </p>
               </div>
             </CollapsibleSection>
 
-            {/* Back */}
-            <div className="pt-2">
-              <PillButton variant="outline" size="md" onClick={() => navigate(-1)} style={{ width: "100%" }}>
+            {/* ── ID History ── */}
+            <CollapsibleSection
+              title="ID History"
+              defaultOpen={false}
+              collapsedContent={
+                <p
+                  className="font-['Inter'] mt-1.5"
+                  style={{ fontSize: 12, fontWeight: 500, color: "rgba(26,26,26,0.4)" }}
+                >
+                  {animalRecord.idHistory.length} changes recorded
+                </p>
+              }
+            >
+              <div className="pt-1">
+                {animalRecord.idHistory.map((entry, i) => (
+                  <div
+                    key={i}
+                    className="font-['Inter'] flex items-start justify-between gap-2"
+                    style={{
+                      padding: "10px 0",
+                      borderBottom: i < animalRecord.idHistory.length - 1 ? "1px solid rgba(26,26,26,0.06)" : "none",
+                    }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>
+                        {entry.field}
+                      </p>
+                      <p style={{ fontSize: 12, color: "rgba(26,26,26,0.5)", marginTop: 2 }}>
+                        {entry.oldNew}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p style={{ fontSize: 11, color: "rgba(26,26,26,0.4)" }}>
+                        {entry.date}
+                      </p>
+                      <p style={{ fontSize: 11, color: "rgba(26,26,26,0.4)" }}>
+                        {entry.changedBy}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {/* Disclaimer */}
+                <p
+                  className="font-['Inter']"
+                  style={{ fontSize: 11, color: "rgba(26,26,26,0.3)", fontStyle: "italic", marginTop: 8 }}
+                >
+                  ID history is read-only and cannot be deleted.
+                </p>
+              </div>
+            </CollapsibleSection>
+
+            {/* Back button */}
+            <div className="pt-4">
+              <PillButton
+                variant="outline"
+                size="md"
+                onClick={() => navigate(-1)}
+                style={{
+                  width: "100%",
+                  height: 40,
+                  borderWidth: 1.5,
+                  borderColor: "#D4D4D0",
+                }}
+              >
                 Back to Animals
               </PillButton>
             </div>

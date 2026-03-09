@@ -142,7 +142,7 @@ function getHeaderConfig(pathname: string): HeaderConfig {
   if (pathname === "/dev/color-explore") return { title: "Colors", subtitle: "Font & Pill Accents", showBack: true };
   if (pathname === "/dev/font-explore") return { title: "Fonts", subtitle: "Sans-Serif Options", showBack: true };
   if (pathname === "/dev/skeletons") return { title: "Skeletons", subtitle: "Loading Placeholders", showBack: true };
-  return { title: "ChuteSide", subtitle: "", compact: true };
+  return { title: "HerdWork", subtitle: "", compact: true };
 }
 
 const routeToMenuItem: Record<string, string> = {
@@ -168,7 +168,7 @@ export function AppLayout() {
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
-      return localStorage.getItem("chuteside-sidebar-collapsed") === "true";
+      return localStorage.getItem("herdwork-sidebar-collapsed") === "true";
     } catch {
       return false;
     }
@@ -180,7 +180,7 @@ export function AppLayout() {
   /* Persist sidebar collapsed state */
   useEffect(() => {
     try {
-      localStorage.setItem("chuteside-sidebar-collapsed", String(sidebarCollapsed));
+      localStorage.setItem("herdwork-sidebar-collapsed", String(sidebarCollapsed));
     } catch { /* noop */ }
   }, [sidebarCollapsed]);
 
@@ -302,7 +302,7 @@ export function AppLayout() {
                       Save
                     </button>
                   )}
-                  {/* Hide CHUTESIDE brand text on desktop — sidebar has it */}
+                  {/* Hide HERDWORK brand text on desktop — sidebar has it */}
                   <span
                     className="text-[#F3D12A] font-['Inter'] cursor-pointer active:opacity-80 transition-opacity lg:hidden"
                     style={{
@@ -316,7 +316,7 @@ export function AppLayout() {
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/"); } }}
                   >
-                    CHUTESIDE
+                    HERDWORK
                   </span>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export function AppLayout() {
             {/* Footer */}
             <footer className="text-center pt-4 pb-6">
               <p className="text-[#1A1A1A]/15 font-['Inter']" style={{ fontSize: 10, fontWeight: 600 }}>
-                ChuteSide v1.0
+                HerdWork v1.0
               </p>
             </footer>
           </div>

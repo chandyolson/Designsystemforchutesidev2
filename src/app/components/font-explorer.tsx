@@ -88,7 +88,7 @@ function TopBarPreview({ font }: { font: FontOption }) {
           <span className="block rounded-full" style={{ width: 14, height: 1.5, backgroundColor: "#F0F0F0" }} />
         </div>
         <span style={{ fontFamily: font.css, fontSize: 7, fontWeight: 700, letterSpacing: "0.14em", color: "#F3D12A" }}>
-          CHUTESIDE
+          HERDWORK
         </span>
       </div>
       <p
@@ -373,7 +373,7 @@ export function FontExplorer() {
             {/* Current */}
             <div>
               <p className="font-['Open_Sans'] mb-1.5 text-center" style={{ fontSize: 9, fontWeight: 700, color: "#1A1A1A", opacity: 0.3, letterSpacing: "0.08em" }}>
-                OPEN SANS
+                HERDWORK
               </p>
               <TopBarPreview font={fontOptions[0]} />
               <div className="mt-2">

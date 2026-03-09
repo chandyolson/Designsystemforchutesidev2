@@ -121,7 +121,7 @@ export function ReferenceScreen() {
           items={[
             { name: "User Profile", description: "Display name, phone, avatar", onClick: () => navigate("/user-profile") },
             { name: "Switch Operation", description: "Change active operation", onClick: () => window.dispatchEvent(new Event("open-operation-picker")) },
-            { name: "Sign Out", description: "Log out of ChuteSide", onClick: () => window.dispatchEvent(new Event("app-sign-out")) },
+            { name: "Sign Out", description: "Log out of HerdWork", onClick: () => window.dispatchEvent(new Event("app-sign-out")) },
           ]}
         />
       </div>

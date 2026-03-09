@@ -155,7 +155,7 @@ export function AuthLayout({ children, footer }: AuthLayoutProps) {
                 color: "#F3D12A",
               }}
             >
-              CHUTESIDE
+              HERDWORK
             </span>
           </div>
           <p
@@ -166,7 +166,7 @@ export function AuthLayout({ children, footer }: AuthLayoutProps) {
               letterSpacing: "0.04em",
             }}
           >
-            Cattle Management Made Simple
+            Cow Work Made Easy
           </p>
         </div>
 
@@ -361,7 +361,7 @@ export function AuthHeading({ title, subtitle }: { title: string; subtitle: stri
 
 /* ═══════════════════════════════════════════════
    FOOTER LINK (below card)
-   ═══════════════════════════════════════════════ */
+   ═════════��═════════════════════════════════════ */
 export function AuthFooterLink({
   text,
   linkText,

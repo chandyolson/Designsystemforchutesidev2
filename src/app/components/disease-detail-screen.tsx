@@ -538,7 +538,7 @@ export function DiseaseDetailScreen() {
       >
         <InfoIcon />
         <p style={{ fontSize: 12, fontWeight: 500, color: "#0D47A1", lineHeight: 1.5 }}>
-          This is a global reference. Disease information is maintained by ChuteSide and updated periodically.
+          This is a global reference. Disease information is maintained by HerdWork and updated periodically.
         </p>
       </div>
     </div>

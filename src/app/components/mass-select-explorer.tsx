@@ -737,7 +737,7 @@ export function MassSelectExplorer() {
             Animals
           </span>
           <span className="font-['Inter'] text-white/40" style={{ fontSize: 11, fontWeight: 500 }}>
-            ChuteSide
+            HerdWork
           </span>
         </div>
 

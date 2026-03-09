@@ -153,15 +153,25 @@ const allAnimals: Animal[] = [
   { tag: "2218", flag: "teal",  type: "COW",   values: ["2018", "1,340 lbs", "Normal"] },
   { tag: "6610", flag: "teal",  type: "COW",   values: ["2022", "1,095 lbs", "Gained well"] },
   { tag: "7801", flag: "gold",  type: "COW",   values: ["2017", "1,410 lbs", "Watch BCS"] },
-  { tag: "1134", flag: "teal",  type: "HEIFER", values: ["2024", "687 lbs", "First calf"] },
+  { tag: "1134", flag: "teal",  type: "R. HEIFER", values: ["2024", "687 lbs", "First calf"] },
   { tag: "9027", flag: "teal",  type: "BULL",  values: ["2019", "2,180 lbs", "Breeding sound"] },
   { tag: "4455", flag: "red",    type: "COW",   values: ["2020", "1,198 lbs", "Lame — right rear"] },
-  { tag: "3320", flag: "teal",  type: "STEER", values: ["2023", "845 lbs", "On feed"] },
+  { tag: "3320", flag: "teal",  type: "FEEDER", values: ["2023", "845 lbs", "On feed"] },
   { tag: "8812", flag: "teal",  type: "COW",   values: ["2021", "1,156 lbs", "Normal"] },
   { tag: "5501", flag: "gold",  type: "COW",   values: ["2020", "1,078 lbs", "Thin — supplement"] },
-  { tag: "7744", flag: "teal",  type: "HEIFER", values: ["2024", "712 lbs", "Growing well"] },
+  { tag: "7744", flag: "teal",  type: "R. HEIFER", values: ["2024", "712 lbs", "Growing well"] },
   { tag: "2290", flag: "teal",  type: "COW",   values: ["2019", "1,290 lbs", "Normal"] },
 ];
+
+/* ── Active Herd Totals (full herd counts) ─── */
+const activeHerdTotals = [
+  { label: "Cows", count: 612, color: "#0E2646" },
+  { label: "Calves", count: 127, color: "#55BAAA" },
+  { label: "Bulls", count: 18, color: "#0E2646" },
+  { label: "Repl. Heifers", count: 54, color: "#D4A017" },
+  { label: "Feeders", count: 36, color: "#0E2646" },
+];
+const activeTotalHead = activeHerdTotals.reduce((sum, t) => sum + t.count, 0);
 
 /* ── Screen Component ──────────────────────── */
 interface AnimalsScreenProps {
@@ -261,6 +271,38 @@ export function AnimalsScreen({ onSelectAnimal }: AnimalsScreenProps) {
             </svg>
           </button>
         )}
+      </div>
+
+      {/* ── Active Herd Totals Card ── */}
+      <div
+        className="rounded-2xl px-5 py-4 font-['Inter']"
+        style={{
+          background: "linear-gradient(145deg, #0E2646 0%, #163A5E 55%, #55BAAA 100%)",
+        }}
+      >
+        <div className="flex items-baseline gap-2 mb-3">
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#F3D12A", letterSpacing: "-0.02em", lineHeight: 1 }}>
+            {activeTotalHead.toLocaleString()}
+          </p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "rgba(240,240,240,0.45)", letterSpacing: "0.02em" }}>
+            Active
+          </p>
+        </div>
+        <div className="grid grid-cols-5 gap-1">
+          {activeHerdTotals.map((t) => (
+            <div key={t.label} className="text-center">
+              <p style={{ fontSize: 18, fontWeight: 700, color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>
+                {t.count}
+              </p>
+              <p
+                className="mt-1 truncate"
+                style={{ fontSize: 9, fontWeight: 500, color: "rgba(240,240,240,0.35)", letterSpacing: "0.02em" }}
+              >
+                {t.label}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── Filter Chips ── */}

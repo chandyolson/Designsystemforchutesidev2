@@ -25,7 +25,7 @@ function TopBarPreview({ gradient }: { gradient: GradientOption }) {
           className="text-[#F3D12A] font-['Open_Sans']"
           style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.14em" }}
         >
-          CHUTESIDE
+          HERDWORK
         </span>
       </div>
       <p
@@ -62,7 +62,7 @@ function DrawerPreview({ gradient }: { gradient: GradientOption }) {
           className="text-[#F3D12A] font-['Open_Sans']"
           style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.16em" }}
         >
-          CHUTESIDE
+          HERDWORK
         </p>
         <p
           className="mt-1 font-['Open_Sans']"
