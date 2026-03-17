@@ -51,6 +51,7 @@ import { ForgotPasswordScreen } from "./components/forgot-password-screen";
 import { ResetPasswordScreen } from "./components/reset-password-screen";
 import { OnboardingScreen } from "./components/onboarding-screen";
 import { DashboardExploreScreen } from "./components/dashboard-explore-screen";
+import { CalvingDashboardScreen } from "./components/calving-dashboard-screen";
 
 const router = createBrowserRouter([
   /* ── Public auth routes ── */
@@ -79,6 +80,7 @@ const router = createBrowserRouter([
           /* Calving */
           { path: "/calving", Component: CalvingScreen },
           { path: "/calving/new", Component: AddCalfScreen },
+          { path: "/calving/dashboard", Component: CalvingDashboardScreen },
           { path: "/calving/:id", Component: CalvingDetailScreen },
 
           /* Cow Work */
